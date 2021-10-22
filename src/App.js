@@ -8,6 +8,7 @@ function App() {
   const [recording, setRecording] = useState(false)
   const mediaRecorder = useRef(null)
   const chunkz = useRef([])
+  const buffers = useRef([])
   const player = useRef(null)
   
   useEffect(()=> {
@@ -28,7 +29,11 @@ function App() {
         mediaRecorder.current.onstop = (e)=>{
           let source = URL.createObjectURL(new Blob(chunkz.current))
           console.log(source)
-          player.current = new Tone.Player(source).toDestination().sync().start('1:0:0')
+          buffers.current.push(new Tone.ToneAudioBuffer(source, ()=>{
+            if(!player.current){
+              player.current = new Tone.Player(buffers.current[0]).toDestination()
+            }
+          }))
         }
         mediaRecorder.current.onerror = (e)=>{
           console.log('error')
@@ -56,25 +61,40 @@ function App() {
   const playHandle = ()=>{
     if(Tone.Transport.state === 'started'){
       Tone.Transport.stop()
+      player.current.stop()
     }
     else{
-      Tone.Transport.seconds = 0
-      Tone.Transport.start().scheduleRepeat(transport=>{
+      Tone.Transport.scheduleRepeat(t=>{
         setTransport(Tone.Transport.position)
       },'16n',0)
       Tone.Transport.scheduleOnce(()=>{
         Tone.Transport.stop()
       },'4:0:0')
+
+      Tone.Transport.scheduleOnce(()=>{
+        player.current.buffer = buffers.current[0]
+        player.current.start()
+      },'0:0:0')
+      if(buffers.current.length > 1){
+        Tone.Transport.scheduleOnce(()=>{
+          player.current.buffer = buffers.current[1]
+          player.current.start()
+        },'2:0:0')
+      }
+
+      Tone.Transport.seconds = 0
+      Tone.Transport.start()
     }
     setRecording(false)
   }
 
   return (<> {!begun ? <button onClick={()=>{setBegun(true)}}>Begin</button> :
     <>
-    <p> Simple DAW - {recording ? 'recording' : 'ready'}</p>
-    <button onClick={recHandle}>Record</button>
-    <button onClick={playHandle}>Playback</button>
-    <p>{transport}</p>
+      <div> <p>BeatRoot</p> {recording ? 'recording' : 'ready'}</div>
+      <button onClick={recHandle}>Record</button>
+      <button onClick={playHandle}>Playback</button>
+      <p>{transport}</p>
+      <p>Buffers {buffers.current.length}</p>
     </>}
   </>);
 }
