@@ -62,6 +62,9 @@ function App() {
       Tone.Transport.start().scheduleRepeat(transport=>{
         setTransport(Tone.Transport.position)
       },'16n',0)
+      Tone.Transport.scheduleOnce(()=>{
+        Tone.Transport.stop()
+      },'4:0:0')
     }
     setRecording(false)
   }
