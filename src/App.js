@@ -99,4 +99,43 @@ function App() {
   </>);
 }
 
+/*
+
+Mock structure
+
+<App>
+  <TransportControls>
+    <button> To Previous Bar </button>
+    <button> Play/Stop </button>
+    <button> To Next Bar </button>
+  </TransportControls>
+
+  <MetronomeControls>
+    <button> Toggle </button>
+    <button> Count-in: {bars} </button>
+    <slider> Volume </slider>
+  </MetronomeControls>
+  
+  <AudioField {loopBegin:Tone.Time, loopEnd:Tone.Time}>
+    <Track >
+      <Clip />
+      <Clip />
+    </Track>
+    <Track>
+      <Clip />
+    </Track>
+    <Track>
+      <Clip />
+      <Clip />
+      <Clip />
+    </Track>
+  </AudioField>
+</App>
+
+Components:
+<Clip {bufferid:int, start:Tone.Time, end:Tone.Time, fadein:Tone.Time, fadeout:Tone.Time, gain:float}/>
+<Track {focus:bool, player:Tone.Player, volume:float, pan:float, muted:bool, icon:img, color:string}/>
+
+*/
+
 export default App;
