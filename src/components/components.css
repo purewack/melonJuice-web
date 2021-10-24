@@ -1,0 +1,17 @@
+
+.AudioRegion{
+    margin:5px;
+    display:inline-block;
+    width:100px;
+    height:50px;
+    background:gray;
+}
+
+.AudioTrack{
+    background:cyan;
+    border:solid black 1px;
+}
+
+.AudioTrackArmed{
+    background:red;
+}
