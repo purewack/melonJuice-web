@@ -38,10 +38,21 @@ function App() {
         const startWorklet = async ()=>{
           console.log('setup mic-processor worklet')
           let mikeNode = ac.createMediaStreamSource(stream);
+          
           await ac.audioWorklet.addModule('mic-processor.js').then(()=>{
-            micProcess.current = new AudioWorkletNode(ac, 'mic-processor')
-            mikeNode.connect(micProcess.current)
+            
           })
+          let mikeProcess = new window.AudioWorkletNode(ac, 'recorder-worklet')
+          mikeNode.connect(mikeProcess)
+          
+          mikeProcess.port.onmessage = (e)=>{
+            if(e.data.eventType === 'data'){
+              console.log('have data')
+            }
+          }
+          mikeProcess.parameters.get('isRecording').setValueAtTime(1, 0);
+          
+          micProcess.current = mikeProcess
         }
 
         const startTone = async ()=>{
