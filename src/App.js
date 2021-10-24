@@ -3,6 +3,8 @@ import * as Tone from 'tone'
 import './App.css';
 import AudioTrack from './components/AudioTrack';
 
+const ac = new AudioContext()
+
 function App() {
   const mediaRecorder = useRef(null)
   const mediaRecorderChunks = useRef([])  
@@ -11,6 +13,7 @@ function App() {
   const [recording, setRecording] = useState(false)
   const [armedIndex,setArmedIndex] = useState(null)
   const [tracks, setTracks] = useState([])
+  const micProcess = useRef(null)
 
   const addTrack = ()=>{
     setTracks(prev => 
@@ -25,36 +28,51 @@ function App() {
   useEffect(()=> {
 
     if(begun){
-      const startTone = async ()=>{
-        await Tone.start()
-        console.log('start and clear tracks')
-        setTracks([])
-        addTrack()
-        addTrack()
-        addTrack()
-        console.log(tracks)
-      }
-      startTone()
+      
+
 
 
       navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(stream => {
         console.log('permission granted')
         
-        mediaRecorder.current = new MediaRecorder(stream, {mimeType:'audio/webm'});
-        mediaRecorder.current.ondataavailable = (e)=>{
-          if(e.data.size > 0) mediaRecorderChunks.current.push(e.data)
-          //console.log(e)
-        }
-        mediaRecorder.current.onstart = (e)=>{
-          console.log('started')
-          mediaRecorderChunks.current = []
+        const startWorklet = async ()=>{
+          console.log('setup mic-processor worklet')
+          let mikeNode = ac.createMediaStreamSource(stream);
+          await ac.audioWorklet.addModule('mic-processor.js').then(()=>{
+            micProcess.current = new AudioWorkletNode(ac, 'mic-processor')
+            mikeNode.connect(micProcess.current)
+          })
         }
 
-        mediaRecorder.current.onerror = (e)=>{
-          console.log('error')
+        const startTone = async ()=>{
+          Tone.setContext(ac)
+          await Tone.start().then(()=>{
+            console.log('started')
+            console.log('start and clear tracks')
+            setTracks([])
+            addTrack()
+            addTrack()
+            addTrack()
+            startWorklet()
+          })
         }
+        startTone()
+        
+        
+        // mediaRecorder.current = new MediaRecorder(stream, {mimeType:'audio/webm'});
+        // mediaRecorder.current.ondataavailable = (e)=>{
+        //   if(e.data.size > 0) mediaRecorderChunks.current.push(e.data)
+        //   //console.log(e)
+        // }
+        // mediaRecorder.current.onstart = (e)=>{
+        //   console.log('started')
+        //   mediaRecorderChunks.current = []
+        // }
+        //
+        // mediaRecorder.current.onerror = (e)=>{
+        //   console.log('error')
+        // }
       })
-
     }
 
   },[begun])
@@ -85,13 +103,17 @@ function App() {
   const recHandle = ()=>{
     if(armedIndex === null) return
     
-    if(mediaRecorder.current.state === 'recording'){
-      mediaRecorder.current.stop()
+    if(micProcess.current.onaudioprocess){
+      //mediaRecorder.current.stop()
+      micProcess.current.onaudioprocess = null
       setRecording(false)
     }
     else{
       playHandle()
-      mediaRecorder.current.start(1000*1024/44100)
+      micProcess.current.onaudioprocess = (e)=>{
+        console.log(e.inputBuffer);
+      }
+      //mediaRecorder.current.start(1000*1024/44100)
       setRecording(true)
     }
   }
