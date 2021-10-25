@@ -108,18 +108,17 @@ export const AudioEngine = {
   ac: null,
   tonejs: null,
   micNode: null,
-  lastRecordingChunks: null,
+  lastRecording: new Float32Array(0),
   player: null,
-  bufferPool: null,
+  bufferPool: [],
   lastURL: null,
   init() {
-    let ac = this.ac  = new AudioContext({ latencyHint: 'interactive' });
-    Tone.setContext(ac) 
+    let ac = this.ac  = new AudioContext(); ac.resume()
+    Tone.setContext(ac)
     this.tonejs = Tone;
-	this.bufferPool = []
-    this.player = new this.tonejs.Player().toDestination()
-
-	console.log(ac.baseLatency)
+	  console.log(ac.baseLatency)
+    this.player = new this.tonejs.Player()
+    this.player.connect(this.ac.destination)
 
     navigator.mediaDevices.getUserMedia({audio:{
 		latency: 0.0,
@@ -141,17 +140,25 @@ export const AudioEngine = {
           
           micNode.port.onmessage = (e)=>{
               if(e.data.eventType === 'onchunk'){
-                this.lastRecordingChunks.push(e.data.audioChunk)
-				console.log('data')
+                let len = (e.data.audioChunk.length + this.lastRecording.length)
+                let bufnew = new Float32Array(len)
+                bufnew.set(this.lastRecording)
+                bufnew.set(e.data.audioChunk, this.lastRecording.length)
+                this.lastRecording = bufnew
+                console.log(len)
               }
               else if(e.data.eventType === 'begin'){
 				this.lastRecordingChunks = []
 			  }
               else if(e.data.eventType === 'end'){
-				let buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
-				let toneBuf = new this.tonejs.ToneAudioBuffer(buf)
-				this.player.buffer = toneBuf
-				console.log(this.player)
+                console.log(this.lastRecording)
+        				const buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
+                buf.copyToChannel(Float32Array.from(this.lastRecording),0)
+                
+                // this.bufferPool.push(buf)
+                
+                let toneBuf = new this.tonejs.ToneAudioBuffer(buf)
+                this.player.buffer = toneBuf
               }
           }
           this.micNode = micNode
@@ -175,6 +182,7 @@ export const AudioEngine = {
   },
   transportPlay(){
     if(this.ac === null) return;
+
     this.player.start()
   },
   transportStop(){
