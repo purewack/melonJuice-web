@@ -117,7 +117,7 @@ export const AudioEngine = {
     Tone.setContext(ac) 
     this.tonejs = Tone;
 	this.bufferPool = []
-    this.player = new Tone.Player().toDestination()
+    this.player = new this.tonejs.Player().toDestination()
 
 	console.log(ac.baseLatency)
 
@@ -131,15 +131,15 @@ export const AudioEngine = {
         
         const startWorklet = async ()=>{
           console.log('setup mic-processor worklet')
-          let mikeNode = ac.createMediaStreamSource(stream);
+          let micStream = ac.createMediaStreamSource(stream);
           await ac.resume()
           await ac.audioWorklet.addModule('MicWorkletModule.js')
 
-          let mikeProcess = new window.AudioWorkletNode(ac, 'mic-worklet')
-          mikeNode.connect(mikeProcess)
-		  mikeProcess.connect(ac.destination)
+          let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
+          micStream.connect(micNode)
+		  micNode.connect(ac.destination)
           
-          mikeProcess.port.onmessage = (e)=>{
+          micNode.port.onmessage = (e)=>{
               if(e.data.eventType === 'onchunk'){
                 this.lastRecordingChunks.push(e.data.audioChunk)
 				console.log('data')
@@ -148,17 +148,13 @@ export const AudioEngine = {
 				this.lastRecordingChunks = []
 			  }
               else if(e.data.eventType === 'end'){
-				let url = URL.createObjectURL(new Blob(this.lastRecordingChunks))
-				this.lastURL = url;
-				console.log(url)
-		
-				this.bufferPool.push(new Tone.ToneAudioBuffer(url, (buffer)=>{
-					console.log(buffer)
-					this.player.buffer = buffer
-				}))
+				let buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
+				let toneBuf = new this.tonejs.ToneAudioBuffer(buf)
+				this.player.buffer = toneBuf
+				console.log(this.player)
               }
           }
-          this.micNode = mikeProcess
+          this.micNode = micNode
         }
         startWorklet()
     })

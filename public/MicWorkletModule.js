@@ -64,8 +64,8 @@ class RecorderWorkletProcessor extends AudioWorkletProcessor {
     this._chunkSize = 4096;
     this._chunk = new Float32Array(this._chunkSize);
     this._framesWritten = 0;
+	this._recLength = 0;
 	this._wasRec = 0
-	console.log(this._chunk)
   }
 
   _flush() {
@@ -77,13 +77,15 @@ class RecorderWorkletProcessor extends AudioWorkletProcessor {
   }
   _recordingStarted() {
 	this._framesWritten = 0;
+	this._recLength = 0;
     this.port.postMessage({
       eventType: 'begin'
     });
   }
   _recordingStopped() {
     this.port.postMessage({
-      eventType: 'end'
+      eventType: 'end',
+	  recLength: this._recLength
     });
   }
 
@@ -104,6 +106,7 @@ class RecorderWorkletProcessor extends AudioWorkletProcessor {
 			this._chunk[this._framesWritten + i] =  ins[i]
 		}
 		this._framesWritten += len; //+=128
+		this._recLength += len;
 
 		if(this._framesWritten >= this._chunkSize){
 			this._framesWritten = 0
