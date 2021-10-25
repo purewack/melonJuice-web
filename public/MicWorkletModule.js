@@ -50,81 +50,74 @@ audio into it, and schedule the values for 'isRecording' parameter:
 class RecorderWorkletProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [{
-      name: 'isRecording',
-      defaultValue: 0
+      name: 'recState',
+	  minValue: 0,
+	  maxValue: 1,
+      defaultValue: 0,
+      automationRate: 'k-rate'
     }];
   }
 
   constructor() {
     super();
-    this._bufferSize = 256;
-    this._buffer = new Float32Array(this._bufferSize);
-    this._initBuffer();
-  }
-
-  _initBuffer() {
-    this._bytesWritten = 0;
-  }
-
-  _isBufferEmpty() {
-    return this._bytesWritten === 0;
-  }
-
-  _isBufferFull() {
-    return this._bytesWritten === this._bufferSize;
-  }
-
-  _appendToBuffer(value) {
-    if (this._isBufferFull()) {
-      this._flush();
-    }
-
-    this._buffer[this._bytesWritten] = value;
-    this._bytesWritten += 1;
+	this._armedChannel = 0
+    this._chunkSize = 4096;
+    this._chunk = new Float32Array(this._chunkSize);
+    this._framesWritten = 0;
+	this._recLength = 0;
+	this._wasRec = 0
   }
 
   _flush() {
-    let buffer = this._buffer;
-    if (this._bytesWritten < this._bufferSize) {
-      buffer = buffer.slice(0, this._bytesWritten);
-    }
-
-    this.port.postMessage({
-      eventType: 'data',
-      audioBuffer: buffer
-    });
-
-    this._initBuffer();
+	let buffer = this._chunk;
+	this.port.postMessage({
+		eventType: 'onchunk',
+		audioChunk: buffer
+	});
   }
-
+  _recordingStarted() {
+	this._framesWritten = 0;
+	this._recLength = 0;
+    this.port.postMessage({
+      eventType: 'begin'
+    });
+  }
   _recordingStopped() {
     this.port.postMessage({
-      eventType: 'stop'
+      eventType: 'end',
+	  recLength: this._recLength
     });
   }
 
   process(inputs, outputs, parameters) {
-    const isRecordingValues = parameters.isRecording;
 
-    for (
-      let dataIndex = 0;
-      dataIndex < isRecordingValues.length;
-      dataIndex++
-    ) {
-      const shouldRecord = isRecordingValues[dataIndex] === 1;
-      if (!shouldRecord && !this._isBufferEmpty()) {
-        this._flush();
-        this._recordingStopped();
-      }
+	let ins = inputs[0][this._armedChannel]
+	const len = ins.length//Math.min(inputs[0][this._armedChannel].length, outputs[0][this._armedChannel].length)
+	const rec = parameters.recState[0]
 
-      if (shouldRecord) {
-        this._appendToBuffer(inputs[0][0][dataIndex]);
-      }
-    }
+	if(rec && !this._wasRec){
+		this._recordingStarted()
+	}
+	if(!rec && this._wasRec){
+		this._recordingStopped()
+	}
+	if(rec){
+		for(let i=0; i<len; i++){
+			this._chunk[this._framesWritten + i] =  ins[i]
+		}
+		this._framesWritten += len; //+=128
+		this._recLength += len;
+
+		if(this._framesWritten >= this._chunkSize){
+			this._framesWritten = 0
+			this._flush()
+		}
+	}
+	this._wasRec = rec
 
     return true;
   }
 
 }
 
-registerProcessor('recorder-worklet', RecorderWorkletProcessor);
+registerProcessor('mic-worklet', RecorderWorkletProcessor);
