@@ -166,6 +166,20 @@ export const AudioEngine = {
         startWorklet()
     })
   },
+  monitor () {
+    if(this.ac === null) return;
+
+    let monitorState = (this.micNode.parameters.get('monitorState').value > 0)
+    
+    if(!monitorState){
+      	this.micNode.parameters.get('monitorState').setValueAtTime(1, 0);
+    }
+	else{
+	  	this.micNode.parameters.get('monitorState').setValueAtTime(0, 0);
+    }
+
+	return !monitorState
+  },
   record () {
     if(this.ac === null) return;
 
@@ -190,4 +204,6 @@ export const AudioEngine = {
 
 
   },
+    
+    
 };

@@ -51,8 +51,11 @@ class RecorderWorkletProcessor extends AudioWorkletProcessor {
   static get parameterDescriptors() {
     return [{
       name: 'recState',
-	  minValue: 0,
-	  maxValue: 1,
+      defaultValue: 0,
+      automationRate: 'k-rate'
+    },
+    {
+      name: 'monitorState',
       defaultValue: 0,
       automationRate: 'k-rate'
     }];
@@ -91,29 +94,37 @@ class RecorderWorkletProcessor extends AudioWorkletProcessor {
 
   process(inputs, outputs, parameters) {
 
-	let ins = inputs[0][this._armedChannel]
-	const len = ins.length//Math.min(inputs[0][this._armedChannel].length, outputs[0][this._armedChannel].length)
-	const rec = parameters.recState[0]
+  	let ins = inputs[0][this._armedChannel]
+    let outs = outputs[0]
+  	const len = ins.length
+  	const rec = parameters.recState[0]
+    const monitor = parameters.monitorState[0]
 
-	if(rec && !this._wasRec){
-		this._recordingStarted()
-	}
-	if(!rec && this._wasRec){
-		this._recordingStopped()
-	}
-	if(rec){
+  	if(rec && !this._wasRec){
+  		this._recordingStarted()
+  	}
+  	if(!rec && this._wasRec){
+  		this._recordingStopped()
+  	}
+  
 		for(let i=0; i<len; i++){
-			this._chunk[this._framesWritten + i] =  ins[i]
+      if(rec){
+			  this._chunk[this._framesWritten + i] =  ins[i]
+      }
+      if(monitor){
+        outs[0][i] = outs[1][i] = ins[i]
+      }
 		}
-		this._framesWritten += len; //+=128
-		this._recLength += len;
+    if(rec){
+  		this._framesWritten += len; //+=128
+  		this._recLength += len;
 
-		if(this._framesWritten >= this._chunkSize){
-			this._framesWritten = 0
-			this._flush()
-		}
-	}
-	this._wasRec = rec
+  		if(this._framesWritten >= this._chunkSize){
+  			this._framesWritten = 0
+  			this._flush()
+  		}
+  	}
+  	this._wasRec = rec
 
     return true;
   }
