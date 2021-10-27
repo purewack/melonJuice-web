@@ -111,13 +111,13 @@ export const AudioEngine = {
               bufnew.set(this.lastRecording)
               bufnew.set(e.data.audioChunk, this.lastRecording.length)
               this.lastRecording = bufnew
-              console.log(len)
+              //console.log(len)
             }
             else if(e.data.eventType === 'begin'){
       				this.lastRecordingChunks = []
       			}
             else if(e.data.eventType === 'end'){
-              console.log(this.lastRecording)
+              //console.log(this.lastRecording)
       				const buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
               buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
               this.lastBufferId = newid()
@@ -185,7 +185,7 @@ export const AudioEngine = {
     this.tracks.forEach(tr => {
       tr.regions.forEach(reg => {
         this.tonejs.Transport.schedule(t => {
-            tr.player.buffer = this.bufferPool[`${reg.bufferId}`]
+            tr.player.buffer = this.bufferPool[reg.bufferId]
             tr.player.start(t,reg.timeBufferOffset,reg.timeDuration)
             tr.adsr.attack = reg.timeFadeIn
             tr.adsr.release = reg.timeFadeOut
