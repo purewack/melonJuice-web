@@ -122,7 +122,9 @@ export const AudioEngine = {
               buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
               this.lastBufferId = newid()
               this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
-              this.tracks[0].addRegion(this.lastBufferId,0,1.0)
+              
+              let recordStartTime = 0 //get actual position of transport
+              this.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
             }
           }
           this.micNode = micNode
@@ -159,22 +161,35 @@ export const AudioEngine = {
     }
  
   },
+  transportStop(){
+    if(this.ac === null) return;
+    
+    this.tonejs.Transport.stop()
+    this.tonejs.Transport.cancel()
+    
+    this.tracks.forEach(tr => {
+      tr.player.stop()
+      tr.adsr.cancel()
+    })
+    
+  },
   transportPlay(setTransportLabel){
     if(this.ac === null) return;
   
     
     if(this.tonejs.Transport.state !== 'stopped'){
-      this.tonejs.Transport.stop()
-      this.tonejs.Transport.cancel()
+      this.transportStop()
       return;
     }
-    
     
     this.tracks.forEach(tr => {
       tr.regions.forEach(reg => {
         this.tonejs.Transport.schedule(t => {
             tr.player.buffer = this.bufferPool[`${reg.bufferId}`]
             tr.player.start(t,reg.timeBufferOffset,reg.timeDuration)
+            tr.adsr.attack = reg.timeFadeIn
+            tr.adsr.release = reg.timeFadeOut
+            tr.adsr.triggerAttackRelease(reg.timeDuration - reg.timeFadeOut)
         }, reg.timeStart)
       })
     })
@@ -187,31 +202,30 @@ export const AudioEngine = {
     this.tonejs.Transport.start('+0.1')
           
   },
-  transportStop(){
-    if(this.ac === null) return;
-    
-    if(this.tonejs.Transport.state !== 'stopped'){
-      this.tonejs.Transport.stop()
-      this.tonejs.Transport.cancel()
-      return;
-    }
-  },
   
   addTrack(){
-      this.tracks.push({
-          id:newid(),
-          player: new this.tonejs.Player().toDestination(),
-          regions: [],
-          addRegion(bufferId, start, duration){
-              this.regions.push({
-                  bufferId: bufferId,
-                  timeBufferOffset:0,
-                  timeStart:start,
-                  timeDuration:duration,
-                  timeFadeIn: 0,
-                  timeFadeOut: 0,
-              })
-          }
-      })
+    let t = {
+        player: new this.tonejs.Player(),
+        adsr: new this.tonejs.AmplitudeEnvelope({
+          attack:0,
+          decay:0,
+          sustain:1,
+          release:0,
+        }),
+        regions: [],
+        addRegion(bufferId, start, duration){
+            this.regions.push({
+                bufferId: bufferId,
+                timeBufferOffset:0,
+                timeStart:start,
+                timeDuration:duration,
+                timeFadeIn: 0.01,
+                timeFadeOut: 0.01,
+            })
+        }
+    }
+    t.player.connect(t.adsr)
+    t.adsr.toDestination()
+    this.tracks.push(t)
   },
 };
