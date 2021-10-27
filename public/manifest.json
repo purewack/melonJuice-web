@@ -1,6 +1,6 @@
 {
-  "short_name": "SimpleDAW",
-  "name": "Simple Multitrack Recorder",
+  "short_name": "MelonJuice",
+  "name": "A Juicy Multitrack Recorder",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
