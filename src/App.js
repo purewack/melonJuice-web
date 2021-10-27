@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './App.css';
-import AudioTrack from './components/AudioTrack';
+import AudioTrackControls from './components/AudioTrackControls';
 import {AudioEngine} from './audio/AudioEngine';
 
 function App() {
@@ -11,30 +11,29 @@ function App() {
   const [transport, setTransport] = useState('0:0:0')
   // eslint-disable-next-line 
   const [tracks, setTracks] = useState([1,2,3])
-
+  
 
   return (<> {!begun ? <button onClick={()=>{
-    setBegun(true)
-    AudioEngine.init()
+    setBegun(AudioEngine.init())
   }}>Begin</button> :
     <>
       <div> <p>MelonJuice</p> {recording ? 'recording' : 'ready'}</div>
-      <button onClick={()=>{
-        AudioEngine.monitor()
-      }}>Monitor</button>
+      <p>{transport}</p>
+          
+      <button onClick={()=>{AudioEngine.monitor()}}>Monitor</button>
       <button style={{backgroundColor:(recording ? 'red' : 'gray')}} 
         onClick={()=>{
-          setRecording(AudioEngine.record())
+          setRecording(AudioEngine.record(armedIndex))
         }}
       >Record</button>
       <button onClick={()=>{
-        AudioEngine.transportPlay()
+        AudioEngine.transportPlay(setTransport)
       }}>Playback</button>
-      <p>{transport}</p>
-      <a href={AudioEngine.lastURL} download={'wau.wav'}>get</a>
+        <button onClick={()=>{
+    console.log(AudioEngine.tracks)}}>List</button>
       
       {tracks.map((t,i) => {
-        return <AudioTrack key={i} id={i} armedId={armedIndex} onArm={()=>{
+        return <AudioTrackControls key={i} id={i} armedId={armedIndex} onArm={()=>{
           setArmedIndex((armedIndex !== i ? i : null))
         }}/>
       })}
