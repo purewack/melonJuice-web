@@ -148,7 +148,7 @@ export const AudioEngine = {
 
 	  return !monitorState
   },
-  record (trackIndex) {
+  transportRecord (trackIndex) {
     if(this.ac === null) return;
 
     let recState = (this.micNode.parameters.get('recState').value > 0)
@@ -169,7 +169,7 @@ export const AudioEngine = {
     
     this.tracks.forEach(tr => {
       tr.player.stop()
-      tr.adsr.cancel()
+      tr.envelope.cancel()
     })
     
   },
@@ -187,9 +187,9 @@ export const AudioEngine = {
         this.tonejs.Transport.schedule(t => {
             tr.player.buffer = this.bufferPool[reg.bufferId]
             tr.player.start(t,reg.timeBufferOffset,reg.timeDuration)
-            tr.adsr.attack = reg.timeFadeIn
-            tr.adsr.release = reg.timeFadeOut
-            tr.adsr.triggerAttackRelease(reg.timeDuration - reg.timeFadeOut)
+            tr.envelope.attack = reg.timeFadeIn
+            tr.envelope.release = reg.timeFadeOut
+            tr.envelope.triggerAttackRelease(reg.timeDuration - reg.timeFadeOut)
         }, reg.timeStart)
       })
     })
@@ -206,7 +206,7 @@ export const AudioEngine = {
   addTrack(){
     let t = {
         player: new this.tonejs.Player(),
-        adsr: new this.tonejs.AmplitudeEnvelope({
+        envelope: new this.tonejs.AmplitudeEnvelope({
           attack:0,
           decay:0,
           sustain:1,
@@ -224,8 +224,8 @@ export const AudioEngine = {
             })
         }
     }
-    t.player.connect(t.adsr)
-    t.adsr.toDestination()
+    t.player.connect(t.envelope)
+    t.envelope.toDestination()
     this.tracks.push(t)
   },
 };

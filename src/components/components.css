@@ -1,17 +1,75 @@
 
+:root{
+    --side-panel-width:80px;
+    --track-panel-width:200px;
+}
+
+*{
+    box-sizing: border-box;
+}
+
 .AudioRegion{
-    margin:5px;
+    margin: 5px 0 ;
     display:inline-block;
-    width:100px;
     height:50px;
-    background:gray;
+    background:pink;
+    border: solid black 1px;
 }
 
 .AudioTrack{
     background:cyan;
     border:solid black 1px;
+    white-space: nowrap;
+    width:max-content;
+    display:flex;
 }
 
-.AudioTrackArmed{
-    background:red;
+.AudioTrackHeading{
+    background:yellow;
+    border:solid black 1px;
+    display:inline-block;
+    position: sticky;
+    left:0;
+    width:var(--side-panel-width);
+    display:flex;
+    flex-direction: column;
+}
+
+.AudioTrackHelper{
+    display:none;
+
+    background:blue;
+    border:solid black 1px;
+    position: absolute;
+    left: calc(100%);
+    width:var(--track-panel-width);
+    flex-direction: row;
+    height:50px;
+    overflow: hidden;
+}
+.AudioTrackHeading:hover .AudioTrackHelper{
+    display:flex;
+}
+
+
+.AudioField{
+    border:solid red 1px;
+    width:max-content;
+}
+.AudioTimer{
+    display:inline-block;
+    position: sticky;
+    left:0;
+    border:solid black 1px;
+    background:white;
+    width:var(--side-panel-width);
+}
+.AudioTimeline{
+    border:solid black 1px;
+    width:max-content;
+    white-space: nowrap;
+}
+.AudioTimeline div{
+    display:inline-block;
+    border-left:solid gray 1px;
 }
