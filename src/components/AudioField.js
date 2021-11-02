@@ -8,9 +8,18 @@ const AudioField = ({songMeasures, timer, bar, children}) => {
         setBars(Array(songMeasures).fill(null))
     },[bar,songMeasures])
 
-    return(<div className='AudioField'>
+    const [dragging, setDragging] = useState(false)
+    const mouseDown = (e)=>{
+        setDragging(true)
+    }
+    const mouseUp = (e)=>{
+        setDragging(false)
+    }
+
+    return(<div className='AudioField' onMouseDown={mouseDown} onMouseUp={mouseUp}> 
         <span className='AudioTimer'>{timer}</span>
         <span className='Timeline'>
+            <div className='Playhead' style={{pointerEvents: dragging ? 'none' : ''}}></div>
             {bars && bars.map((b,i)=>{
                 return (<TimelineBar bar={bar} number={i}/>)
             })}

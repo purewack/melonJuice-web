@@ -4,7 +4,9 @@ import {useState,useEffect} from 'react'
 const AudioRegion = ({region, setRegion, bar, shouldSnap})=>{
   const [left, setLeft] = useState()
   const [width, setWidth] = useState()
-  const [dragged, setDragged] = useState(false)
+  const [draggedMove, setDraggedMove] = useState(false)
+  const [draggedStart, setDraggedStart] = useState(false)
+  const [draggedEnd, setDraggedEnd] = useState(false)
   const [xstart, setXstart] = useState()
   const [leftStart, setLeftstart] = useState(0)
 
@@ -14,7 +16,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap})=>{
   },[region,bar])
 
   const mouseDown = (e)=>{
-    setDragged(true)
+    setDraggedMove(true)
     setXstart(e.clientX)
     setLeftstart(left)
 
@@ -25,13 +27,10 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap})=>{
       setLeftstart(l)
     }
 
-    console.log('----')
-    console.log({left, leftStart})
-    console.log('----')
   }
   const mouseMove = (e)=>{
     e.preventDefault()
-    if(!dragged) return;
+    if(!draggedMove) return;
 
     let delta = e.clientX-xstart
     if(shouldSnap) {
@@ -40,15 +39,14 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap})=>{
     }
     setLeft(leftStart + delta);
     
-    console.log({left, leftStart})
   }
   const mouseUp = (e)=>{
-    setDragged(false)
+    setDraggedMove(false)
     //setRegion()
   }
 
   return(<div 
-    className={dragged ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
+    className={draggedMove ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
     style={{width, left}}
     onMouseDown={mouseDown}
     onMouseMove={mouseMove}

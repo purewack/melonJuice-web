@@ -84,7 +84,7 @@
     border-left:solid gray 1px;
 }
 
-.Timeline::before{
+.Timeline .Playhead{
     position:absolute;
     z-index: 100;
     content:'';
