@@ -5,6 +5,8 @@ import './App.css';
 import AudioField from './components/AudioField';
 import AudioRegion from './components/AudioRegion';
 import AudioTrack from './components/AudioTrack';
+import ToolField from './components/ToolField';
+import TrackTool from './components/TrackTool';
 
 function App() {
   const [begun, setBegun] = useState(false)
@@ -25,13 +27,13 @@ function App() {
     {
       bufferId: 2,
       timeBufferOffset:0,
-      timeStart:3,
+      timeStart:4,
       timeDuration:1,
     },
     {
       bufferId: 3,
       timeBufferOffset:0,
-      timeStart:4,
+      timeStart:7,
       timeDuration:4,
     }
   ])
@@ -63,32 +65,47 @@ function App() {
         }}
       />
 
-      <button onClick={()=>{
-        if(snapGrain === null){
-          setSnapGrain(1)
-        }
-        else if(snapGrain < 16){
-          setSnapGrain(snapGrain*2)
-        }
-        else(setSnapGrain(null))
-      }}>
+      <button 
+        style={{width:100}}
+        onClick={()=>{
+          if(snapGrain === null){
+            setSnapGrain(2)
+          }
+          else if(snapGrain < 16){
+            setSnapGrain(snapGrain*2)
+          }
+          else(setSnapGrain(null))
+        }}>
+
         {snapGrain ? 'Q:'+snapGrain : 'No-snap'}
       </button>
+      
+      <div className="EditorField">
+        <ToolField>
+          <span className='TransportTimer'>{transportTimer}</span>
 
-      <AudioField timer={transportTimer} songMeasures={measures} bar={bar}>
-        {tracks.map((t,i) => {
+          {tracks.map((t,i) => {
+            return <TrackTool key={i} id={i} armedId={armedIndex} onArm={()=>{
+              setArmedIndex((armedIndex !== i ? i : null))
+            }} />
+          })}
 
-          return <AudioTrack key={i} id={i} armedId={armedIndex} onArm={()=>{
-            setArmedIndex((armedIndex !== i ? i : null))
-          }} bar={bar}>
+        </ToolField>
 
-            {regions && regions.map((r,j) => {
-                return <AudioRegion key={j} region={r} bar={bar} shouldSnap={snapGrain}/>
-            })}
+        <AudioField songMeasures={measures} bar={bar}>
 
-          </AudioTrack>
-        })}
-      </AudioField>
+          {tracks.map((t,i) => { 
+            return <AudioTrack key={i} bar={bar}>
+
+              {regions && regions.map((r,j) => {
+                  return <AudioRegion key={j} region={r} bar={bar} shouldSnap={snapGrain}/>
+              })}
+
+            </AudioTrack> 
+          })}
+
+        </AudioField>
+      </div>
   </>);
 }
 

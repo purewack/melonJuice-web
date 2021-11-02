@@ -53,8 +53,9 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap})=>{
     onMouseUp={mouseUp}
     onMouseLeave={mouseUp}
     >
-    <span>S </span>
-    <span> E</span>  
+    <span className='StartHandle'>|</span>
+    <span></span>
+    <span className='EndHandle'>|</span>  
   </div>)
 }
 

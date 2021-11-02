@@ -9,15 +9,18 @@
 }
 
 .AudioRegion{
-    position:relative;
+    position:absolute;
+    height:40px;
     margin: 5px 0 ;
-    display:inline-block;
-    height:50px;
     background:pink;
     border: solid black 1px;
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+
 }
 .AudioRegion:hover{
-    cursor:grab;
+    cursor:move;
 }
 .AudioRegionDrag{
     background:red;
@@ -29,8 +32,29 @@
     white-space: nowrap;
     display:flex;
 }
+.AudioTrack .content{
+    position:relative;
+    width:100%;
+    height:50px;
+}
 
-.AudioTrackHeading{
+
+.EditorField{
+    border: solid black 1px;
+    width:max-content;
+    position: relative;
+}
+.ToolField{
+    width:min-content;
+    display:inline-block;
+}
+.AudioField{
+    width:max-content;
+    overflow:hidden;
+    display:inline-block;
+}
+
+.TrackTool{
     z-index: 9;
     background:yellow;
     border:solid black 1px;
@@ -43,7 +67,7 @@
     align-items: center;
 }
 
-.AudioTrackHelper{
+.TrackToolHelper{
     display:none;
     z-index: 10;
     background:blue;
@@ -55,17 +79,12 @@
     height:50px;
     overflow: hidden;
 }
-.AudioTrackHeading:hover .AudioTrackHelper{
+.TrackTool:hover .TrackToolHelper{
     display:flex;
 }
 
 
-.AudioField{
-    border:solid red 1px;
-    width:max-content;
-    overflow:hidden;
-}
-.AudioTimer{
+.TransportTimer{
     display:inline-block;
     position: sticky;
     left:0;
@@ -81,7 +100,7 @@
 }
 .Timeline .TimelineBar{
     display:inline-block;
-    border-left:solid gray 1px;
+    border:solid gray 1px;
 }
 
 .Timeline .Playhead{

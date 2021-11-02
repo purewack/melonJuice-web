@@ -17,7 +17,6 @@ const AudioField = ({songMeasures, timer, bar, children}) => {
     }
 
     return(<div className='AudioField' onMouseDown={mouseDown} onMouseUp={mouseUp}> 
-        <span className='AudioTimer'>{timer}</span>
         <span className='Timeline'>
             <div className='Playhead' style={{pointerEvents: dragging ? 'none' : ''}}></div>
             {bars && bars.map((b,i)=>{

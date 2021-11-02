@@ -6,15 +6,9 @@ import AudioRegion from './AudioRegion';
 const AudioTrack = ({id, armedId, onArm, onSolo, onMute, children})=>{
  
     return(<div className={armedId === id ? 'AudioTrack AudioTrackArmed' : 'AudioTrack'}>
-        <div className='AudioTrackHeading'>
-            <p>Icon</p>
-            <div className='AudioTrackHelper'>
-                <button onClick={onArm}>Rec Arm</button>
-                <button >Solo</button>
-                <button >Mute</button>
-            </div>
+        <div className="content">
+            {children}
         </div>
-        {children}
     </div>)
 }
 
