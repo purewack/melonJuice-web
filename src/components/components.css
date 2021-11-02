@@ -1,17 +1,20 @@
-
-:root{
-    --side-panel-width:80px;
-    --track-panel-width:200px;
+* {
+    box-sizing: border-box;
+}
+html{
+    box-sizing: border-box;
 }
 
-*{
-    box-sizing: border-box;
+:root{
+    --side-panel-width:3rem;
+    --track-panel-width:12rem;
 }
 
 .AudioRegion{
     position:absolute;
     height:40px;
-    margin: 5px 0 ;
+    margin-top: 5px;
+    margin-bottom: 5px;
     background:pink;
     border: solid black 1px;
     display:flex;
@@ -31,6 +34,7 @@
     border:solid black 1px;
     white-space: nowrap;
     display:flex;
+    height:50px;
 }
 .AudioTrack .content{
     position:relative;
@@ -43,6 +47,7 @@
     border: solid black 1px;
     width:max-content;
     position: relative;
+    display:flex;
 }
 .ToolField{
     width:min-content;
@@ -62,6 +67,7 @@
     position: sticky;
     left:0;
     width:var(--side-panel-width);
+    height:50px;
     display:flex;
     justify-content: center;
     align-items: center;
