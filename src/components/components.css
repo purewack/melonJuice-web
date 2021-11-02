@@ -9,22 +9,29 @@
 }
 
 .AudioRegion{
+    position:relative;
     margin: 5px 0 ;
     display:inline-block;
     height:50px;
     background:pink;
     border: solid black 1px;
 }
+.AudioRegion:hover{
+    cursor:grab;
+}
+.AudioRegionDrag{
+    background:red;
+}
 
 .AudioTrack{
     background:cyan;
     border:solid black 1px;
     white-space: nowrap;
-    width:max-content;
     display:flex;
 }
 
 .AudioTrackHeading{
+    z-index: 9;
     background:yellow;
     border:solid black 1px;
     display:inline-block;
@@ -38,7 +45,7 @@
 
 .AudioTrackHelper{
     display:none;
-
+    z-index: 10;
     background:blue;
     border:solid black 1px;
     position: absolute;
@@ -56,6 +63,7 @@
 .AudioField{
     border:solid red 1px;
     width:max-content;
+    overflow:hidden;
 }
 .AudioTimer{
     display:inline-block;
@@ -65,21 +73,24 @@
     background:white;
     width:var(--side-panel-width);
 }
-.AudioTimeline{
+.Timeline{
     position:relative;
     border:solid black 1px;
     width:max-content;
     white-space: nowrap;
 }
-.AudioTimeline div{
+.Timeline .TimelineBar{
     display:inline-block;
     border-left:solid gray 1px;
 }
 
-.AudioTimeline::before{
-    width:100px;
-    height:800px;
+.Timeline::before{
     position:absolute;
+    z-index: 100;
+    content:'';
+    width:1px;
+    height:800px;
+    left:20%;
     background-color: red;
-    border:solid black 1px;
+    border:solid red 1px;
 }
