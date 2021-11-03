@@ -6,7 +6,7 @@ html{
 }
 
 :root{
-    --side-panel-width:3rem;
+    --side-panel-width:6rem;
     --track-panel-width:12rem;
 }
 
@@ -22,11 +22,17 @@ html{
     align-items: center;
 
 }
-.AudioRegion:hover{
-    cursor:move;
-}
+
 .AudioRegionDrag{
     background:red;
+}
+.AudioRegion .StartHandle,
+.AudioRegion .EndHandle {
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    border: solid black 1px;
+    height:100%;
 }
 
 .AudioTrack{
@@ -52,6 +58,7 @@ html{
 .ToolField{
     width:min-content;
     display:inline-block;
+    width:var(--side-panel-width);
 }
 .AudioField{
     width:max-content;
@@ -66,7 +73,6 @@ html{
     display:inline-block;
     position: sticky;
     left:0;
-    width:var(--side-panel-width);
     height:50px;
     display:flex;
     justify-content: center;
@@ -79,8 +85,7 @@ html{
     background:blue;
     border:solid black 1px;
     position: absolute;
-    left: calc(100%);
-    width:var(--track-panel-width);
+    left: 100%;
     flex-direction: row;
     height:50px;
     overflow: hidden;
@@ -97,6 +102,7 @@ html{
     border:solid black 1px;
     background:white;
     width:var(--side-panel-width);
+    text-align: center;
 }
 .Timeline{
     position:relative;
@@ -112,7 +118,6 @@ html{
 .Timeline .Playhead{
     position:absolute;
     z-index: 100;
-    content:'';
     width:1px;
     height:800px;
     left:20%;

@@ -82,7 +82,7 @@ function App() {
       
       <div className="EditorField">
         <ToolField>
-          <span className='TransportTimer'>{transportTimer}</span>
+          <div className='TransportTimer'>{transportTimer}</div>
 
           {tracks.map((t,i) => {
             return <TrackTool key={i} id={i} armedId={armedIndex} onArm={()=>{

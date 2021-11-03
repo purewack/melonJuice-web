@@ -206,6 +206,8 @@ export const AudioEngine = {
   addTrack(){
     let t = {
         player: new this.tonejs.Player(),
+        volume: 1.0,
+        enable: 1.0,
         envelope: new this.tonejs.AmplitudeEnvelope({
           attack:0,
           decay:0,

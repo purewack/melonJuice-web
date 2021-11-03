@@ -1,14 +1,32 @@
 import './components.css';
-import {useState,useEffect} from 'react'
+import {useState,useEffect,useRef} from 'react'
 
 const AudioRegion = ({region, setRegion, bar, shouldSnap})=>{
   const [left, setLeft] = useState()
   const [width, setWidth] = useState()
-  const [draggedMove, setDraggedMove] = useState(false)
-  const [draggedStart, setDraggedStart] = useState(false)
-  const [draggedEnd, setDraggedEnd] = useState(false)
-  const [xstart, setXstart] = useState()
-  const [leftStart, setLeftstart] = useState(0)
+  const [drag, setDrag] = useState()
+  const [hover, setHover] = useState()
+  const preClick = useRef()
+  const resizeArea = 15;
+
+  const collisionCalc = (x,r)=>{
+    let d = 'center'
+    if(x > r.left && x < r.left+resizeArea){
+      d = 'left'
+    } 
+    if(x < r.right && x > r.right-resizeArea){
+      d = 'right'
+    }
+    return d
+  }
+  const snapCalc = (ll)=>{
+    if(shouldSnap){
+      let b = (bar/shouldSnap)
+      let l = Math.floor(ll/b)*b
+      return l;
+    }
+    return ll
+  }
 
   useEffect(()=>{
     setLeft(bar*region.timeStart)
@@ -16,46 +34,57 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap})=>{
   },[region,bar])
 
   const mouseDown = (e)=>{
-    setDraggedMove(true)
-    setXstart(e.clientX)
-    setLeftstart(left)
-
-    if(shouldSnap){
-      let b = (bar/shouldSnap)
-      let l = Math.floor(left/b)*b
-      setLeft(l)
-      setLeftstart(l)
-    }
+    e.preventDefault()
+    let x = e.clientX
+    let r = e.target.getBoundingClientRect()
+    preClick.current = {x ,r, left:snapCalc(left), width}
+    setDrag(collisionCalc(x,r))
 
   }
   const mouseMove = (e)=>{
     e.preventDefault()
-    if(!draggedMove) return;
+    let x = e.clientX
+    let r = e.target.getBoundingClientRect()
+    setHover(collisionCalc(x,r))
+    if(!drag) return
 
-    let delta = e.clientX-xstart
-    if(shouldSnap) {
-      let b = (bar/shouldSnap)
-      delta = Math.floor(delta/b)*b
+    let pe = preClick.current
+    let delta = snapCalc(e.clientX - pe.x )   
+    switch (drag) {
+      case 'right':
+        setWidth(pe.width + delta)
+        break;
+      
+      case 'left':
+        setLeft(pe.left + delta)
+        setWidth(pe.width - delta)
+        break;
+
+      default:
+        setLeft(pe.left + delta)
+        break;
     }
-    setLeft(leftStart + delta);
-    
+
   }
   const mouseUp = (e)=>{
-    setDraggedMove(false)
+    e.preventDefault()
+    setDrag(null)
     //setRegion()
   }
 
+const pointerEvents = {pointerEvents:'none', width:resizeArea}
+
   return(<div 
-    className={draggedMove ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
-    style={{width, left}}
+    className={drag ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
+    style={{width, left, cursor:((hover === 'center' || !hover) ? 'grab' : 'col-resize')}}
     onMouseDown={mouseDown}
     onMouseMove={mouseMove}
     onMouseUp={mouseUp}
     onMouseLeave={mouseUp}
     >
-    <span className='StartHandle'>|</span>
+    <span className='StartHandle' style={pointerEvents}>|</span>
     <span></span>
-    <span className='EndHandle'>|</span>  
+    <span className='EndHandle' style={pointerEvents}>|</span>  
   </div>)
 }
 
