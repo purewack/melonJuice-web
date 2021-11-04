@@ -220,6 +220,7 @@ export const AudioEngine = {
                 regionId: newid(),
                 bufferId: bufferId,
                 rBufferOffset:0,
+                rBufferDuration:duration,
                 rStart:start,
                 rDuration:duration,
                 rFadeIn: 0.01,
