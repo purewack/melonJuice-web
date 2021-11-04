@@ -56,7 +56,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
 
   const mouseDown = (e)=>{
     e.preventDefault()
-    preClick.current = {cx:e.clientX, left: bStart, width: bDuration, right:bStart+bDuration, o:bOffset}
+    preClick.current = {cx:e.pageX, left: bStart, width: bDuration, right:bStart+bDuration, o:bOffset}
     setDrag(e.target.className)
   }
   const mouseUp = (e)=>{
