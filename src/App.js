@@ -45,8 +45,8 @@ function App() {
 
       AudioEngine.tracks[2].addRegion(newid(),1,10)
 
-      setTracks(AudioEngine.tracks)
       setBegun(true)
+      setTracks(AudioEngine.tracks)
     }
   }, [])
 
@@ -110,7 +110,10 @@ function App() {
             return <AudioTrack key={i} bar={bar}>
 
               {t.regions && t.regions.map((r,j) => {
-                  return <AudioRegion key={j} region={r} setRegion={t.setRegion} bar={bar} shouldSnap={snapGrain}/>
+                  return <AudioRegion key={j} region={r} setRegion={(r)=>{
+                    console.log(AudioEngine.tracks)
+                    AudioEngine.tracks[i].setRegion(r)
+                  }} bar={bar} shouldSnap={snapGrain}/>
               })}
 
             </AudioTrack> 

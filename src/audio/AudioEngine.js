@@ -227,9 +227,6 @@ export const AudioEngine = {
             })
         },
         setRegion(region){
-          console.log(this)
-          console.log(region)
-          return
           this.regions = this.regions.map(r =>{
             if(r.regionId === region.regionId)
             return region
