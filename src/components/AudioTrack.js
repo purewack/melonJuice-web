@@ -16,6 +16,11 @@ const AudioTrack = ({id, armedId, onArm, onSolo, onMute, children})=>{
         setDrag(false)
         setMousePos(null); 
     }}
+    onMouseLeave={(e)=>{
+        e.preventDefault()
+        setDrag(false)
+        setMousePos(null); 
+    }}
     onMouseMove={(e)=>{
         e.preventDefault()
         if(drag) setMousePos(e.pageX)

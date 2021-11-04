@@ -111,7 +111,6 @@ function App() {
 
               {t.regions && t.regions.map((r,j) => {
                   return <AudioRegion key={j} region={r} setRegion={(r)=>{
-                    console.log(AudioEngine.tracks)
                     AudioEngine.tracks[i].setRegion(r)
                   }} bar={bar} shouldSnap={snapGrain}/>
               })}
