@@ -204,19 +204,20 @@ export const AudioEngine = {
   },
   
   addTrack(){
-    let t = {
-        player: new this.tonejs.Player(),
+    const t = {
         volume: 1.0,
         enable: 1.0,
-        envelope: new this.tonejs.AmplitudeEnvelope({
-          attack:0,
-          decay:0,
-          sustain:1,
-          release:0,
-        }),
+        // player: new this.tonejs.Player(),
+        // envelope: new this.tonejs.AmplitudeEnvelope({
+        //   attack:0,
+        //   decay:0,
+        //   sustain:1,
+        //   release:0,
+        // }),
         regions: [],
         addRegion(bufferId, start, duration){
             this.regions.push({
+                regionId: newid(),
                 bufferId: bufferId,
                 rBufferOffset:0,
                 rStart:start,
@@ -224,10 +225,21 @@ export const AudioEngine = {
                 rFadeIn: 0.01,
                 rFadeOut: 0.01,
             })
+        },
+        setRegion(region){
+          console.log(this)
+          console.log(region)
+          return
+          this.regions = this.regions.map(r =>{
+            if(r.regionId === region.regionId)
+            return region
+            else
+            return r
+          })
         }
     }
-    t.player.connect(t.envelope)
-    t.envelope.toDestination()
+    // t.player.connect(t.envelope)
+    // t.envelope.toDestination()
     this.tracks.push(t)
   },
 };

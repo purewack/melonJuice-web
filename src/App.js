@@ -1,6 +1,10 @@
-import { useRef, useState } from 'react';
-import { createContext } from 'react';
 import './App.css';
+// eslint-disable-next-line
+import { useRef, useState, useEffect} from 'react';
+// eslint-disable-next-line
+import { createContext } from 'react';
+import newid from 'uniqid';
+import { AudioEngine } from './audio/AudioEngine';
 //import {AudioEngine} from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioRegion from './components/AudioRegion';
@@ -9,34 +13,42 @@ import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
 
 function App() {
+  // eslint-disable-next-line
   const [begun, setBegun] = useState(false)
+  // eslint-disable-next-line
   const [recording, setRecording] = useState(false)
+  // eslint-disable-next-line
   const [armedIndex,setArmedIndex] = useState(null)
+  // eslint-disable-next-line
   const [transportTimer, setTransportTimer] = useState('0:0:0')
-  const [tracks, setTracks] = useState([1,2,3,2])
+  // eslint-disable-next-line
   const [bar, setBar] = useState(50)
+  // eslint-disable-next-line
   const [snapGrain, setSnapGrain] = useState(null)
+  // eslint-disable-next-line
   const [measures, setMeasures] = useState(16)
-  const [regions, setRegions] = useState([
-    {
-      bufferId: 1,
-      rBufferOffset:0,
-      rStart:0,
-      rDuration:2,
-    },
-    {
-      bufferId: 2,
-      rBufferOffset:0,
-      rStart:4,
-      rDuration:1,
-    },
-    {
-      bufferId: 3,
-      rBufferOffset:0,
-      rStart:6.92,
-      rDuration:5.22,
+  // eslint-disable-next-line
+  const [tracks, setTracks] = useState([])
+
+  useEffect(() => {
+    if(!begun){
+      AudioEngine.addTrack()
+      AudioEngine.addTrack()
+      AudioEngine.addTrack()
+
+      AudioEngine.tracks[0].addRegion(newid(),0,2)
+      AudioEngine.tracks[0].addRegion(newid(),3,4)
+      AudioEngine.tracks[0].addRegion(newid(),10,1)
+
+      AudioEngine.tracks[1].addRegion(newid(),0,2)
+      AudioEngine.tracks[1].addRegion(newid(),5,5)
+
+      AudioEngine.tracks[2].addRegion(newid(),1,10)
+
+      setTracks(AudioEngine.tracks)
+      setBegun(true)
     }
-  ])
+  }, [])
 
   return (
     <>  
@@ -97,8 +109,8 @@ function App() {
           {tracks.map((t,i) => { 
             return <AudioTrack key={i} bar={bar}>
 
-              {regions && regions.map((r,j) => {
-                  return <AudioRegion key={j} region={r} bar={bar} shouldSnap={snapGrain}/>
+              {t.regions && t.regions.map((r,j) => {
+                  return <AudioRegion key={j} region={r} setRegion={t.setRegion} bar={bar} shouldSnap={snapGrain}/>
               })}
 
             </AudioTrack> 

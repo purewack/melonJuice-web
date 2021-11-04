@@ -5,7 +5,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
   const [bStart, setBStart] = useState()
   const [bDuration, setBDuration] = useState()
   const [bOffset, setBOffset] = useState()
-  const [drag, setDrag] = useState()
+  const handleHitbox = useRef()
   const preClick = useRef()
   const resizeArea = 10;
 
@@ -26,14 +26,14 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
 
   useEffect(()=>{
     if(!mousePos) mouseUp(null);
-    if(!drag || !mousePos) return
+    if(!handleHitbox.current || !mousePos) return
 
     let pe = preClick.current
     let delta = snapCalc(mousePos - pe.cx)
     let ne = snapCalc(mousePos - 50)
     
 
-    switch (drag) {
+    switch (handleHitbox.current) {
       case 'EndHandle':
         setBDuration(ne - pe.left)
         break;
@@ -56,24 +56,31 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
   const mouseDown = (e)=>{
     e.preventDefault()
     preClick.current = {cx:e.pageX, left: bStart, width: bDuration, right:bStart+bDuration, o:bOffset}
-    setDrag(e.target.className)
+    handleHitbox.current = e.target.className
   }
   const mouseUp = (e)=>{
     if(e)
     e.preventDefault()
-    if(!drag) return
-    setDrag(null)
-    let s = 1 + bStart/bar;
-    let d = 1 + bDuration/bar;
-    let o = bOffset/bar;
-    console.log({s,d,o})
-    //setRegion()
+    if(!handleHitbox.current) return
+
+    handleHitbox.current = null
+    if(e.pageX === preClick.current.cx) return
+
+    const s = bStart/bar;
+    const d = bDuration/bar;
+    const o = bOffset/bar;
+
+    const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
+    // console.log({s,d,o})
+    // console.log(region)
+    // console.log(newRegion)
+    setRegion(newRegion)
   }
 
   const pointerEvents = {width:resizeArea}
 
   return(<div
-    className={drag ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
+    className={handleHitbox.current ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
     style={{width: bDuration, left: bStart}}
     onMouseDown={mouseDown}
     onMouseUp={mouseUp}

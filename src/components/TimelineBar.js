@@ -1,4 +1,3 @@
-import {useState,useEffect} from 'react'
 
 const TimelineBar = ({bar, number}) => {
     return(<div 
