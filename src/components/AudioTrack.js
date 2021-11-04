@@ -20,7 +20,7 @@ const AudioTrack = ({id, armedId, onArm, onSolo, onMute, children})=>{
     }}
     onMouseMove={(e)=>{
         e.preventDefault()
-        if(drag) setMousePos(e.clientX)
+        if(drag) setMousePos(e.pageX)
     }}
     >
         {children.map(c => {
