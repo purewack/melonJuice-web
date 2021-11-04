@@ -10,14 +10,6 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
   const preClick = useRef()
   const resizeArea = 10;
 
-  const snapCalc = (ll)=>{
-    if(shouldSnap){
-      let b = (bar/shouldSnap)
-      let l = Math.floor(ll/b)*b
-      return l;
-    }
-    return ll
-  }
 
   useEffect(()=>{
     setRStart(bar*region.rStart)
@@ -27,6 +19,15 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
   },[region,bar])
 
   useEffect(()=>{
+    const snapCalc = (ll)=>{
+      if(shouldSnap){
+        let b = (bar/shouldSnap)
+        let l = Math.floor(ll/b)*b
+        return l;
+      }
+      return ll
+    }
+
     if(mousePos === null) setHandleHitbox(null)
     if(!handleHitbox || !mousePos) return
 
