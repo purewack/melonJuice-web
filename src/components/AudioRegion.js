@@ -32,7 +32,6 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
     let delta = snapCalc(mousePos - pe.cx)
     let ne = snapCalc(mousePos - 50)
     
-    console.log({delta})
 
     switch (drag) {
       case 'EndHandle':
@@ -62,10 +61,11 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
   const mouseUp = (e)=>{
     if(e)
     e.preventDefault()
+    if(!drag) return
     setDrag(null)
     let s = 1 + bStart/bar;
     let d = 1 + bDuration/bar;
-    let o = 1 + bOffset/bar;
+    let o = bOffset/bar;
     console.log({s,d,o})
     //setRegion()
   }
@@ -79,7 +79,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
     onMouseUp={mouseUp}
     >
     <span className='StartHandle' style={pointerEvents}>|</span>
-    <span> {bOffset} </span>
+    <span> </span>
     <span className='EndHandle' style={pointerEvents}>|</span>  
   </div>)
 }
