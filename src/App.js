@@ -20,21 +20,21 @@ function App() {
   const [regions, setRegions] = useState([
     {
       bufferId: 1,
-      timeBufferOffset:0,
-      timeStart:0,
-      timeDuration:2,
+      rBufferOffset:0,
+      rStart:0,
+      rDuration:2,
     },
     {
       bufferId: 2,
-      timeBufferOffset:0,
-      timeStart:4,
-      timeDuration:1,
+      rBufferOffset:0,
+      rStart:4,
+      rDuration:1,
     },
     {
       bufferId: 3,
-      timeBufferOffset:0,
-      timeStart:7,
-      timeDuration:4,
+      rBufferOffset:0,
+      rStart:6.92,
+      rDuration:5.22,
     }
   ])
 

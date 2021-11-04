@@ -218,11 +218,11 @@ export const AudioEngine = {
         addRegion(bufferId, start, duration){
             this.regions.push({
                 bufferId: bufferId,
-                timeBufferOffset:0,
-                timeStart:start,
-                timeDuration:duration,
-                timeFadeIn: 0.01,
-                timeFadeOut: 0.01,
+                rBufferOffset:0,
+                rStart:start,
+                rDuration:duration,
+                rFadeIn: 0.01,
+                rFadeOut: 0.01,
             })
         }
     }
