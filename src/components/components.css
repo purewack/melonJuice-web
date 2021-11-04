@@ -5,11 +5,6 @@ html{
     box-sizing: border-box;
 }
 
-:root{
-    --side-panel-width:6rem;
-    --track-panel-width:12rem;
-}
-
 .AudioRegion{
     position:absolute;
     height:40px;
@@ -62,7 +57,7 @@ html{
 .ToolField{
     width:min-content;
     display:inline-block;
-    width:var(--side-panel-width);
+    width: 12rem;
 }
 .AudioField{
     width:max-content;
@@ -105,7 +100,6 @@ html{
     left:0;
     border:solid black 1px;
     background:white;
-    width:var(--side-panel-width);
     text-align: center;
 }
 .Timeline{

@@ -5,15 +5,14 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
   const [left, setLeft] = useState()
   const [width, setWidth] = useState()
   const [drag, setDrag] = useState()
-  const [hover, setHover] = useState()
   const preClick = useRef()
-  const mouseAreaRef = useRef()
   const resizeArea = 10;
 
   const snapCalc = (ll)=>{
     if(shouldSnap){
       let b = (bar/shouldSnap)
       let l = Math.floor(ll/b)*b
+      console.log(l);
       return l;
     }
     return ll
@@ -25,12 +24,13 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
   },[region,bar])
 
   useEffect(()=>{
-    if(!drag) return
+    if(!mousePos) mouseUp(null);
+    if(!drag || !mousePos) return
     let pe = preClick.current
     let delta = snapCalc(mousePos - pe.x )
     switch (drag) {
       case 'EndHandle':
-        setWidth(pe.width + delta)
+        setWidth(snapCalc(mousePos + delta) - (pe.left - 50))
         break;
       
       case 'StartHandle':
@@ -50,8 +50,12 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
     setDrag(e.target.className)
   }
   const mouseUp = (e)=>{
+    if(e)
     e.preventDefault()
     setDrag(null)
+    let s = 1 + left/bar;
+    let d = 1 + width/bar;
+    console.log({s,d})
     //setRegion()
   }
 
