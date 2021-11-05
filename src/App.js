@@ -36,9 +36,9 @@ function App() {
       AudioEngine.addTrack()
       AudioEngine.addTrack()
 
+      AudioEngine.tracks[0].addRegion(newid(),10,1)
       AudioEngine.tracks[0].addRegion(newid(),0,2)
       AudioEngine.tracks[0].addRegion(newid(),3,4)
-      AudioEngine.tracks[0].addRegion(newid(),10,1)
 
       AudioEngine.tracks[1].addRegion(newid(),0,2)
       AudioEngine.tracks[1].addRegion(newid(),5,5)
@@ -91,7 +91,7 @@ function App() {
 
         {snapGrain ? 'Q:'+snapGrain : 'No-snap'}
       </button>
-      
+
       <div className="EditorField">
         <ToolField>
           <div className='TransportTimer'>{transportTimer}</div>
@@ -112,6 +112,7 @@ function App() {
               {t.regions && t.regions.map((r,j) => {
                   return <AudioRegion key={j} region={r} setRegion={(r)=>{
                     AudioEngine.tracks[i].setRegion(r)
+                    setTracks([...AudioEngine.tracks])
                   }} bar={bar} shouldSnap={snapGrain}/>
               })}
 

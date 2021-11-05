@@ -58,7 +58,7 @@
 //     setRecording(false)
 //   }
 
-
+import {calculateRegionRelations} from '../Util'
 import * as Tone from 'tone'
 import newid from 'uniqid';
 
@@ -217,31 +217,34 @@ export const AudioEngine = {
         // }),
         regions: [],
         addRegion(bufferId, start, duration){
-            this.regions.push({
-                regionId: newid(),
-                bufferId: bufferId,
-                rBufferOffset:0,
-                rBufferDuration:duration,
-                rStart:start,
-                rDuration:duration,
-                rFadeIn: 0.01,
-                rFadeOut: 0.01,
-                rLoop:0,
-            })
+            this.regions = calculateRegionRelations([...this.regions,{
+              regionId: newid(),
+              bufferId: bufferId,
+              rBufferOffset:0,
+              rBufferDuration:duration,
+              rStart:start,
+              rDuration:duration,
+              rFadeIn: 0.01,
+              rFadeOut: 0.01,
+              rPlayrate:1.0,
+              rLoop:0,
+              rPrev:null,
+              rNext:null,
+          }])
         },
         setRegion(region){
-          this.regions = this.regions.map(r =>{
+          this.regions = calculateRegionRelations(this.regions.map(r =>{
             if(r.regionId === region.regionId)
             return region
             else
             return r
-          })
+          }))
         },
         removeRegion(region){
-          this.regions = this.regions.map(r =>{
+          this.regions = calculateRegionRelations(this.regions.map(r =>{
             if(r.regionId !== region.regionId)
             return r
-          })
+          }))
         }
     }
     // t.player.connect(t.envelope)

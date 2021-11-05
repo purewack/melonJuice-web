@@ -9,6 +9,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset}
   const [handleHitbox, setHandleHitbox] = useState(null)
   const preClick = useRef()
   const resizeArea = 10;
+  const [relationLabel, setRelationLabel] = useState(' < > ')
 
 
   useEffect(()=>{
@@ -89,7 +90,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset}
     onMouseUp={mouseUp}
     >
     <span className='StartHandle' style={pointerEvents}>|</span>
-    <span> </span>
+    <span style={{pointerEvents:'none'}}> {`${region.rPrev && region.rPrev.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNext && region.rNext.regionId.slice(-2)}`} </span>
     <span className='EndHandle' style={pointerEvents}>|</span>  
   </div>)
 }
