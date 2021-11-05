@@ -63,7 +63,7 @@ import * as Tone from 'tone'
 import newid from 'uniqid';
 
 export const AudioEngine = {
-  ac: null,
+  actx: null,
   tonejs: null,
   micNode: null,
   lastRecording: new Float32Array(0),
@@ -72,7 +72,7 @@ export const AudioEngine = {
   tracks: [],
     
   init() {
-    let ac = this.ac  = Tone.getContext().rawContext._nativeContext
+    let ac = this.actx  = Tone.getContext().rawContext._nativeContext
       console.log(ac)
         console.log(new AudioContext())
     // ac.name = 'con'
@@ -135,7 +135,7 @@ export const AudioEngine = {
     return true;
   },
   monitor () {
-    if(this.ac === null) return;
+    if(this.actx === null) return;
 
     let monitorState = (this.micNode.parameters.get('monitorState').value > 0)
     
@@ -149,7 +149,7 @@ export const AudioEngine = {
 	  return !monitorState
   },
   transportRecord (trackId) {
-    if(this.ac === null) return;
+    if(this.actx === null) return;
 
     let recState = (this.micNode.parameters.get('recState').value > 0)
     
@@ -162,7 +162,7 @@ export const AudioEngine = {
  
   },
   transportStop(){
-    if(this.ac === null) return;
+    if(this.actx === null) return;
     
     this.tonejs.Transport.stop()
     this.tonejs.Transport.cancel()
@@ -174,7 +174,7 @@ export const AudioEngine = {
     
   },
   transportPlay(setTransportLabel){
-    if(this.ac === null) return;
+    if(this.actx === null) return;
   
     
     if(this.tonejs.Transport.state !== 'stopped'){
