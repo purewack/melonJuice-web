@@ -1,12 +1,21 @@
 import {cloneElement, useState} from 'react'
+import { useEffect, useRef} from 'react/cjs/react.development';
 import './components.css';
 
 const AudioTrack = ({id, armedId, onArm, onSolo, onMute, children})=>{
     
+    const audioTrackRef = useRef()
+    const [mouseOffset, setMouseOffset] = useState()
     const [mousePos, setMousePos] = useState()
     const [drag, setDrag] = useState(false)
 
-    return(<div className={armedId === id ? 'AudioTrack AudioTrackArmed' : 'AudioTrack'}
+    useEffect(()=>{
+        if(audioTrackRef.current){
+            setMouseOffset(audioTrackRef.current.offsetLeft)
+        }
+    },[audioTrackRef])
+
+    return(<div ref={audioTrackRef} className={armedId === id ? 'AudioTrack AudioTrackArmed' : 'AudioTrack'}
     onMouseDown={(e)=>{
         e.preventDefault()
         setDrag(true)
@@ -27,7 +36,7 @@ const AudioTrack = ({id, armedId, onArm, onSolo, onMute, children})=>{
     }}
     >
         {children.map(c => {
-            return cloneElement(c, { mousePos })
+            return cloneElement(c, { mousePos, mouseOffset})
         })}
     </div>)
 }

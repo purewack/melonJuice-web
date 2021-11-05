@@ -1,7 +1,7 @@
 import './components.css';
 import {useState,useEffect,useRef} from 'react'
 
-const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
+const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset})=>{
   const [rStart, setRStart] = useState()
   const [rDuration, setRDuration] = useState()
   const [rBOffset, setRBOffset] = useState()
@@ -33,7 +33,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos})=>{
 
     let pe = preClick.current
     let delta = snapCalc(mousePos - pe.cx)
-    let ne = snapCalc(mousePos - 50)
+    let ne = snapCalc(mousePos - mouseOffset)
     
     switch (handleHitbox) {
       case 'EndHandle':
