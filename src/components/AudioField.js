@@ -2,7 +2,7 @@ import {useState,useEffect} from 'react'
 import TimelineBar from './TimelineBar'
 
 const AudioField = ({songMeasures, timer, bar, children}) => {
-    
+
     const [bars, setBars] = useState()
     useEffect(()=>{
         setBars(Array(songMeasures).fill(null))
@@ -20,7 +20,7 @@ const AudioField = ({songMeasures, timer, bar, children}) => {
         <span className='Timeline'>
             <div className='Playhead' style={{pointerEvents: dragging ? 'none' : ''}}></div>
             {bars && bars.map((b,i)=>{
-                return (<TimelineBar bar={bar} number={i}/>)
+                return (<TimelineBar key={i} bar={bar} number={i}/>)
             })}
         </span>
         {children}

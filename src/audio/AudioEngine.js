@@ -148,7 +148,7 @@ export const AudioEngine = {
 
 	  return !monitorState
   },
-  transportRecord (trackIndex) {
+  transportRecord (trackId) {
     if(this.ac === null) return;
 
     let recState = (this.micNode.parameters.get('recState').value > 0)
@@ -205,6 +205,7 @@ export const AudioEngine = {
   
   addTrack(){
     const t = {
+        trackId: newid(),
         volume: 1.0,
         enable: 1.0,
         // player: new this.tonejs.Player(),
@@ -220,10 +221,12 @@ export const AudioEngine = {
                 regionId: newid(),
                 bufferId: bufferId,
                 rBufferOffset:0,
+                rBufferDuration:duration,
                 rStart:start,
                 rDuration:duration,
                 rFadeIn: 0.01,
                 rFadeOut: 0.01,
+                rLoop:0,
             })
         },
         setRegion(region){
@@ -231,6 +234,12 @@ export const AudioEngine = {
             if(r.regionId === region.regionId)
             return region
             else
+            return r
+          })
+        },
+        removeRegion(region){
+          this.regions = this.regions.map(r =>{
+            if(r.regionId !== region.regionId)
             return r
           })
         }
