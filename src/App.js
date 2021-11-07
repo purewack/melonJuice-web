@@ -142,6 +142,7 @@ import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioRegion from './components/AudioRegion';
 import AudioTrack from './components/AudioTrack';
+import { connectSeries } from 'tone';
 
 function App() {
 
@@ -158,14 +159,20 @@ function App() {
         AudioEngine.newTrack(),
       ]
 
-      ttt[0].addRegion(newid(),10,1)
-      ttt[0].addRegion(newid(),0,2)
-      ttt[0].addRegion(newid(),3,4)
+      ttt[0].regions = AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),10,1),
+        AudioEngine.newRegion(newid(),0,2),
+        AudioEngine.newRegion(newid(),3,4),
+      ])
 
-      ttt[1].addRegion(newid(),0,2)
-      ttt[1].addRegion(newid(),5,5)
+      ttt[1].regions =  AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),0,2),
+        AudioEngine.newRegion(newid(),5,5),
+      ])
 
-      ttt[2].addRegion(newid(),1,10)
+      ttt[2].regions =  AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),1,10),
+      ])
 
       setTracks(ttt)
       console.log(ttt)
@@ -177,6 +184,11 @@ function App() {
       setBegun(false)
     }
   }, [])
+
+  useEffect(()=>{
+    console.log('new tracks')
+    console.log(tracks)
+  },[tracks])
 
   return (<>
     {!begun ? <p>Loading...</p> : 
@@ -208,10 +220,13 @@ function App() {
 
       <br/>
 
-      <AudioField songMeasures={16} editorSettings={barLength,snapGrain}>
-        {tracks.map((t,i) => { 
-          return <AudioTrack key={i} editorSettings={barLength,snapGrain} regions={t.regions} setRegion={(newRegion)=>{
-            //console.log(newRegion)
+      <AudioField songMeasures={16} barLength={barLength} snapGrain={snapGrain}>
+        {tracks.map((track,i) => { 
+          return <AudioTrack key={i} barLength={barLength} snapGrain={snapGrain} regions={track.regions} setRegion={(newRegion)=>{
+            console.log(newRegion)
+            let tt = tracks
+            tt[i].regions = AudioEngine.setRegion(tt[i].regions,newRegion)
+            setTracks(tt)
           }}/>
         })}
       </AudioField>

@@ -216,39 +216,49 @@ export const AudioEngine = {
         //   release:0,
         // }),
         regions: [],
-        addRegion(bufferId, start, duration){
-            this.regions = calculateRegionRelations([...this.regions,{
-              regionId: newid(),
-              bufferId: bufferId,
-              rBufferOffset:0,
-              rBufferDuration:duration,
-              rStart:start,
-              rDuration:duration,
-              rFadeIn: 0.01,
-              rFadeOut: 0.01,
-              rPlayrate:1.0,
-              rLoop:0,
-              rPrev:null,
-              rNext:null,
-          }])
-        },
-        setRegion(region){
-          this.regions = calculateRegionRelations(this.regions.map(r =>{
-            if(r.regionId === region.regionId)
-            return region
-            else
-            return r
-          }))
-        },
-        removeRegion(region){
-          this.regions = calculateRegionRelations(this.regions.map(r =>{
-            if(r.regionId !== region.regionId)
-            return r
-          }))
-        }
     }
     // t.player.connect(t.envelope)
     // t.envelope.toDestination()
     return t
   },
+
+  newRegion(bufferId, start, duration){
+    return {
+      regionId: newid(),
+      bufferId: bufferId,
+      rBufferOffset:0,
+      rBufferDuration:duration,
+      rStart:start,
+      rDuration:duration,
+      rFadeIn: 0.01,
+      rFadeOut: 0.01,
+      rPlayrate:1.0,
+      rLoop:0,
+      rPrev:null,
+      rNext:null,
+    }
+  },
+
+  pushRegion(regions,region){
+    return calculateRegionRelations([...regions,region])
+  },
+
+  setRegions(regions){
+    return calculateRegionRelations(regions)
+  },
+  setRegion(regions,region){
+    return calculateRegionRelations(regions.map(r =>{
+      if(r.regionId === region.regionId)
+      return region
+      else
+      return r
+    }))
+  },
+  
+  removeRegion(regions,region){
+    return calculateRegionRelations(regions.map(r =>{
+      if(r.regionId !== region.regionId)
+      return r
+    }))
+  }
 };

@@ -1,7 +1,7 @@
 import './components.css';
 import {useState,useEffect,useRef} from 'react'
 
-const AudioRegion = ({region, setRegion, onRegionSelect, mouseEvents, editorSettings})=>{
+const AudioRegion = ({region, setRegion, onRegionSelect, mouseEvents, barLength, snapGrain,})=>{
   const [rStart, setRStart] = useState()
   const [rDuration, setRDuration] = useState()
   const [rBOffset, setRBOffset] = useState()
@@ -11,11 +11,11 @@ const AudioRegion = ({region, setRegion, onRegionSelect, mouseEvents, editorSett
   const resizeArea = 10;
 
   useEffect(()=>{
-    setRStart(editorSettings.barLength*region.rStart)
-    setRDuration(editorSettings.barLength*region.rDuration)
-    setRBOffset(editorSettings.barLength*region.rBufferOffset)
-    setRBDuration(editorSettings.barLength*region.rBufferDuration)
-  },[region,editorSettings.barLength])
+    setRStart(barLength*region.rStart)
+    setRDuration(barLength*region.rDuration)
+    setRBOffset(barLength*region.rBufferOffset)
+    setRBDuration(barLength*region.rBufferDuration)
+  },[region,barLength])
 
   useEffect(()=>{
     if(mouseEvents){
@@ -40,8 +40,8 @@ const AudioRegion = ({region, setRegion, onRegionSelect, mouseEvents, editorSett
   const mouseMove = (x, xOld)=>{
 
     const snapCalc = (ll)=>{
-      if(editorSettings.snapGrain){
-        let b = (editorSettings.barLength/editorSettings.snapGrain)
+      if(snapGrain){
+        let b = (barLength/snapGrain)
         let l = Math.floor(ll/b)*b
         return l;
       }
@@ -77,15 +77,15 @@ const AudioRegion = ({region, setRegion, onRegionSelect, mouseEvents, editorSett
   const mouseUp = (x, xOld)=>{
     setHandleHitbox(null)
     if(x === xOld) return
-    // const s = rStart/editorSettings.barLength;
-    // const d = rDuration/editorSettings.barLength;
-    // const o = rBOffset/editorSettings.barLength;
+    const s = rStart/barLength;
+    const d = rDuration/barLength;
+    const o = rBOffset/barLength;
 
-    // const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
-    // // console.log({s,d,o})
-    // // console.log(region)
-    // // console.log(newRegion)
-    // setRegion(newRegion)
+    const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
+    // console.log({s,d,o})
+    // console.log(region)
+    // console.log(newRegion)
+    setRegion(newRegion)
   }
 
   const pointerEvents = {width:resizeArea}

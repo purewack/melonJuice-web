@@ -36,12 +36,12 @@ import {useRef, useState,useEffect,cloneElement} from 'react'
 import AudioTrack from './AudioTrack'
 import TimelineBar from './TimelineBar'
 
-const AudioField = ({ songMeasures, timer, editorSettings ,children}) => {
+const AudioField = ({ songMeasures, timer, barLength, snapGrain ,children}) => {
     
     const [bars, setBars] = useState()
     useEffect(()=>{
         setBars(Array(songMeasures).fill(null))
-    },[editorSettings,songMeasures])
+    },[songMeasures])
 
     const audioFieldRef = useRef()
     const initialMousePos = useRef()
@@ -49,6 +49,7 @@ const AudioField = ({ songMeasures, timer, editorSettings ,children}) => {
     const [selectedRegion, setSelectedRegion] = useState()
     const [mouse, setMouse] = useState({event:'up', x:undefined, xOld:undefined, target:''})
     const mousedown = (e)=>{
+        e.preventDefault()
         const offset = (audioFieldRef.current ? audioFieldRef.current.offsetLeft : 0)
         initialMousePos.current = (e.pageX-offset)
         console.log(initialMousePos.current)
@@ -72,26 +73,26 @@ const AudioField = ({ songMeasures, timer, editorSettings ,children}) => {
     },[selectedRegion])
 
     useEffect(()=>{
-        window.addEventListener('mousedown',mousedown)
-        window.addEventListener('mouseup',mouseup)
-        window.addEventListener('mousemove',mousemove)
-        window.addEventListener('mouseleave',mouseup)
+        if(selectedRegion){
+            window.addEventListener('mouseup',mouseup)
+            window.addEventListener('mousemove',mousemove)
+            window.addEventListener('mouseleave',mouseup)
+        }
 
         return ()=>{
-            window.removeEventListener('mousedown',mousedown)
             window.removeEventListener('mouseup',mouseup)
             window.removeEventListener('mousemove',mousemove)
             window.removeEventListener('mouseleave',mouseup)
         }
     },[selectedRegion])
 
-    return(<div ref={audioFieldRef} className='AudioField' style={{backgroundColor:'red'}}>
+    return(<div ref={audioFieldRef} className='AudioField' style={{backgroundColor:'red'}} onMouseDown={mousedown}>
         <span className='Timeline'>
             {/* <div className='Playhead'></div>  */}
             {bars && bars.map((b,i)=>{
                 return (<div key={i}
                     className='TimelineBar'
-                    style={{width:editorSettings.barLength}}>
+                    style={{width:barLength}}>
                     {1+ i}
                 </div>)
             })}
