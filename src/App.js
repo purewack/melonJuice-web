@@ -146,7 +146,7 @@ import AudioTrack from './components/AudioTrack';
 function App() {
 
   const [begun, setBegun] = useState(false)
-  const [bar, setBar] = useState(50)
+  const [barLength, setBarLength] = useState(50)
   const [snapGrain, setSnapGrain] = useState(null)
   const [tracks, setTracks] = useState([])
 
@@ -187,8 +187,7 @@ function App() {
         max="400" 
         defaultValue="90"
         onChange={(e)=>{
-          let n = Number(e.target.value)
-          setBar(n)
+          setBarLength(Number(e.target.value))
         }}
       />
 
@@ -209,17 +208,12 @@ function App() {
 
       <br/>
 
-      <AudioField songMeasures={16} bar={bar}>
-
+      <AudioField songMeasures={16} editorSettings={barLength,snapGrain}>
         {tracks.map((t,i) => { 
-          return <AudioTrack key={i} bar={bar} regions={t.regions} setRegion={(newRegion)=>{
-            console.log(newRegion)
-          }}
-          onRegionSelect={r => {
-            console.log(r)
+          return <AudioTrack key={i} editorSettings={barLength,snapGrain} regions={t.regions} setRegion={(newRegion)=>{
+            //console.log(newRegion)
           }}/>
         })}
-
       </AudioField>
   </>
   }
@@ -227,9 +221,3 @@ function App() {
 }
 
 export default App;
-
-  // <> {!begun ? <button onClick={()=>{
-  //   setBegun(AudioEngine.init())
-  // }}>Begin</button> :
-
-  // }</>

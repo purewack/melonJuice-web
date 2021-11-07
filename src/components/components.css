@@ -60,6 +60,8 @@ html{
     width: 12rem;
 }
 .AudioField{
+    position: relative;
+    left:200px;
     width:max-content;
     overflow:hidden;
     display:inline-block;
