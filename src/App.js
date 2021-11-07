@@ -140,14 +140,13 @@ import { useState, useEffect} from 'react';
 import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
-import AudioRegion from './components/AudioRegion';
 import AudioTrack from './components/AudioTrack';
-import { connectSeries } from 'tone';
 
 function App() {
 
   const [begun, setBegun] = useState(false)
   const [barLength, setBarLength] = useState(50)
+  const [songMeasures, setSongMeasures] = useState(16)
   const [snapGrain, setSnapGrain] = useState(null)
   const [tracks, setTracks] = useState([])
 
@@ -186,8 +185,19 @@ function App() {
   }, [])
 
   useEffect(()=>{
+    if(!tracks) return
     console.log('new tracks')
     console.log(tracks)
+
+    let sm = 0
+    tracks.forEach(t => {
+      if(t.regions.length){
+        const r = t.regions[t.regions.length-1]
+        const d = r.rStart + r.rDuration
+        if(d > sm) sm = d
+      }
+    })
+    setSongMeasures(Math.floor(sm + 4))
   },[tracks])
 
   return (<>
@@ -220,7 +230,7 @@ function App() {
 
       <br/>
 
-      <AudioField songMeasures={16} barLength={barLength} snapGrain={snapGrain}>
+      <AudioField songMeasures={songMeasures ? songMeasures : 16} barLength={barLength} snapGrain={snapGrain}>
         {tracks.map((track,i) => { 
           return <AudioTrack key={i} barLength={barLength} snapGrain={snapGrain} regions={track.regions} setRegion={(newRegion)=>{
             console.log(newRegion)
