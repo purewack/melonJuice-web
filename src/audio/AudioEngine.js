@@ -246,7 +246,7 @@ export const AudioEngine = {
   setRegions(regions){
     return calculateRegionRelations(regions)
   },
-  setRegion(regions,region){
+  updateRegion(regions,region){
     return calculateRegionRelations(regions.map(r =>{
       if(r.regionId === region.regionId)
       return region

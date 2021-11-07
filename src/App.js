@@ -136,11 +136,37 @@
 
 
 import './App.css';
-import { useState, useEffect} from 'react';
+import { useState, useEffect, useReducer} from 'react';
 import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
+import {SongContext} from './Contexts'
+
+function tracksReducer(state,action){
+  switch(action.type){
+    case 'new':
+      return [AudioEngine.newTrack()]
+
+    case 'load':
+      return action.tracks
+
+    case 'update_region':
+      return state.map(t => {
+        let outputTrack = t
+        t.regions.forEach(r => {
+          if(r.regionId == action.updatedRegion.regionId){
+            console.log(action.updatedRegion)
+            outputTrack.regions = AudioEngine.updateRegion(outputTrack.regions, action.updatedRegion)
+          }
+        }) 
+        return outputTrack
+      })
+      
+    default:
+      return state;
+  }
+}
 
 function App() {
 
@@ -148,7 +174,8 @@ function App() {
   const [barLength, setBarLength] = useState(50)
   const [songMeasures, setSongMeasures] = useState(16)
   const [snapGrain, setSnapGrain] = useState(null)
-  const [tracks, setTracks] = useState([])
+  const [tracks, tracksDispatch] = useReducer(tracksReducer,[])
+  const [songTitle, setSongTitle] = useState('')
 
   useEffect(() => {
     if(!begun) {
@@ -173,24 +200,24 @@ function App() {
         AudioEngine.newRegion(newid(),1,10),
       ])
 
-      setTracks(ttt)
-      console.log(ttt)
+      tracksDispatch({type:'load', tracks:ttt})
+      setSongTitle('test_init_regions')
       setBegun(true)
     }
     
     return ()=>{
-      setTracks(null)
       setBegun(false)
     }
   }, [])
 
   useEffect(()=>{
     if(!tracks) return
-    console.log('new tracks')
+    if(!tracks.tracks) return
+    console.log('song changed')
     console.log(tracks)
 
     let sm = 0
-    tracks.forEach(t => {
+    tracks.tracks.forEach(t => {
       if(t.regions.length){
         const r = t.regions[t.regions.length-1]
         const d = r.rStart + r.rDuration
@@ -203,6 +230,8 @@ function App() {
   return (<>
     {!begun ? <p>Loading...</p> : 
     <> 
+      <p>{songTitle}</p>
+
       <input 
         type="range" 
         min="20" 
@@ -212,6 +241,11 @@ function App() {
           setBarLength(Number(e.target.value))
         }}
       />
+
+      <button onClick={()=>{
+        tracksDispatch({type:'new'})
+        setSongTitle('untitled')
+      }}> New... </button>
 
       <button 
         style={{width:100}}
@@ -232,12 +266,7 @@ function App() {
 
       <AudioField songMeasures={songMeasures ? songMeasures : 16} barLength={barLength} snapGrain={snapGrain}>
         {tracks.map((track,i) => { 
-          return <AudioTrack key={i} barLength={barLength} snapGrain={snapGrain} regions={track.regions} setRegion={(newRegion)=>{
-            console.log(newRegion)
-            let tt = tracks
-            tt[i].regions = AudioEngine.setRegion(tt[i].regions,newRegion)
-            setTracks([...tt])
-          }}/>
+          return <AudioTrack key={i} regions={track.regions} tracksDispatch={tracksDispatch} barLength={barLength} snapGrain={snapGrain} />
         })}
       </AudioField>
   </>

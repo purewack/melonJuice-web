@@ -1,7 +1,8 @@
 import './components.css';
-import {useState,useEffect,useRef} from 'react'
+import {useState,useEffect,useRef, useContext} from 'react'
 
-const AudioRegion = ({region, setRegion, onRegionSelect, mouseEvents, barLength, snapGrain,})=>{
+const AudioRegion = ({region, tracksDispatch, onRegionSelect, mouseEvents, barLength, snapGrain,})=>{
+
   const [rStart, setRStart] = useState()
   const [rDuration, setRDuration] = useState()
   const [rBOffset, setRBOffset] = useState()
@@ -82,10 +83,7 @@ const AudioRegion = ({region, setRegion, onRegionSelect, mouseEvents, barLength,
     const o = rBOffset/barLength;
 
     const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
-    // console.log({s,d,o})
-    // console.log(region)
-    // console.log(newRegion)
-    setRegion(newRegion)
+    tracksDispatch({type:'update_region', updatedRegion:newRegion})
   }
 
   const pointerEvents = {width:resizeArea}
