@@ -69,7 +69,7 @@ export const AudioEngine = {
   lastRecording: new Float32Array(0),
   lastBufferId: null,
   bufferPool: Object.create(null),
-  tracks: [],
+  connections: [],
     
   init() {
     let ac = this.actx  = Tone.getContext().rawContext._nativeContext
@@ -203,7 +203,7 @@ export const AudioEngine = {
           
   },
   
-  addTrack(){
+  newTrack(){
     const t = {
         trackId: newid(),
         volume: 1.0,
@@ -249,6 +249,6 @@ export const AudioEngine = {
     }
     // t.player.connect(t.envelope)
     // t.envelope.toDestination()
-    this.tracks.push(t)
+    return t
   },
 };

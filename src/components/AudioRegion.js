@@ -1,7 +1,7 @@
 import './components.css';
 import {useState,useEffect,useRef} from 'react'
 
-const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset})=>{
+const AudioRegion = ({region, setRegion, onRegionSelect, bar})=>{
   const [rStart, setRStart] = useState()
   const [rDuration, setRDuration] = useState()
   const [rBOffset, setRBOffset] = useState()
@@ -9,7 +9,7 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset}
   const [handleHitbox, setHandleHitbox] = useState(null)
   const preClick = useRef()
   const resizeArea = 10;
-  const [relationLabel, setRelationLabel] = useState(' < > ')
+  const [mouseHeld, setMouseHeld] = useState(false)
 
 
   useEffect(()=>{
@@ -19,52 +19,61 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset}
     setRBDuration(bar*region.rBufferDuration)
   },[region,bar])
 
-  useEffect(()=>{
-    const snapCalc = (ll)=>{
-      if(shouldSnap){
-        let b = (bar/shouldSnap)
-        let l = Math.floor(ll/b)*b
-        return l;
-      }
-      return ll
-    }
+  // useEffect(()=>{
+  //   if(mousePos === null && mouseHeld) mouseUp(null)
+  //   if(!handleHitbox || !mousePos) return
 
-    if(mousePos === null) setHandleHitbox(null)
-    if(!handleHitbox || !mousePos) return
+  //   const snapCalc = (ll)=>{
+  //     if(shouldSnap){
+  //       let b = (bar/shouldSnap)
+  //       let l = Math.floor(ll/b)*b
+  //       return l;
+  //     }
+  //     return ll
+  //   }
 
-    let pe = preClick.current
-    let delta = snapCalc(mousePos - pe.cx)
-    let ne = snapCalc(mousePos - mouseOffset)
+  //   let pe = preClick.current
+  //   let delta = snapCalc(mousePos - pe.cx)
+  //   let ne = snapCalc(mousePos - mouseOffset)
     
-    switch (handleHitbox) {
-      case 'EndHandle':
-        let d = (ne - pe.left)
-        if(d <= rBDuration){
-          setRDuration(d)
-        }
-        break;
+  //   switch (handleHitbox) {
+  //     case 'EndHandle':
+  //       let d = (ne - pe.left)
+  //       if(d <= rBDuration){
+  //         setRDuration(d)
+  //       }
+  //       break;
       
-      case 'StartHandle':
-        let o = (pe.o+ne)-pe.left
-        if(o >= 0){
-          setRBOffset(o)
-          setRStart(ne)
-          setRDuration(pe.right-ne)
-        }
-        break;
+  //     case 'StartHandle':
+  //       let o = (pe.o+ne)-pe.left
+  //       if(o >= 0){
+  //         setRBOffset(o)
+  //         setRStart(ne)
+  //         setRDuration(pe.right-ne)
+  //       }
+  //       break;
 
-      default:
-        setRStart(snapCalc(pe.left) + delta)
-        break;
-    }
-  },[mousePos])
+  //     default:
+  //       setRStart(snapCalc(pe.left) + delta)
+  //       break;
+  //   }
+  // },[mousePos])
+
+  useEffect(()=>{
+    console.log(regionDragged.mousePos)
+  },[regionDragged])
 
   const mouseDown = (e)=>{
     e.preventDefault()
-    preClick.current = {cx:e.pageX, left: rStart, width: rDuration, right:rStart+rDuration, o:rBOffset}
+    setMouseHeld(true)
     setHandleHitbox(e.target.className)
+    preClick.current = {cx:e.pageX, left: rStart, width: rDuration, right:rStart+rDuration, o:rBOffset}
+
+    onRegionSelect(region)
   }
   const mouseUp = (e)=>{
+    if(!mouseHeld) return
+    setMouseHeld(false)
     if(!e) return
     e.preventDefault()
     setHandleHitbox(null)

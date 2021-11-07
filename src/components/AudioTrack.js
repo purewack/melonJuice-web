@@ -1,42 +1,26 @@
 import {cloneElement, useState} from 'react'
 import { useEffect, useRef} from 'react/cjs/react.development';
+import AudioRegion from './AudioRegion';
 import './components.css';
 
-const AudioTrack = ({id, armedId, onArm, onSolo, onMute, children})=>{
-    
-    const audioTrackRef = useRef()
-    const [mouseOffset, setMouseOffset] = useState()
-    const [mousePos, setMousePos] = useState()
-    const [drag, setDrag] = useState(false)
+const AudioTrack = ({id, armedId, setRegion, onRegionSelect, bar, regions})=>{
+
+    const [selectedRegion, setSelectedRegion] = useState()
 
     useEffect(()=>{
-        if(audioTrackRef.current){
-            setMouseOffset(audioTrackRef.current.offsetLeft)
-        }
-    },[audioTrackRef])
+        console.log('new region select')
+        console.log(selectedRegion)
+    },[selectedRegion])
 
-    return(<div ref={audioTrackRef} className={armedId === id ? 'AudioTrack AudioTrackArmed' : 'AudioTrack'}
-    onMouseDown={(e)=>{
-        e.preventDefault()
-        setDrag(true)
-    }}
-    onMouseUp={(e)=>{
-        e.preventDefault()
-        setDrag(false)
-        setMousePos(null); 
-    }}
-    onMouseLeave={(e)=>{
-        e.preventDefault()
-        setDrag(false)
-        setMousePos(null); 
-    }}
-    onMouseMove={(e)=>{
-        e.preventDefault()
-        if(drag) setMousePos(e.pageX)
-    }}
-    >
-        {children.map(c => {
-            return cloneElement(c, { mousePos, mouseOffset})
+    return(<div className={armedId === id ? 'AudioTrack AudioTrackArmed' : 'AudioTrack'}>
+        {regions.map((r,j) => {
+            return <AudioRegion 
+                key={j} 
+                region={r} 
+                setRegion={setRegion}
+                onRegionSelect={onRegionSelect}
+                bar={bar}
+            />
         })}
     </div>)
 }
