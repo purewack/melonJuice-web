@@ -226,7 +226,7 @@ function App() {
             console.log(newRegion)
             let tt = tracks
             tt[i].regions = AudioEngine.setRegion(tt[i].regions,newRegion)
-            setTracks(tt)
+            setTracks([...tt])
           }}/>
         })}
       </AudioField>
