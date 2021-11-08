@@ -145,17 +145,17 @@ import AudioTrack from './components/AudioTrack';
 function tracksReducer(state,action){
   switch(action.type){
     case 'new':
-      return {current: [AudioEngine.newTrack()], history: []}
+      return {current: [AudioEngine.newTrack()], history: [[]], historyPointer:0}
 
     case 'load':
-      return {current: [...action.tracks], history: []}
+      return {current: [...action.tracks], history: [[...action.tracks]], historyPointer:0}
 
     case 'update_region':
-      const oldMove = state.current.map(t => {
+      const currentCopy = state.current.map(t => {
         return {...t, regions:[...t.regions]}
       })
 
-      const newMove = state.current.map(t => {
+      const newMove = currentCopy.map(t => {
         let outputTrack = t
         t.regions.forEach(r => {
           if(r.regionId == action.updatedRegion.regionId){
@@ -166,15 +166,26 @@ function tracksReducer(state,action){
       })
 
       return {
-        history: [...state.history, oldMove],
+        historyPointer: state.historyPointer+1,
+        history: [...state.history, newMove],
         current: newMove,
       }
     
     case 'undo':
-      if(state.history.length)
-      return {
-        current: state.history[state.history.length-1], 
-        history: state.history.slice(0,state.history.length-1)
+      if(state.historyPointer > 0){
+        return {
+          ...state,
+          current: state.history[state.historyPointer-1],
+          historyPointer: state.historyPointer-1,
+        }
+      }
+    case 'redo':
+      if(state.historyPointer < state.history.length-1){
+        return {
+          ...state,
+          current: state.history[state.historyPointer+1],
+          historyPointer: state.historyPointer+1,
+        }
       }
       
     default:
@@ -246,6 +257,7 @@ function App() {
       <p>{songTitle}</p>
 
       <button onClick={()=>{tracksDispatch({type:'undo'})}}>Undo</button>
+      <button onClick={()=>{tracksDispatch({type:'redo'})}}>Redo</button>
 
       <input 
         type="range" 
