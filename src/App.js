@@ -148,12 +148,12 @@ function tracksReducer(state,action){
       return {current: [AudioEngine.newTrack()], history: []}
 
     case 'load':
-      return {current: [...action.tracks], history: [[...action.tracks]]}
+      return {current: [...action.tracks], history: []}
 
     case 'update_region':
-      const oldMove = state.current.slice()
-
-      console.log(JSON.stringify(oldMove))
+      const oldMove = state.current.map(t => {
+        return {...t, regions:[...t.regions]}
+      })
 
       const newMove = state.current.map(t => {
         let outputTrack = t
@@ -171,8 +171,11 @@ function tracksReducer(state,action){
       }
     
     case 'undo':
-      let newCurrent = state.history[state.history.length-1]
-      return{current:newCurrent, history: state.history.pop()}
+      if(state.history.length)
+      return {
+        current: state.history[state.history.length-1], 
+        history: state.history.slice(0,state.history.length-1)
+      }
       
     default:
       return state;
