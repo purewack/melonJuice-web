@@ -141,27 +141,34 @@ import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
-import {SongContext} from './Contexts'
 
 function tracksReducer(state,action){
   switch(action.type){
     case 'new':
-      return [AudioEngine.newTrack()]
+      return {current: [AudioEngine.newTrack()], history: []}
 
     case 'load':
-      return action.tracks
+      return {current: [...action.tracks], history: [[...action.tracks]]}
 
     case 'update_region':
-      return state.map(t => {
+      const newMove = state.current.map(t => {
         let outputTrack = t
         t.regions.forEach(r => {
           if(r.regionId == action.updatedRegion.regionId){
-            console.log(action.updatedRegion)
             outputTrack.regions = AudioEngine.updateRegion(outputTrack.regions, action.updatedRegion)
           }
         }) 
         return outputTrack
       })
+
+      return {
+        history: [...state.history, newMove],
+        current: newMove,
+      }
+    
+    case 'undo':
+      let newCurrent = state.history[state.history.length-1]
+      return{current:newCurrent, history: state.history.pop()}
       
     default:
       return state;
@@ -174,7 +181,7 @@ function App() {
   const [barLength, setBarLength] = useState(50)
   const [songMeasures, setSongMeasures] = useState(16)
   const [snapGrain, setSnapGrain] = useState(null)
-  const [tracks, tracksDispatch] = useReducer(tracksReducer,[])
+  const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
 
   useEffect(() => {
@@ -211,13 +218,12 @@ function App() {
   }, [])
 
   useEffect(()=>{
-    if(!tracks) return
-    if(!tracks.tracks) return
+    if(!begun) return
     console.log('song changed')
     console.log(tracks)
 
     let sm = 0
-    tracks.tracks.forEach(t => {
+    tracks.current.forEach(t => {
       if(t.regions.length){
         const r = t.regions[t.regions.length-1]
         const d = r.rStart + r.rDuration
@@ -225,12 +231,14 @@ function App() {
       }
     })
     setSongMeasures(Math.floor(sm + 4))
-  },[tracks])
+  },[tracks,begun])
 
   return (<>
     {!begun ? <p>Loading...</p> : 
     <> 
       <p>{songTitle}</p>
+
+      <button onClick={()=>{tracksDispatch({type:'undo'})}}>Undo</button>
 
       <input 
         type="range" 
@@ -265,7 +273,7 @@ function App() {
       <br/>
 
       <AudioField songMeasures={songMeasures ? songMeasures : 16} barLength={barLength} snapGrain={snapGrain}>
-        {tracks.map((track,i) => { 
+        {tracks.current.map((track,i) => { 
           return <AudioTrack key={i} regions={track.regions} tracksDispatch={tracksDispatch} barLength={barLength} snapGrain={snapGrain} />
         })}
       </AudioField>

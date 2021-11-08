@@ -1,5 +1,5 @@
 import './components.css';
-import {useState,useEffect,useRef, useContext} from 'react'
+import {useState,useEffect,useRef} from 'react'
 
 const AudioRegion = ({region, tracksDispatch, onRegionSelect, mouseEvents, barLength, snapGrain,})=>{
 

@@ -52,7 +52,7 @@ const AudioField = ({ songMeasures, timer, barLength, snapGrain ,children}) => {
         e.preventDefault()
         const offset = (audioFieldRef.current ? audioFieldRef.current.offsetLeft : 0)
         initialMousePos.current = (e.pageX-offset)
-        console.log(initialMousePos.current)
+        //console.log(initialMousePos.current)
     }
     const mouseup = (e)=>{
         if(selectedRegion){
@@ -67,10 +67,10 @@ const AudioField = ({ songMeasures, timer, barLength, snapGrain ,children}) => {
            setMouse({ type:'move', x: (e.pageX-offset), xOld:(initialMousePos.current)})
         }
     }
-    useEffect(()=>{
-        console.log('new region select')
-        console.log(selectedRegion)
-    },[selectedRegion])
+    // useEffect(()=>{
+    //     console.log('new region select')
+    //     console.log(selectedRegion)
+    // },[selectedRegion])
 
     useEffect(()=>{
         if(selectedRegion){
