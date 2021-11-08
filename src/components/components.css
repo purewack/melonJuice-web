@@ -15,11 +15,12 @@ html{
     display:flex;
     justify-content: space-between;
     align-items: center;
-
+    z-index: 1;
 }
 
 .AudioRegionDrag{
     background:red;
+    z-index: 10;
 }
 .AudioRegion .StartHandle,
 .AudioRegion .EndHandle {
@@ -60,6 +61,8 @@ html{
     width: 12rem;
 }
 .AudioField{
+    position: relative;
+    left:200px;
     width:max-content;
     overflow:hidden;
     display:inline-block;

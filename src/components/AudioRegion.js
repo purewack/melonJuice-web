@@ -1,84 +1,89 @@
 import './components.css';
 import {useState,useEffect,useRef} from 'react'
 
-const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset})=>{
+const AudioRegion = ({region, tracksDispatch, onRegionSelect, mouseEvents, barLength, snapGrain,})=>{
+
   const [rStart, setRStart] = useState()
   const [rDuration, setRDuration] = useState()
   const [rBOffset, setRBOffset] = useState()
   const [rBDuration, setRBDuration] = useState()
   const [handleHitbox, setHandleHitbox] = useState(null)
-  const preClick = useRef()
+  const regionStatsPrev = useRef()
   const resizeArea = 10;
-  const [relationLabel, setRelationLabel] = useState(' < > ')
-
 
   useEffect(()=>{
-    setRStart(bar*region.rStart)
-    setRDuration(bar*region.rDuration)
-    setRBOffset(bar*region.rBufferOffset)
-    setRBDuration(bar*region.rBufferDuration)
-  },[region,bar])
+    setRStart(barLength*region.rStart)
+    setRDuration(barLength*region.rDuration)
+    setRBOffset(barLength*region.rBufferOffset)
+    setRBDuration(barLength*region.rBufferDuration)
+  },[region,barLength])
 
   useEffect(()=>{
+    if(mouseEvents){
+      switch(mouseEvents.type){
+        case 'move':
+          mouseMove(mouseEvents.x, mouseEvents.xOld)
+          break;
+        case 'up':
+          mouseUp(mouseEvents.x, mouseEvents.xOld)
+          break;
+        default:
+          break;
+      }
+    }
+  },[mouseEvents])
+
+  const mouseDown = (e, x)=>{   
+    regionStatsPrev.current = {left: rStart, width: rDuration, right:rStart+rDuration, o:rBOffset}
+    onRegionSelect(region)
+    setHandleHitbox(e.target.className)
+  }
+  const mouseMove = (x, xOld)=>{
+
     const snapCalc = (ll)=>{
-      if(shouldSnap){
-        let b = (bar/shouldSnap)
+      if(snapGrain){
+        let b = (barLength/snapGrain)
         let l = Math.floor(ll/b)*b
         return l;
       }
       return ll
     }
 
-    if(mousePos === null) setHandleHitbox(null)
-    if(!handleHitbox || !mousePos) return
-
-    let pe = preClick.current
-    let delta = snapCalc(mousePos - pe.cx)
-    let ne = snapCalc(mousePos - mouseOffset)
+    let r = regionStatsPrev.current
+    let delta = snapCalc(x - xOld)
+    let ne = snapCalc(x)
     
     switch (handleHitbox) {
       case 'EndHandle':
-        let d = (ne - pe.left)
+        let d = (ne - r.left)
         if(d <= rBDuration){
           setRDuration(d)
         }
         break;
       
       case 'StartHandle':
-        let o = (pe.o+ne)-pe.left
+        let o = (r.o+ne)-r.left
         if(o >= 0){
           setRBOffset(o)
           setRStart(ne)
-          setRDuration(pe.right-ne)
+          setRDuration(r.right-ne)
         }
         break;
 
       default:
-        setRStart(snapCalc(pe.left) + delta)
+        setRStart(snapCalc(r.left) + delta)
         break;
     }
-  },[mousePos])
-
-  const mouseDown = (e)=>{
-    e.preventDefault()
-    preClick.current = {cx:e.pageX, left: rStart, width: rDuration, right:rStart+rDuration, o:rBOffset}
-    setHandleHitbox(e.target.className)
   }
-  const mouseUp = (e)=>{
-    if(!e) return
-    e.preventDefault()
+  const mouseUp = (x, xOld)=>{
     setHandleHitbox(null)
-
-    if(e.pageX === preClick.current.cx) return
-    const s = rStart/bar;
-    const d = rDuration/bar;
-    const o = rBOffset/bar;
+    if(x === xOld) return
+    const s = rStart/barLength;
+    const d = rDuration/barLength;
+    const o = rBOffset/barLength;
 
     const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
-    // console.log({s,d,o})
-    // console.log(region)
-    // console.log(newRegion)
-    setRegion(newRegion)
+    tracksDispatch({type:'update_region', updatedRegion:newRegion})
   }
 
   const pointerEvents = {width:resizeArea}
@@ -87,10 +92,9 @@ const AudioRegion = ({region, setRegion, bar, shouldSnap, mousePos, mouseOffset}
     className={handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
     style={{width: rDuration, left: rStart}}
     onMouseDown={mouseDown}
-    onMouseUp={mouseUp}
     >
     <span className='StartHandle' style={pointerEvents}>|</span>
-    <span style={{pointerEvents:'none'}}> {`${region.rPrev && region.rPrev.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNext && region.rNext.regionId.slice(-2)}`} </span>
+    <span style={{pointerEvents:'none'}}> {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`} </span>
     <span className='EndHandle' style={pointerEvents}>|</span>  
   </div>)
 }

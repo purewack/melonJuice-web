@@ -58,9 +58,27 @@
 //     setRecording(false)
 //   }
 
-import {calculateRegionRelations} from '../Util'
 import * as Tone from 'tone'
 import newid from 'uniqid';
+
+
+const calculateRegionRelations = (regions) => {
+  let sorted = regions.slice().sort((a,b)=>{
+      if(a.rStart < b.rStart){
+          return -1
+      }
+      else if(a.rStart > b.rStart){
+          return 1
+      }
+      else return 0
+  })
+
+  return sorted.map((r,i,a) => {
+      r.rPrevId = (i>0 ? a[i-1].regionId : '')
+      r.rNextId = (i<a.length-1 ? a[i+1].regionId : '')
+      return r
+  })
+}
 
 export const AudioEngine = {
   actx: null,
@@ -69,7 +87,7 @@ export const AudioEngine = {
   lastRecording: new Float32Array(0),
   lastBufferId: null,
   bufferPool: Object.create(null),
-  tracks: [],
+  connections: [],
     
   init() {
     let ac = this.actx  = Tone.getContext().rawContext._nativeContext
@@ -203,11 +221,12 @@ export const AudioEngine = {
           
   },
   
-  addTrack(){
+  newTrack(){
     const t = {
         trackId: newid(),
         volume: 1.0,
         enable: 1.0,
+        regions: [],
         // player: new this.tonejs.Player(),
         // envelope: new this.tonejs.AmplitudeEnvelope({
         //   attack:0,
@@ -215,40 +234,49 @@ export const AudioEngine = {
         //   sustain:1,
         //   release:0,
         // }),
-        regions: [],
-        addRegion(bufferId, start, duration){
-            this.regions = calculateRegionRelations([...this.regions,{
-              regionId: newid(),
-              bufferId: bufferId,
-              rBufferOffset:0,
-              rBufferDuration:duration,
-              rStart:start,
-              rDuration:duration,
-              rFadeIn: 0.01,
-              rFadeOut: 0.01,
-              rPlayrate:1.0,
-              rLoop:0,
-              rPrev:null,
-              rNext:null,
-          }])
-        },
-        setRegion(region){
-          this.regions = calculateRegionRelations(this.regions.map(r =>{
-            if(r.regionId === region.regionId)
-            return region
-            else
-            return r
-          }))
-        },
-        removeRegion(region){
-          this.regions = calculateRegionRelations(this.regions.map(r =>{
-            if(r.regionId !== region.regionId)
-            return r
-          }))
-        }
     }
     // t.player.connect(t.envelope)
     // t.envelope.toDestination()
-    this.tracks.push(t)
+    return t
   },
+
+  newRegion(bufferId, start, duration){
+    return {
+      regionId: newid(),
+      bufferId: bufferId,
+      rBufferOffset:0,
+      rBufferDuration:duration,
+      rStart:start,
+      rDuration:duration,
+      rFadeIn: 0.01,
+      rFadeOut: 0.01,
+      rPlayrate:1.0,
+      rLoop:0,
+      rPrevId:'',
+      rNextId:'',
+    }
+  },
+
+  pushRegion(regions,region){
+    return calculateRegionRelations([...regions,region])
+  },
+
+  setRegions(regions){
+    return calculateRegionRelations(regions)
+  },
+  updateRegion(regions,region){
+    return calculateRegionRelations(regions.map(r =>{
+      if(r.regionId === region.regionId)
+      return region
+      else
+      return r
+    }))
+  },
+  
+  removeRegion(regions,region){
+    return calculateRegionRelations(regions.map(r =>{
+      if(r.regionId !== region.regionId)
+      return r
+    }))
+  }
 };
