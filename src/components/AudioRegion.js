@@ -94,7 +94,7 @@ const AudioRegion = ({region, tracksDispatch, onRegionSelect, mouseEvents, barLe
     onMouseDown={mouseDown}
     >
     <span className='StartHandle' style={pointerEvents}>|</span>
-    <span style={{pointerEvents:'none'}}> {`${region.rPrev && region.rPrev.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNext && region.rNext.regionId.slice(-2)}`} </span>
+    <span style={{pointerEvents:'none'}}> {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`} </span>
     <span className='EndHandle' style={pointerEvents}>|</span>  
   </div>)
 }

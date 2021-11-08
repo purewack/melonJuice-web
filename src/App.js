@@ -151,6 +151,10 @@ function tracksReducer(state,action){
       return {current: [...action.tracks], history: [[...action.tracks]]}
 
     case 'update_region':
+      const oldMove = state.current.slice()
+
+      console.log(JSON.stringify(oldMove))
+
       const newMove = state.current.map(t => {
         let outputTrack = t
         t.regions.forEach(r => {
@@ -162,7 +166,7 @@ function tracksReducer(state,action){
       })
 
       return {
-        history: [...state.history, newMove],
+        history: [...state.history, oldMove],
         current: newMove,
       }
     

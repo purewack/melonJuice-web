@@ -58,9 +58,27 @@
 //     setRecording(false)
 //   }
 
-import {calculateRegionRelations} from '../Util'
 import * as Tone from 'tone'
 import newid from 'uniqid';
+
+
+const calculateRegionRelations = (regions) => {
+  let sorted = regions.slice().sort((a,b)=>{
+      if(a.rStart < b.rStart){
+          return -1
+      }
+      else if(a.rStart > b.rStart){
+          return 1
+      }
+      else return 0
+  })
+
+  return sorted.map((r,i,a) => {
+      r.rPrevId = (i>0 ? a[i-1].regionId : '')
+      r.rNextId = (i<a.length-1 ? a[i+1].regionId : '')
+      return r
+  })
+}
 
 export const AudioEngine = {
   actx: null,
@@ -208,6 +226,7 @@ export const AudioEngine = {
         trackId: newid(),
         volume: 1.0,
         enable: 1.0,
+        regions: [],
         // player: new this.tonejs.Player(),
         // envelope: new this.tonejs.AmplitudeEnvelope({
         //   attack:0,
@@ -215,7 +234,6 @@ export const AudioEngine = {
         //   sustain:1,
         //   release:0,
         // }),
-        regions: [],
     }
     // t.player.connect(t.envelope)
     // t.envelope.toDestination()
@@ -234,8 +252,8 @@ export const AudioEngine = {
       rFadeOut: 0.01,
       rPlayrate:1.0,
       rLoop:0,
-      rPrev:null,
-      rNext:null,
+      rPrevId:'',
+      rNextId:'',
     }
   },
 
