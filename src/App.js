@@ -158,7 +158,7 @@ function tracksReducer(state,action){
       const newMove = currentCopy.map(t => {
         let outputTrack = t
         t.regions.forEach(r => {
-          if(r.regionId == action.updatedRegion.regionId){
+          if(r.regionId === action.updatedRegion.regionId){
             outputTrack.regions = AudioEngine.updateRegion(outputTrack.regions, action.updatedRegion)
           }
         }) 
@@ -179,6 +179,7 @@ function tracksReducer(state,action){
           historyPointer: state.historyPointer-1,
         }
       }
+      break;
     case 'redo':
       if(state.historyPointer < state.history.length-1){
         return {
@@ -187,6 +188,7 @@ function tracksReducer(state,action){
           historyPointer: state.historyPointer+1,
         }
       }
+      break;
       
     default:
       return state;
@@ -230,10 +232,7 @@ function App() {
       setBegun(true)
     }
     
-    return ()=>{
-      setBegun(false)
-    }
-  }, [])
+  }, [begun])
 
   useEffect(()=>{
     if(!begun) return

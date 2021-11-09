@@ -103,12 +103,12 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     //tracksDispatch({type:'update_region', updatedRegion:newRegion})
   }  
 
-  const cancelEdit = (e)=>{
-    mouseUp(null)
-    setRStart(rStartOld)
-    setRDuration(rDurationOld)
-    console.log('cancel')
-  }
+  // const cancelEdit = (e)=>{
+  //   mouseUp(null)
+  //   setRStart(rStartOld)
+  //   setRDuration(rDurationOld)
+  //   console.log('cancel')
+  // }
 
   return(<>
   {
@@ -124,7 +124,9 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     onMouseDown={mouseDown}
     >
     <span className='StartHandle' style={{width:resizeArea}}>|</span>
-    <span style={{pointerEvents:'none'}}> {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`} </span>
+      <span style={{pointerEvents:'none'}}> 
+        {/* {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`}  */}
+      </span>
     <span className='EndHandle' style={{width:resizeArea}}>|</span>  
   </div>
   </>)

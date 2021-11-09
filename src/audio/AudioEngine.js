@@ -277,6 +277,8 @@ export const AudioEngine = {
     return calculateRegionRelations(regions.map(r =>{
       if(r.regionId !== region.regionId)
       return r
+      else
+      return null
     }))
   }
 };
