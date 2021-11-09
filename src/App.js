@@ -136,7 +136,7 @@
 
 
 import './App.css';
-import { useState, useEffect, useReducer} from 'react';
+import { useState, useEffect, useReducer, useRef} from 'react';
 import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
@@ -165,9 +165,18 @@ function tracksReducer(state,action){
         return outputTrack
       })
 
+      if(state.historyPointer !== state.history.length-1){
+        //console.log(state.history.slice(0,state.historyPointer+1))
+        return {
+          historyPointer: state.historyPointer+1,
+          history:  [...state.history.slice(0,state.historyPointer+1), newMove],
+          current: newMove,
+        }
+      }
+
       return {
         historyPointer: state.historyPointer+1,
-        history: [...state.history, newMove],
+        history:  [...state.history, newMove],
         current: newMove,
       }
     
@@ -203,6 +212,8 @@ function App() {
   const [snapGrain, setSnapGrain] = useState(null)
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
+  const undoButtonRef = useRef()
+  const redoButtonRef = useRef()
 
   useEffect(() => {
     if(!begun) {
@@ -248,6 +259,9 @@ function App() {
       }
     })
     setSongMeasures(Math.floor(sm + 4))
+
+    undoButtonRef.current.disabled = (tracks.historyPointer < 1)
+    redoButtonRef.current.disabled = (tracks.historyPointer === tracks.history.length-1)
   },[tracks,begun])
 
   return (<>
@@ -255,8 +269,8 @@ function App() {
     <> 
       <p>{songTitle}</p>
 
-      <button onClick={()=>{tracksDispatch({type:'undo'})}}>Undo</button>
-      <button onClick={()=>{tracksDispatch({type:'redo'})}}>Redo</button>
+      <button ref={undoButtonRef} onClick={()=>{tracksDispatch({type:'undo'})}}>Undo</button>
+      <button ref={redoButtonRef} onClick={()=>{tracksDispatch({type:'redo'})}}>Redo</button>
 
       <input 
         type="range" 

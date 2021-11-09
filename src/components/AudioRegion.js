@@ -41,6 +41,7 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
           const max = (rBDuration-rBOffset)
           if(d <= max){
             setRDuration(d)
+            regionStatsPrev.current.rDuration = d
           }
         }
         break;
@@ -54,13 +55,19 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
             setRBOffset(o)
             setRStart(d)
             setRDuration(r.right-d)
+            regionStatsPrev.current.rBOffset = o
+            regionStatsPrev.current.rStart = d
+            regionStatsPrev.current.rDuration = r.right-d
           }
         }
         break;
 
       default:
         let o = snapCalc(r.left + delta)
-        if(o > 0) setRStart(o)
+        if(o > 0) {
+          setRStart(o)
+          regionStatsPrev.current.rStart = o
+        }
         break;
     }
   }
@@ -76,9 +83,12 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
       rbo:rBOffset,
       rbd:rBDuration,
       rrbo:rBOffset,
-      mouseDelta:0
+      mouseDelta:0,
+      rStart:rStart,
+      rDuration:rDuration,
+      rBOffset:rBOffset,
     }
-    console.log(regionStatsPrev.current)
+    
     setRStartOld(rStart)
     setRDurationOld(rDuration)
     setHandleHitbox(target)
@@ -91,16 +101,14 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     window.removeEventListener('mouseup',mouseUp)
     window.removeEventListener('mousemove',mouseMove)
     setHandleHitbox(null)
-    // let oldX = mouseStatsPrev.current
-    // let x = e.pageX - 200
-    // if(x === xOld) return
+    if(regionStatsPrev.current.mouseDelta === 0) return
 
-    // const s = rStart/barLength;
-    // const d = rDuration/barLength;
-    // const o = rBOffset/barLength;
+    const s = regionStatsPrev.current.rStart/barLength;
+    const d = regionStatsPrev.current.rDuration/barLength;
+    const o = regionStatsPrev.current.rBOffset/barLength;
 
-    //const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
-    //tracksDispatch({type:'update_region', updatedRegion:newRegion})
+    const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
+    tracksDispatch({type:'update_region', updatedRegion:newRegion})
   }  
 
   // const cancelEdit = (e)=>{
