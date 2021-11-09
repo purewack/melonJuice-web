@@ -62,7 +62,7 @@ html{
 }
 .AudioField{
     position: relative;
-    left:200px;
+    left:100px;
     width:max-content;
     overflow:hidden;
     display:inline-block;

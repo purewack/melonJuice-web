@@ -36,21 +36,23 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
 
     switch (r.target) {
       case 'EndHandle':{
-        let d = snapCalc(r.right + delta)
-        if(rDuration <= rBDuration){
-          setRDuration(d - r.left)
-        }
+          let d = snapCalc(r.right + delta) - r.left
+          
+          if(d <= rBDuration){
+            setRDuration(d)
+          }
         }
         break;
       
       case 'StartHandle':{
-        //let o = (r.o+ne)-r.left
+        //let o = r.right-d
         let d = snapCalc(r.left + delta)
-        //if(o >= 0){
+        console.log({rr:r.right-d, rBDuration})
+        if(r.right-d <= rBDuration){
           //setRBOffset(o)
           setRStart(d)
           setRDuration(r.right-d)
-        //}
+        }
         }
         break;
 
@@ -76,7 +78,7 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
   }  
   const mouseDown = (e)=>{   
     const target = e.target.className
-    regionStatsPrev.current = {left: rStart, width: rDuration, right:rStart+rDuration, o:rBOffset, target, mouseDelta:0, mouseX:e.pageX}
+    regionStatsPrev.current = {left: rStart, width: rDuration, right:rStart+rDuration, o:rBOffset, target, mouseDelta:0}
     setHandleHitbox(target)
 
     window.addEventListener('mouseup',mouseUp)
