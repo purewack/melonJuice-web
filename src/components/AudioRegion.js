@@ -111,8 +111,13 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
   }
 
   return(<>
-  {/* {handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionOld'></div> : null} */}
-  {/* {handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionOldBuffer'></div> : null} */}
+  {
+    (handleHitbox === 'StartHandle' || handleHitbox === 'EndHandle') 
+    ? <div style={{left: rStartOld-regionStatsPrev.current.rrbo, width: rBDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> 
+    : (
+      handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
+    )
+  }
   <div
     className={handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
     style={{width: rDuration, left: rStart}}

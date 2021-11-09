@@ -18,10 +18,17 @@ html{
     z-index: 1;
 }
 
-.AudioRegionOld{
+.AudioRegionGhostMove{
     pointer-events: none;
     z-index: 20;
     background:rgba(255, 58, 245, 0.178);
+    border-width:2px;  
+    border-style:dashed;
+}
+.AudioRegionGhostBuffer{
+    pointer-events: none;
+    z-index: 20;
+    background:rgba(83, 184, 0, 0.5);
     border-width:2px;  
     border-style:dashed;
 }
