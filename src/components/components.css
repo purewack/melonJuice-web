@@ -18,6 +18,13 @@ html{
     z-index: 1;
 }
 
+.AudioRegionOld{
+    pointer-events: none;
+    z-index: 20;
+    background:rgba(255, 58, 245, 0.178);
+    border-width:2px;  
+    border-style:dashed;
+}
 .AudioRegionDrag{
     background:red;
     z-index: 10;

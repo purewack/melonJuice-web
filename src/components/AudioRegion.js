@@ -5,6 +5,8 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
 
   const [rStart, setRStart] = useState()
   const [rDuration, setRDuration] = useState()
+  const [rStartOld, setRStartOld] = useState()
+  const [rDurationOld, setRDurationOld] = useState()
   const [rBOffset, setRBOffset] = useState()
   const [rBDuration, setRBDuration] = useState()
   const [handleHitbox, setHandleHitbox] = useState(null)
@@ -17,7 +19,6 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     setRBOffset(barLength*region.rBufferOffset)
     setRBDuration(barLength*region.rBufferDuration)
   },[region,barLength])
-
 
   const mouseMove = (e)=>{
     e.preventDefault()
@@ -36,31 +37,56 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
 
     switch (r.target) {
       case 'EndHandle':{
-          let d = snapCalc(r.right + delta) - r.left
-          
-          if(d <= rBDuration){
+          const d = snapCalc(r.right + delta) - r.left
+          const max = (rBDuration-rBOffset)
+          if(d <= max){
             setRDuration(d)
           }
         }
         break;
       
       case 'StartHandle':{
-        //let o = r.right-d
-        let d = snapCalc(r.left + delta)
-        console.log({rr:r.right-d, rBDuration})
-        if(r.right-d <= rBDuration){
-          //setRBOffset(o)
-          setRStart(d)
-          setRDuration(r.right-d)
-        }
+          const d = snapCalc(r.left + delta)
+          const o = r.rrbo+(d-r.left)
+
+          if( o >= 0 ){
+            regionStatsPrev.current.rbo = o
+            setRBOffset(o)
+            setRStart(d)
+            setRDuration(r.right-d)
+          }
         }
         break;
 
       default:
-        setRStart(snapCalc(r.left + delta))
+        let o = snapCalc(r.left + delta)
+        if(o > 0) setRStart(o)
         break;
     }
   }
+
+  const mouseDown = (e)=>{   
+    e.preventDefault()
+    const target = e.target.className
+    regionStatsPrev.current = {
+      target, 
+      left: rStart,
+      width: rDuration, 
+      right:rStart+rDuration, 
+      rbo:rBOffset,
+      rbd:rBDuration,
+      rrbo:rBOffset,
+      mouseDelta:0
+    }
+    console.log(regionStatsPrev.current)
+    setRStartOld(rStart)
+    setRDurationOld(rDuration)
+    setHandleHitbox(target)
+
+    window.addEventListener('mouseup',mouseUp)
+    window.addEventListener('mousemove',mouseMove)
+  }
+
   const mouseUp = (e)=>{
     window.removeEventListener('mouseup',mouseUp)
     window.removeEventListener('mousemove',mouseMove)
@@ -76,17 +102,18 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     //const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
     //tracksDispatch({type:'update_region', updatedRegion:newRegion})
   }  
-  const mouseDown = (e)=>{   
-    const target = e.target.className
-    regionStatsPrev.current = {left: rStart, width: rDuration, right:rStart+rDuration, o:rBOffset, target, mouseDelta:0}
-    setHandleHitbox(target)
 
-    window.addEventListener('mouseup',mouseUp)
-    window.addEventListener('mousemove',mouseMove)
-    //window.addEventListener('mouseleave',mouseUp)
+  const cancelEdit = (e)=>{
+    mouseUp(null)
+    setRStart(rStartOld)
+    setRDuration(rDurationOld)
+    console.log('cancel')
   }
 
-  return(<div
+  return(<>
+  {/* {handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionOld'></div> : null} */}
+  {/* {handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionOldBuffer'></div> : null} */}
+  <div
     className={handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
     style={{width: rDuration, left: rStart}}
     onMouseDown={mouseDown}
@@ -94,47 +121,8 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     <span className='StartHandle' style={{width:resizeArea}}>|</span>
     <span style={{pointerEvents:'none'}}> {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`} </span>
     <span className='EndHandle' style={{width:resizeArea}}>|</span>  
-  </div>)
+  </div>
+  </>)
 }
 
 export default AudioRegion
-
-
-// const [mouse, setMouse] = useState({event:'up', x:undefined, xOld:undefined, target:''})
-// const mousedown = (e)=>{
-//     e.preventDefault()
-//     const offset = (audioFieldRef.current ? audioFieldRef.current.offsetLeft : 0)
-//     initialMousePos.current = (e.pageX-offset)
-//     //console.log(initialMousePos.current)
-// }
-// const mouseup = (e)=>{
-//     if(selectedRegion){
-//         const offset = (audioFieldRef.current ? audioFieldRef.current.offsetLeft : 0)
-//         setMouse({type:'up', x:(e.pageX-offset), xOld:(initialMousePos.current)})
-//         setSelectedRegion(null)
-//     }
-// }
-// const mousemove = (e)=>{
-//     if(selectedRegion){
-//        const offset = (audioFieldRef.current ? audioFieldRef.current.offsetLeft : 0)
-//        setMouse({ type:'move', x: (e.pageX-offset), xOld:(initialMousePos.current)})
-//     }
-// }
-// // useEffect(()=>{
-// //     console.log('new region select')
-// //     console.log(selectedRegion)
-// // },[selectedRegion])
-
-// useEffect(()=>{
-//     if(selectedRegion){
-//         window.addEventListener('mouseup',mouseup)
-//         window.addEventListener('mousemove',mousemove)
-//         window.addEventListener('mouseleave',mouseup)
-//     }
-
-//     return ()=>{
-//         window.removeEventListener('mouseup',mouseup)
-//         window.removeEventListener('mousemove',mousemove)
-//         window.removeEventListener('mouseleave',mouseup)
-//     }
-// },[selectedRegion])
