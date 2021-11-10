@@ -247,8 +247,8 @@ function App() {
 
   useEffect(()=>{
     if(!begun) return
-    console.log('song changed')
-    console.log(tracks)
+    // console.log('song changed')
+    // console.log(tracks)
 
     let sm = 0
     tracks.current.forEach(t => {

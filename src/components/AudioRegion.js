@@ -63,7 +63,7 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
 
       default:
         let o = snapCalc(r.left + delta)
-        if(o > 0) {
+        if(o >= 0) {
           setRStart(o)
           regionStatsPrev.current.rStart = o
         }
