@@ -20,8 +20,7 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     setRBDuration(barLength*region.rBufferDuration)
   },[region,barLength])
 
-  const mouseMove = (e)=>{
-    e.preventDefault()
+  const duringAdjust = (type,pointer)=>{
     const snapCalc = (ll)=>{
       if(snapGrain){
         let b = (barLength/snapGrain)
@@ -32,8 +31,8 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     }
 
     const r = regionStatsPrev.current
-    regionStatsPrev.current.mouseDelta += e.movementX
-    const delta = regionStatsPrev.current.mouseDelta 
+    regionStatsPrev.current.cursorDelta += pointer
+    const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
 
     switch (r.target) {
       case 'EndHandle':{
@@ -72,9 +71,12 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     }
   }
 
-  const mouseDown = (e)=>{   
-    e.preventDefault()
-    const target = e.target.className
+  const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
+  const mousemove = (e)=>{e.preventDefault();  duringAdjust('mouse',e.movementX)}
+  const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',e.touches[0].pageX)}
+  const touchup = (e)=>{endAdjust('touch')}
+  
+  const startAdjust = (type,target,cursorInitial)=>{  
     regionStatsPrev.current = {
       target, 
       left: rStart,
@@ -83,23 +85,36 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
       rbo:rBOffset,
       rbd:rBDuration,
       rrbo:rBOffset,
-      mouseDelta:0,
       rStart:rStart,
       rDuration:rDuration,
       rBOffset:rBOffset,
+      cursorDelta:0,
+      cursorInitial,
     }
     
     setRStartOld(rStart)
     setRDurationOld(rDuration)
     setHandleHitbox(target)
 
-    window.addEventListener('mouseup',mouseUp)
-    window.addEventListener('mousemove',mouseMove)
+    if(type === 'mouse'){
+      window.addEventListener('mouseup',mouseup)
+      window.addEventListener('mousemove',mousemove)
+    }
+    else{
+      document.addEventListener('touchmove', touchmove, { passive: false });
+      document.addEventListener('touchend', touchup, { passive: false });
+    }
   }
 
-  const mouseUp = (e)=>{
-    window.removeEventListener('mouseup',mouseUp)
-    window.removeEventListener('mousemove',mouseMove)
+  const endAdjust = (type)=>{
+    if(type === 'mouse'){
+      window.removeEventListener('mouseup',mouseup)
+      window.removeEventListener('mousemove',mousemove)
+    }
+    else{
+      document.removeEventListener('touchmove', touchmove, { passive: false })
+      document.removeEventListener('touchend', touchup, { passive: false });
+    }
     setHandleHitbox(null)
     if(regionStatsPrev.current.mouseDelta === 0) return
 
@@ -129,7 +144,8 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
   <div
     className={handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
     style={{width: rDuration, left: rStart}}
-    onMouseDown={mouseDown}
+    onMouseDown={(e)=>{startAdjust('mouse',e.target.className,0)}}
+    onTouchStart={(e=>{startAdjust('touch',e.target.className,e.touches[0].pageX)})}
     >
     <span className='StartHandle' style={{width:resizeArea}}>|</span>
       <span style={{pointerEvents:'none'}}> 
