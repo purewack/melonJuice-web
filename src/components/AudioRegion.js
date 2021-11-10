@@ -1,7 +1,7 @@
 import './components.css';
 import {useState,useEffect,useRef} from 'react'
 
-const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
+const AudioRegion = ({region, tracksDispatch, editorStats})=>{
 
   const [rStart, setRStart] = useState()
   const [rDuration, setRDuration] = useState()
@@ -14,16 +14,16 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
   const resizeArea = 10;
 
   useEffect(()=>{
-    setRStart(barLength*region.rStart)
-    setRDuration(barLength*region.rDuration)
-    setRBOffset(barLength*region.rBufferOffset)
-    setRBDuration(barLength*region.rBufferDuration)
-  },[region,barLength])
+    setRStart(editorStats.barLength*region.rStart)
+    setRDuration(editorStats.barLength*region.rDuration)
+    setRBOffset(editorStats.barLength*region.rBufferOffset)
+    setRBDuration(editorStats.barLength*region.rBufferDuration)
+  },[region,editorStats])
 
   const duringAdjust = (type,pointer)=>{
     const snapCalc = (ll)=>{
-      if(snapGrain){
-        let b = (barLength/snapGrain)
+      if(editorStats.snapGrain){
+        let b = (editorStats.barLength/editorStats.snapGrain)
         let l = Math.floor(ll/b)*b
         return l;
       }
@@ -118,9 +118,9 @@ const AudioRegion = ({region, tracksDispatch, barLength, snapGrain})=>{
     setHandleHitbox(null)
     if(regionStatsPrev.current.mouseDelta === 0) return
 
-    const s = regionStatsPrev.current.rStart/barLength;
-    const d = regionStatsPrev.current.rDuration/barLength;
-    const o = regionStatsPrev.current.rBOffset/barLength;
+    const s = regionStatsPrev.current.rStart/editorStats.barLength;
+    const d = regionStatsPrev.current.rDuration/editorStats.barLength;
+    const o = regionStatsPrev.current.rBOffset/editorStats.barLength;
 
     const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
     tracksDispatch({type:'update_region', updatedRegion:newRegion})

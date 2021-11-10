@@ -207,9 +207,8 @@ function tracksReducer(state,action){
 function App() {
 
   const [begun, setBegun] = useState(false)
-  const [barLength, setBarLength] = useState(50)
   const [songMeasures, setSongMeasures] = useState(16)
-  const [snapGrain, setSnapGrain] = useState(null)
+  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:50})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   const undoButtonRef = useRef()
@@ -278,7 +277,10 @@ function App() {
         max="400" 
         defaultValue="90"
         onChange={(e)=>{
-          setBarLength(Number(e.target.value))
+          setEditorStats({
+            ...editorStats, 
+            barLength:Number(e.target.value)
+          })
         }}
       />
 
@@ -290,23 +292,26 @@ function App() {
       <button 
         style={{width:100}}
         onClick={()=>{
-          if(snapGrain === null){
-            setSnapGrain(2)
+          let snap = editorStats.snapGrain
+          if(snap === null){
+            setEditorStats({...editorStats, snapGrain:2})
           }
-          else if(snapGrain < 16){
-            setSnapGrain(snapGrain*2)
+          else if(snap < 16){
+            setEditorStats({...editorStats, snapGrain:snap*2})
           }
-          else(setSnapGrain(null))
+          else{
+            setEditorStats({...editorStats, snapGrain:null})
+          }
         }}>
 
-        {snapGrain ? 'Q:'+snapGrain : 'No-snap'}
+        {editorStats.snapGrain ? 'Q:'+editorStats.snapGrain : 'No-snap'}
       </button>
 
       <br/>
 
-      <AudioField songMeasures={songMeasures ? songMeasures : 16} barLength={barLength} snapGrain={snapGrain}>
+      <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
         {tracks.current.map((track,i) => { 
-          return <AudioTrack key={i} regions={track.regions} tracksDispatch={tracksDispatch} barLength={barLength} snapGrain={snapGrain} />
+          return <AudioTrack key={i} regions={track.regions} tracksDispatch={tracksDispatch} editorStats={editorStats}/>
         })}
       </AudioField>
   </>

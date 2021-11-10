@@ -34,7 +34,7 @@
 
 import {useState,useEffect} from 'react'
 
-const AudioField = ({ songMeasures, timer, barLength, snapGrain ,children}) => {
+const AudioField = ({ songMeasures, timer, editorStats ,children}) => {
     
     const [bars, setBars] = useState()
     useEffect(()=>{
@@ -47,7 +47,7 @@ const AudioField = ({ songMeasures, timer, barLength, snapGrain ,children}) => {
             {bars && bars.map((b,i)=>{
                 return (<div key={i}
                     className='TimelineBar'
-                    style={{width:barLength}}>
+                    style={{width:editorStats.barLength}}>
                     {1+ i}
                 </div>)
             })}

@@ -1,7 +1,7 @@
 import AudioRegion from './AudioRegion';
 import './components.css';
 
-const AudioTrack = ({id, regions, tracksDispatch, armedId, barLength, snapGrain})=>{
+const AudioTrack = ({id, regions, tracksDispatch, armedId, editorStats})=>{
 
     return(<div className={armedId === id ? 'AudioTrack AudioTrackArmed' : 'AudioTrack'}>
         {regions.map((r,j) => {
@@ -9,8 +9,7 @@ const AudioTrack = ({id, regions, tracksDispatch, armedId, barLength, snapGrain}
                 key={j} 
                 region={r} 
                 tracksDispatch={tracksDispatch}
-                barLength={barLength}
-                snapGrain={snapGrain}
+                editorStats={editorStats}
             />
             return rr
             //return (r.regionId === selectedRegion.regionId ? 
