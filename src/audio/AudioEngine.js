@@ -72,12 +72,13 @@ const calculateRegionRelations = (regions) => {
       }
       else return 0
   })
-
-  return sorted.map((r,i,a) => {
-      r.rPrevId = (i>0 ? a[i-1].regionId : '')
-      r.rNextId = (i<a.length-1 ? a[i+1].regionId : '')
-      return r
-  })
+  
+  return sorted
+  // return sorted.map((r,i,a) => {
+  //     r.rPrevId = (i>0 ? a[i-1].regionId : '')
+  //     r.rNextId = (i<a.length-1 ? a[i+1].regionId : '')
+  //     return r
+  // })
 }
 
 export const AudioEngine = {
@@ -254,8 +255,6 @@ export const AudioEngine = {
       rFadeOut: 0.01,
       rPlayrate:1.0,
       rLoop:0,
-      rPrevId:'',
-      rNextId:'',
     }
   },
 

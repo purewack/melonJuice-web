@@ -1,7 +1,7 @@
 import './components.css';
 import {useState,useEffect,useRef} from 'react'
 
-const AudioRegion = ({region, tracksDispatch, editorStats})=>{
+const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStats})=>{
 
   const [rOffset, setrOffset] = useState()
   const [rDuration, setRDuration] = useState()
@@ -161,7 +161,7 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
     >
     {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeArea}}>|</span>}
       <span style={{pointerEvents:'none'}}> 
-        {/* {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`}  */}
+        {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
       </span>
     {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeArea}}>|</span> }  
   </div>

@@ -383,10 +383,12 @@ function App() {
       <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
         {tracks.current.map((track,i) => { 
           return <AudioTrack key={i}>
-            {track.regions.map((r,j) => {
+            {track.regions.map((r,j,a) => {
               return <AudioRegion 
                   key={j} 
                   region={r} 
+                  prevRegion={j>0 ? a[j-1] : null}
+                  nextRegion={j<a.length-1 ? a[j+1] : null}
                   tracksDispatch={tracksDispatch}
                   editorStats={editorStats}
               />
