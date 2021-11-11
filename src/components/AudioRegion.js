@@ -128,7 +128,7 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
       document.removeEventListener('touchend', touchup, { passive: false });
     }
     setHandleHitbox(null)
-    if(regionStatsPrev.current.mouseDelta === 0) return
+    if(regionStatsPrev.current.cursorDelta === 0) return
 
     const s = regionStatsPrev.current.rOffset/editorStats.barLength;
     const d = regionStatsPrev.current.rDuration/editorStats.barLength;

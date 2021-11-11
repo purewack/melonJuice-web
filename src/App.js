@@ -141,7 +141,6 @@ import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
-import AudioRegion from './components/AudioRegion';
 
 function tracksReducer(state,action){
   switch(action.type){
@@ -182,7 +181,7 @@ function tracksReducer(state,action){
       }
     }
     
-    case 'cutt_region':{
+    case 'cut_region':{
       const currentCopy = state.current.map(t => {
         return {...t, regions:[...t.regions]}
       })
@@ -194,8 +193,13 @@ function tracksReducer(state,action){
             let r1 = AudioEngine.cloneRegion(action.regionToCut)
             let r2 = AudioEngine.cloneRegion(action.regionToCut)
             const trackNewRegions = AudioEngine.removeRegion(outputTrack.regions, action.regionToCut)
-
-            outputTrack.regions = AudioEngine.setRegions(outputTrack.regions, trackNewRegions)
+            r1.rDuration = action.regionCutLength
+            r2.rDuration -= action.regionCutLength
+            r2.bOffset += action.regionCutLength
+            r2.rOffset += action.regionCutLength
+            r1.regionId = newid()
+            r2.regionId = newid()
+            outputTrack.regions = AudioEngine.setRegions([...trackNewRegions,r1,r2])
           }
         }) 
         return outputTrack
@@ -283,8 +287,8 @@ function App() {
 
   useEffect(()=>{
     if(!begun) return
-    // console.log('song changed')
-    // console.log(tracks)
+    console.log('song changed')
+    console.log(tracks)
 
     let sm = 0
     tracks.current.forEach(t => {

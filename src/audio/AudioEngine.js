@@ -64,10 +64,10 @@ import newid from 'uniqid';
 
 const calculateRegionRelations = (regions) => {
   let sorted = regions.slice().sort((a,b)=>{
-      if(a.rStart < b.rStart){
+      if(a.rOffset < b.rOffset){
           return -1
       }
-      else if(a.rStart > b.rStart){
+      else if(a.rOffset > b.rOffset){
           return 1
       }
       else return 0
@@ -280,11 +280,7 @@ export const AudioEngine = {
   },
   
   removeRegion(regions,region){
-    return calculateRegionRelations(regions.map(r =>{
-      if(r.regionId !== region.regionId)
-      return r
-      else
-      return null
-    }))
+    let idx = regions.indexOf(region)
+    return calculateRegionRelations(regions.filter((r,i) => i !== idx))
   }
 };
