@@ -208,7 +208,7 @@ function App() {
 
   const [begun, setBegun] = useState(false)
   const [songMeasures, setSongMeasures] = useState(16)
-  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:50})
+  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:50, toolMode:'grab'})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   const undoButtonRef = useRef()
@@ -263,6 +263,10 @@ function App() {
     redoButtonRef.current.disabled = (tracks.historyPointer === tracks.history.length-1)
   },[tracks,begun])
 
+  useEffect(()=>{ 
+    console.log(editorStats.toolMode)
+  },[editorStats])
+
   return (<>
     {!begun ? <p>Loading...</p> : 
     <> 
@@ -306,6 +310,31 @@ function App() {
 
         {editorStats.snapGrain ? 'Q:'+editorStats.snapGrain : 'No-snap'}
       </button>
+
+      <form>
+        <label>
+          <input type="radio" value="grab" 
+            checked={(editorStats.toolMode === 'grab')} 
+            onChange={e=>{
+              setEditorStats({
+                ...editorStats, 
+                toolMode: e.target.value,
+              })
+            }}/>
+          🖐
+        </label>
+        <label>
+          <input type="radio" value="cut" 
+            checked={(editorStats.toolMode === 'cut')} 
+            onChange={e=>{
+              setEditorStats({
+                ...editorStats, 
+                toolMode: e.target.value,
+              })
+            }}/>
+          ✂️
+        </label>
+      </form>
 
       <br/>
 

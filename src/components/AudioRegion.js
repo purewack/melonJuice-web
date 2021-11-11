@@ -10,6 +10,7 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
   const [rBOffset, setRBOffset] = useState()
   const [rBDuration, setRBDuration] = useState()
   const [handleHitbox, setHandleHitbox] = useState(null)
+  const [cutPos , setCutPos] = useState(null)
   const regionStatsPrev = useRef()
   const resizeArea = 10;
 
@@ -20,15 +21,24 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
     setRBDuration(editorStats.barLength*region.rBufferDuration)
   },[region,editorStats])
 
-  const duringAdjust = (type,pointer)=>{
-    const snapCalc = (ll)=>{
-      if(editorStats.snapGrain){
-        let b = (editorStats.barLength/editorStats.snapGrain)
-        let l = Math.floor(ll/b)*b
-        return l;
-      }
-      return ll
+  const snapCalc = (ll)=>{
+    if(editorStats.snapGrain){
+      let b = (editorStats.barLength/editorStats.snapGrain)
+      let l = Math.floor(ll/b)*b
+      return l;
     }
+    return ll
+  }
+
+  const cutCommit = (e)=>{
+    const newDurFirst = (cutPos/editorStats.barLength)
+    
+  }
+  const cutHover = (e)=>{
+    setCutPos(snapCalc(e.pageX - e.target.getBoundingClientRect().left))
+  }
+
+  const duringAdjust = (type,pointer)=>{
 
     const r = regionStatsPrev.current
     regionStatsPrev.current.cursorDelta += pointer
@@ -134,25 +144,33 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
   // }
 
   return(<>
-  {
-    (handleHitbox === 'StartHandle' || handleHitbox === 'EndHandle') 
-    ? <div style={{left: rStartOld-regionStatsPrev.current.rrbo, width: rBDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> 
-    : (
-      handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
-    )
-  }
   <div
-    className={handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion'} 
     style={{width: rDuration, left: rStart}}
-    onMouseDown={(e)=>{startAdjust('mouse',e.target.className,0)}}
-    onTouchStart={(e=>{startAdjust('touch',e.target.className,e.touches[0].pageX)})}
+    className={
+      editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
+      (handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
+    } 
+    onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse',e.target.className,0)} : cutCommit}
+    onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
+    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : null}
+    onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : null}
+    // onTouchStart={(e=>{startAdjust('touch',e.target.className,e.touches[0].pageX)})}
     >
-    <span className='StartHandle' style={{width:resizeArea}}>|</span>
+    {editorStats.toolMode === 'grab' && <span className='StartHandle' style={{width:resizeArea}}>|</span>}
       <span style={{pointerEvents:'none'}}> 
         {/* {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`}  */}
       </span>
-    <span className='EndHandle' style={{width:resizeArea}}>|</span>  
+    {editorStats.toolMode === 'grab' && <span className='EndHandle' style={{width:resizeArea}}>|</span> }  
   </div>
+
+  {
+    (editorStats.toolMode === 'cut' && cutPos) ? <div style={{left:rStart+cutPos}} className='AudioRegionCutIndicator'></div> :
+    
+    (handleHitbox === 'StartHandle' || handleHitbox === 'EndHandle') 
+    ? <div style={{left: rStartOld-regionStatsPrev.current.rrbo, width: rBDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> 
+    : handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
+     
+  }
   </>)
 }
 

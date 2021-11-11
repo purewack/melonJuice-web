@@ -17,7 +17,13 @@ html{
     align-items: center;
     z-index: 1;
 }
-
+.AudioRegionCutIndicator {
+    position: absolute;
+    height:70px;
+    border-left: solid red 2px;
+    z-index: 10;
+    pointer-events: none;
+}
 .AudioRegionGhostMove{
     pointer-events: none;
     z-index: 20;
@@ -52,6 +58,10 @@ html{
 .AudioRegion:hover {
     cursor: grab;
 }
+.AudioRegionCut:hover {
+    cursor: pointer;
+}
+
 
 .AudioTrack{
     background:cyan;
