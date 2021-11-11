@@ -37,7 +37,7 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (e)=>{
-    setCutPos(snapCalc(e.pageX - e.target.getBoundingClientRect().left))
+    setCutPos(snapCalc(e.clientX - e.target.getBoundingClientRect().left))
   }
 
   const duringAdjust = (type,pointer)=>{
