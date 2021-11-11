@@ -41,7 +41,7 @@ const AudioField = ({ songMeasures, timer, editorStats ,children}) => {
         setBars(Array(songMeasures).fill(null))
     },[songMeasures])
 
-    return(<div className='AudioField' style={{backgroundColor:'red'}} >
+    return(<div className='AudioField' >
         <span className='Timeline'>
             {/* <div className='Playhead'></div>  */}
             {bars && bars.map((b,i)=>{

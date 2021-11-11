@@ -31,6 +31,15 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
     return ll
   }
 
+  const isNeighbourClear = (s,e)=>{
+    const p = prevRegion ?  (prevRegion.rOffset+prevRegion.rDuration)*editorStats.barLength : null
+    const n = nextRegion ?  nextRegion.rOffset*editorStats.barLength : null
+    const offsetPrev = p ? s - p : null
+    const offsetNext = n ? n - e : null
+    console.log({s,e,offsetPrev,offsetNext})
+    return (offsetPrev >= 0 && offsetNext >= 0)
+  }
+
   const cutCommit = (e)=>{
     const cutPosCommit = (cutPos/editorStats.barLength)
     console.log(cutPosCommit)
@@ -51,7 +60,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
       case 'EndHandle':{
           const d = snapCalc(r.right + delta) - r.left
           const max = (rBDuration-rBOffset)
-          if(d <= max){
+          if(d <= max && isNeighbourClear(r.left,d+r.left)){
             setRDuration(d)
             regionStatsPrev.current.rDuration = d
           }
@@ -62,7 +71,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
           const d = snapCalc(r.left + delta)
           const o = r.rrbo+(d-r.left)
 
-          if( o >= 0 && d < r.right-resizeArea ){
+          if( o >= 0 && d < r.right-resizeArea && isNeighbourClear(d,r.right)){
             regionStatsPrev.current.rbo = o
             setRBOffset(o)
             setrOffset(d)
@@ -75,7 +84,8 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
         break;
 
       default:
-        let o = snapCalc(r.left + delta)
+        const o = snapCalc(r.left + delta)
+        // if(o >= 0 && isNeighbourClear(o,o+rDuration)) {
         if(o >= 0) {
           setrOffset(o)
           regionStatsPrev.current.rOffset = o
@@ -130,12 +140,11 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
     }
     setHandleHitbox(null)
     if(regionStatsPrev.current.cursorDelta === 0) return
-
     const s = regionStatsPrev.current.rOffset/editorStats.barLength;
     const d = regionStatsPrev.current.rDuration/editorStats.barLength;
     const o = regionStatsPrev.current.rBOffset/editorStats.barLength;
-
     const newRegion = {...region, rOffset:s, rDuration:d, bOffset:o}
+
     tracksDispatch({type:'update_region', updatedRegion:newRegion})
   }  
 
