@@ -363,7 +363,18 @@ function App() {
                 toolMode: e.target.value,
               })
             }}/>
-          🖐
+          🖐 Grab
+        </label>
+        <label>
+          <input type="radio" value="fade" 
+            checked={(editorStats.toolMode === 'fade')} 
+            onChange={e=>{
+              setEditorStats({
+                ...editorStats, 
+                toolMode: e.target.value,
+              })
+            }}/>
+          🌗 Fade
         </label>
         <label>
           <input type="radio" value="cut" 
@@ -374,7 +385,7 @@ function App() {
                 toolMode: e.target.value,
               })
             }}/>
-          ✂️
+          ✂️ Split
         </label>
       </form>
 
