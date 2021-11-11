@@ -1,6 +1,20 @@
-export const intersectCheck = (colider_start, colider_end, target_start, target_end) => {
-    return ( 
-        (colider_start+colider_end >= target_start && colider_start+colider_end <= target_start+target_end) 
-        || (colider_start >= target_start && colider_start <= target_start+target_end) 
-    )
+export const isOverlapping = (a,b, c,d) => {
+    console.log({a,b,c,d})
+    return !(a > d || c > b)
+
+    //   A-----B
+    // C---------D
+    //
+    // A--------B
+    //   C----D
+    //
+    //   A----------B
+    // C---------D
+    //
+    // A--------B
+    //   C---------D
+    //
+    //            A---------B  C-------D
+    // C-------D  A---------B
+    //return (as+aw >= bs && as+aw <= bs+bw) || (as >= bs && as <= bs+bw) || (as <= bs && as+aw >= bs+bw) || (as >= bs && as+aw <= bs+bw)
 }

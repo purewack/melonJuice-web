@@ -137,6 +137,7 @@
 
 import './App.css';
 import { useState, useEffect, useReducer, useRef} from 'react';
+import { isOverlapping } from './Util';
 import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
@@ -156,15 +157,28 @@ function tracksReducer(state,action){
         return {...t, regions:[...t.regions]}
       })
 
+      let moveAllowed = true
       const newMove = currentCopy.map(t => {
         let outputTrack = t
+        const u = action.updatedRegion
+        
         t.regions.forEach(r => {
-          if(r.regionId === action.updatedRegion.regionId){
+          if(r.regionId === u.regionId){
+            outputTrack.regions.forEach(r => {
+              if(u.regionId !== r.regionId)
+              if(isOverlapping(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)) moveAllowed = false
+            })
+            if(moveAllowed)
             outputTrack.regions = AudioEngine.updateRegion(outputTrack.regions, action.updatedRegion)
           }
         }) 
+        
         return outputTrack
       })
+
+      if(!moveAllowed){
+        return {...state,lastMoveLegal:false}
+      }
 
       if(state.historyPointer !== state.history.length-1){
         //console.log(state.history.slice(0,state.historyPointer+1))
@@ -172,6 +186,7 @@ function tracksReducer(state,action){
           historyPointer: state.historyPointer+1,
           history:  [...state.history.slice(0,state.historyPointer+1), newMove],
           current: newMove,
+          lastMoveLegal:true,
         }
       }
 
@@ -179,6 +194,7 @@ function tracksReducer(state,action){
         historyPointer: state.historyPointer+1,
         history:  [...state.history, newMove],
         current: newMove,
+        lastMoveLegal:true,
       }
     }
     
@@ -290,6 +306,9 @@ function App() {
     if(!begun) return
     console.log('song changed')
     console.log(tracks)
+    if(!tracks.lastMoveLegal){
+      setEditorStats({...editorStats, lastMoveLegal:false})
+    }
 
     let sm = 0
     tracks.current.forEach(t => {
