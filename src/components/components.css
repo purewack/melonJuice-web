@@ -144,7 +144,7 @@ html{
     position:absolute;
     z-index: 100;
     width:1px;
-    height:800px;
+    height:100vh;
     left:20%;
     background-color: red;
     border:solid red 1px;

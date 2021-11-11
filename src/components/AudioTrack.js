@@ -1,23 +1,9 @@
-import AudioRegion from './AudioRegion';
 import './components.css';
 
-const AudioTrack = ({id, regions, tracksDispatch, armedId, editorStats})=>{
+const AudioTrack = ({id, armedId, children})=>{
 
     return(<div className={armedId === id ? 'AudioTrack AudioTrackArmed' : 'AudioTrack'}>
-        {regions.map((r,j) => {
-            let rr = <AudioRegion 
-                key={j} 
-                region={r} 
-                tracksDispatch={tracksDispatch}
-                editorStats={editorStats}
-            />
-            return rr
-            //return (r.regionId === selectedRegion.regionId ? 
-            // <SelectedIndicator>
-            //     {rr}
-            // </SelectedIndicator>   
-            // : rr)
-        })}
+        {children}
     </div>)
 }
 

@@ -141,6 +141,7 @@ import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
+import AudioRegion from './components/AudioRegion';
 
 function tracksReducer(state,action){
   switch(action.type){
@@ -381,7 +382,16 @@ function App() {
 
       <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
         {tracks.current.map((track,i) => { 
-          return <AudioTrack key={i} regions={track.regions} tracksDispatch={tracksDispatch} editorStats={editorStats}/>
+          return <AudioTrack key={i}>
+            {track.regions.map((r,j) => {
+              return <AudioRegion 
+                  key={j} 
+                  region={r} 
+                  tracksDispatch={tracksDispatch}
+                  editorStats={editorStats}
+              />
+            })}
+            </AudioTrack>
         })}
       </AudioField>
   </>
