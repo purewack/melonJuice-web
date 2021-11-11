@@ -11,6 +11,7 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
   const [rBDuration, setRBDuration] = useState()
   const [handleHitbox, setHandleHitbox] = useState(null)
   const [cutPos , setCutPos] = useState(null)
+  const [isHovering, setIsHovering] = useState(false)
   const regionStatsPrev = useRef()
   const resizeArea = 10;
 
@@ -61,7 +62,7 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
           const d = snapCalc(r.left + delta)
           const o = r.rrbo+(d-r.left)
 
-          if( o >= 0 ){
+          if( o >= 0 && d < r.right-resizeArea ){
             regionStatsPrev.current.rbo = o
             setRBOffset(o)
             setrOffset(d)
@@ -154,15 +155,15 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
     } 
     onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse',e.target.className,0)} : cutCommit}
     onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
-    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : null}
-    onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : null}
+    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : (e)=>{setIsHovering(true)}}
+    onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
     // onTouchStart={(e=>{startAdjust('touch',e.target.className,e.touches[0].pageX)})}
     >
-    {editorStats.toolMode === 'grab' && <span className='StartHandle' style={{width:resizeArea}}>|</span>}
+    {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeArea}}>|</span>}
       <span style={{pointerEvents:'none'}}> 
         {/* {`${region.rPrevId && region.rPrevId.slice(-2)} < ${region.regionId.slice(-2)} > ${region.rNextId && region.rNextId.slice(-2)}`}  */}
       </span>
-    {editorStats.toolMode === 'grab' && <span className='EndHandle' style={{width:resizeArea}}>|</span> }  
+    {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeArea}}>|</span> }  
   </div>
 
   {
