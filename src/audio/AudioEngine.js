@@ -58,7 +58,7 @@
 //     setRecording(false)
 //   }
 
-import * as Tone from 'tone'
+//import * as Tone from 'tone'
 import newid from 'uniqid';
 
 
@@ -90,15 +90,17 @@ export const AudioEngine = {
   connections: [],
     
   init() {
-    let ac = this.actx  = Tone.getContext().rawContext._nativeContext
-      console.log(ac)
+    
+    //let ac = this.actx  = Tone.getContext().rawContext._nativeContext
+    let ac
+    console.log(ac)
         console.log(new AudioContext())
     // ac.name = 'con'
     //   console.log(ac)
     //   console.log(Tone.context)
     // Tone.setContext(ac)
     //   console.log(Tone.context)
-    this.tonejs = Tone;
+    //this.tonejs = Tone;
     this.player = new this.tonejs.Player()
     this.player.toDestination()
 
@@ -255,6 +257,10 @@ export const AudioEngine = {
       rPrevId:'',
       rNextId:'',
     }
+  },
+
+  cloneRegion(clonee){
+    return {...clonee}
   },
 
   pushRegion(regions,region){

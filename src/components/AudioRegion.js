@@ -31,8 +31,10 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
   }
 
   const cutCommit = (e)=>{
-    const newDurFirst = (cutPos/editorStats.barLength)
-    
+    const cutPosCommit = (cutPos/editorStats.barLength)
+    console.log(cutPosCommit)
+    console.log(region)
+    tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (e)=>{
     setCutPos(snapCalc(e.pageX - e.target.getBoundingClientRect().left))

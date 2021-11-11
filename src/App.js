@@ -141,6 +141,7 @@ import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
+import AudioRegion from './components/AudioRegion';
 
 function tracksReducer(state,action){
   switch(action.type){
@@ -150,7 +151,7 @@ function tracksReducer(state,action){
     case 'load':
       return {current: [...action.tracks], history: [[...action.tracks]], historyPointer:0}
 
-    case 'update_region':
+    case 'update_region':{
       const currentCopy = state.current.map(t => {
         return {...t, regions:[...t.regions]}
       })
@@ -179,7 +180,43 @@ function tracksReducer(state,action){
         history:  [...state.history, newMove],
         current: newMove,
       }
+    }
     
+    case 'cutt_region':{
+      const currentCopy = state.current.map(t => {
+        return {...t, regions:[...t.regions]}
+      })
+
+      const newMove = currentCopy.map(t => {
+        let outputTrack = t
+        t.regions.forEach(r => {
+          if(r.regionId === action.regionToCut.regionId){
+            let r1 = AudioEngine.cloneRegion(action.regionToCut)
+            let r2 = AudioEngine.cloneRegion(action.regionToCut)
+            const trackNewRegions = AudioEngine.removeRegion(outputTrack.regions, action.regionToCut)
+
+            outputTrack.regions = AudioEngine.setRegions(outputTrack.regions, trackNewRegions)
+          }
+        }) 
+        return outputTrack
+      })
+
+      if(state.historyPointer !== state.history.length-1){
+        //console.log(state.history.slice(0,state.historyPointer+1))
+        return {
+          historyPointer: state.historyPointer+1,
+          history:  [...state.history.slice(0,state.historyPointer+1), newMove],
+          current: newMove,
+        }
+      }
+
+      return {
+        historyPointer: state.historyPointer+1,
+        history:  [...state.history, newMove],
+        current: newMove,
+      }
+    }
+
     case 'undo':
       if(state.historyPointer > 0){
         return {
