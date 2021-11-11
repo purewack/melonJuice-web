@@ -3,9 +3,9 @@ import {useState,useEffect,useRef} from 'react'
 
 const AudioRegion = ({region, tracksDispatch, editorStats})=>{
 
-  const [rStart, setRStart] = useState()
+  const [rOffset, setrOffset] = useState()
   const [rDuration, setRDuration] = useState()
-  const [rStartOld, setRStartOld] = useState()
+  const [rOffsetOld, setrOffsetOld] = useState()
   const [rDurationOld, setRDurationOld] = useState()
   const [rBOffset, setRBOffset] = useState()
   const [rBDuration, setRBDuration] = useState()
@@ -15,10 +15,10 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
   const resizeArea = 10;
 
   useEffect(()=>{
-    setRStart(editorStats.barLength*region.rStart)
+    setrOffset(editorStats.barLength*region.rOffset)
     setRDuration(editorStats.barLength*region.rDuration)
-    setRBOffset(editorStats.barLength*region.rBufferOffset)
-    setRBDuration(editorStats.barLength*region.rBufferDuration)
+    setRBOffset(editorStats.barLength*region.bOffset)
+    setRBDuration(editorStats.barLength*region.bDuration)
   },[region,editorStats])
 
   const snapCalc = (ll)=>{
@@ -64,10 +64,10 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
           if( o >= 0 ){
             regionStatsPrev.current.rbo = o
             setRBOffset(o)
-            setRStart(d)
+            setrOffset(d)
             setRDuration(r.right-d)
             regionStatsPrev.current.rBOffset = o
-            regionStatsPrev.current.rStart = d
+            regionStatsPrev.current.rOffset = d
             regionStatsPrev.current.rDuration = r.right-d
           }
         }
@@ -76,8 +76,8 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
       default:
         let o = snapCalc(r.left + delta)
         if(o >= 0) {
-          setRStart(o)
-          regionStatsPrev.current.rStart = o
+          setrOffset(o)
+          regionStatsPrev.current.rOffset = o
         }
         break;
     }
@@ -91,20 +91,20 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
   const startAdjust = (type,target,cursorInitial)=>{  
     regionStatsPrev.current = {
       target, 
-      left: rStart,
+      left: rOffset,
       width: rDuration, 
-      right:rStart+rDuration, 
+      right:rOffset+rDuration, 
       rbo:rBOffset,
       rbd:rBDuration,
       rrbo:rBOffset,
-      rStart:rStart,
+      rOffset:rOffset,
       rDuration:rDuration,
       rBOffset:rBOffset,
       cursorDelta:0,
       cursorInitial,
     }
     
-    setRStartOld(rStart)
+    setrOffsetOld(rOffset)
     setRDurationOld(rDuration)
     setHandleHitbox(target)
 
@@ -130,24 +130,24 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
     setHandleHitbox(null)
     if(regionStatsPrev.current.mouseDelta === 0) return
 
-    const s = regionStatsPrev.current.rStart/editorStats.barLength;
+    const s = regionStatsPrev.current.rOffset/editorStats.barLength;
     const d = regionStatsPrev.current.rDuration/editorStats.barLength;
     const o = regionStatsPrev.current.rBOffset/editorStats.barLength;
 
-    const newRegion = {...region, rStart:s, rDuration:d, rBufferOffset:o}
+    const newRegion = {...region, rOffset:s, rDuration:d, bOffset:o}
     tracksDispatch({type:'update_region', updatedRegion:newRegion})
   }  
 
   // const cancelEdit = (e)=>{
   //   mouseUp(null)
-  //   setRStart(rStartOld)
+  //   setrOffset(rOffsetOld)
   //   setRDuration(rDurationOld)
   //   console.log('cancel')
   // }
 
   return(<>
   <div
-    style={{width: rDuration, left: rStart}}
+    style={{width: rDuration, left: rOffset}}
     className={
       editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
       (handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
@@ -166,11 +166,11 @@ const AudioRegion = ({region, tracksDispatch, editorStats})=>{
   </div>
 
   {
-    (editorStats.toolMode === 'cut' && cutPos) ? <div style={{left:rStart+cutPos}} className='AudioRegionCutIndicator'></div> :
+    (editorStats.toolMode === 'cut' && cutPos) ? <div style={{left:rOffset+cutPos}} className='AudioRegionCutIndicator'></div> :
     
     (handleHitbox === 'StartHandle' || handleHitbox === 'EndHandle') 
-    ? <div style={{left: rStartOld-regionStatsPrev.current.rrbo, width: rBDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> 
-    : handleHitbox ? <div style={{width: rDurationOld, left: rStartOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
+    ? <div style={{left: rOffsetOld-regionStatsPrev.current.rrbo, width: rBDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> 
+    : handleHitbox ? <div style={{width: rDurationOld, left: rOffsetOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
      
   }
   </>)

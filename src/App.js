@@ -290,7 +290,7 @@ function App() {
     tracks.current.forEach(t => {
       if(t.regions.length){
         const r = t.regions[t.regions.length-1]
-        const d = r.rStart + r.rDuration
+        const d = r.rOffset + r.rDuration
         if(d > sm) sm = d
       }
     })

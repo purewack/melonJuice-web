@@ -202,17 +202,17 @@ export const AudioEngine = {
       return;
     }
     
-    this.tracks.forEach(tr => {
-      tr.regions.forEach(reg => {
-        this.tonejs.Transport.schedule(t => {
-            tr.player.buffer = this.bufferPool[reg.bufferId]
-            tr.player.start(t,reg.timeBufferOffset,reg.timeDuration)
-            tr.envelope.attack = reg.timeFadeIn
-            tr.envelope.release = reg.timeFadeOut
-            tr.envelope.triggerAttackRelease(reg.timeDuration - reg.timeFadeOut)
-        }, reg.timeStart)
-      })
-    })
+    // this.tracks.forEach(tr => {
+    //   tr.regions.forEach(reg => {
+    //     this.tonejs.Transport.schedule(t => {
+    //         tr.player.buffer = this.bufferPool[reg.bufferId]
+    //         tr.player.start(t,reg.bOffset,reg.rDuration)
+    //         tr.envelope.attack = reg.timeFadeIn
+    //         tr.envelope.release = reg.timeFadeOut
+    //         tr.envelope.triggerAttackRelease(reg.rDuration - reg.timeFadeOut)
+    //     }, reg.timeStart)
+    //   })
+    // })
 
     this.tonejs.Transport.scheduleRepeat(()=>{
       setTransportLabel(this.tonejs.Transport.position)
@@ -242,13 +242,13 @@ export const AudioEngine = {
     return t
   },
 
-  newRegion(bufferId, start, duration){
+  newRegion(bufferId, offset, duration){
     return {
       regionId: newid(),
       bufferId: bufferId,
-      rBufferOffset:0,
-      rBufferDuration:duration,
-      rStart:start,
+      bOffset:0,
+      bDuration:duration,
+      rOffset:offset,
       rDuration:duration,
       rFadeIn: 0.01,
       rFadeOut: 0.01,
