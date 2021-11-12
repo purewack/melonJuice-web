@@ -251,8 +251,8 @@ export const AudioEngine = {
       bDuration:duration,
       rOffset:offset,
       rDuration:duration,
-      rFadeIn: 0.01,
-      rFadeOut: 0.01,
+      rFadeIn: 0.125,
+      rFadeOut: 0.125,
       rPlayrate:1.0,
       rLoop:0,
     }

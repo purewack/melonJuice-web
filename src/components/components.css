@@ -16,6 +16,13 @@ html{
     justify-content: space-between;
     align-items: center;
     z-index: 1;
+    overflow: hidden;
+    border-radius: 10px;
+}
+ svg {
+    position: absolute;
+    left:0;
+    top:0;
 }
 .AudioRegionCutIndicator {
     position: absolute;
@@ -92,6 +99,7 @@ html{
     display:inline-block;
 }
 
+
 .TrackTool{
     z-index: 9;
     background:yellow;
@@ -136,7 +144,7 @@ html{
 }
 .Timeline .TimelineBar{
     display:inline-block;
-    border:solid gray 1px;
+    border-left:solid gray 1px;
     position: relative;
     height:2rem;
 }

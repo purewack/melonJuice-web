@@ -306,9 +306,9 @@ function App() {
     if(!begun) return
     console.log('song changed')
     console.log(tracks)
-    if(!tracks.lastMoveLegal){
-      setEditorStats({...editorStats, lastMoveLegal:false})
-    }
+    // if(!tracks.lastMoveLegal){
+    //   setEditorStats({...editorStats, lastMoveLegal:false})
+    // }
 
     let sm = 0
     tracks.current.forEach(t => {
@@ -426,6 +426,8 @@ function App() {
             </AudioTrack>
         })}
       </AudioField>
+
+     
   </>
   }
   </>);

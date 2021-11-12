@@ -1,5 +1,5 @@
 import './components.css';
-import {useState,useEffect,useRef} from 'react'
+import {useState,useEffect,useRef, useReducer} from 'react'
 
 const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStats})=>{
 
@@ -9,18 +9,30 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
   const [rDurationOld, setRDurationOld] = useState()
   const [rBOffset, setRBOffset] = useState()
   const [rBDuration, setRBDuration] = useState()
+  const [fadeIn, setFadeIn] = useState(0)
+  const [fadeOut, setFadeOut] = useState(0)
   const [handleHitbox, setHandleHitbox] = useState(null)
   const [cutPos , setCutPos] = useState(null)
   const [isHovering, setIsHovering] = useState(false)
   const regionStatsPrev = useRef()
   const resizeArea = 10;
+  const audioRegionRef = useRef()
+  const [height, setHeight] = useState(0)
 
   useEffect(()=>{
     setrOffset(editorStats.barLength*region.rOffset)
     setRDuration(editorStats.barLength*region.rDuration)
     setRBOffset(editorStats.barLength*region.bOffset)
     setRBDuration(editorStats.barLength*region.bDuration)
+    setFadeIn(region.rFadeIn*editorStats.barLength)
+    setFadeOut(region.rFadeOut*editorStats.barLength)
+    // setFadeIn(100)
+    // setFadeOut(30)
   },[region,editorStats])
+
+  useEffect(()=>{
+    setHeight(audioRegionRef.current ? audioRegionRef.current.getBoundingClientRect().height : 0)
+  },[audioRegionRef])
 
   const snapCalc = (ll)=>{
     if(editorStats.snapGrain){
@@ -157,6 +169,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
 
   return(<>
   <div
+    ref={audioRegionRef}
     style={{width: rDuration, left: rOffset}}
     className={
       editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
@@ -168,9 +181,15 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
     // onTouchStart={(e=>{startAdjust('touch',e.target.className,e.touches[0].pageX)})}
     >
+    <svg style={{pointerEvents:"none"}} width={rDuration} height={height}>
+      <line x1={0} x2={rDuration-1} y1={height/2} y2={height/2} stroke="white"></line>
+      <polygon points={`0,0 0,${height} ${fadeIn},0`} fill="blue"></polygon>
+      <polygon points={`${rDuration},0 ${rDuration},${height} ${rDuration - (fadeOut)},0`} fill="blue"></polygon>
+
+    </svg>
     {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeArea}}>|</span>}
       <span style={{pointerEvents:'none'}}> 
-        {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
+        {/* {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`}  */}
       </span>
     {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeArea}}>|</span> }  
   </div>
