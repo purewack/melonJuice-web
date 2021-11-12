@@ -83,7 +83,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
           const d = snapCalc(r.left + delta)
           const o = r.rrbo+(d-r.left)
 
-          if( o >= 0 && d < r.right-resizeArea && isNeighbourClear(d,r.right)){
+          if( d >= 0 && o >= 0 && d < r.right-resizeArea && isNeighbourClear(d,r.right)){
             regionStatsPrev.current.rbo = o
             setRBOffset(o)
             setrOffset(d)
@@ -188,9 +188,9 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
 
     </svg>
     {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeArea}}>|</span>}
-      <span style={{pointerEvents:'none'}}> 
-        {/* {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`}  */}
-      </span>
+      {/* <span style={{pointerEvents:'none'}}> 
+        {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
+      </span> */}
     {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeArea}}>|</span> }  
   </div>
 
