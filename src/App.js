@@ -154,7 +154,7 @@ function tracksReducer(state,action){
 
     case 'update_region':{
       const currentCopy = state.current.map(t => {
-        return {...t, regions:[...t.regions]}
+        return {...t, regions:[...t.regions.map(r => {return {...r}})]}
       })
 
       let moveAllowed = true
@@ -168,8 +168,9 @@ function tracksReducer(state,action){
               if(u.regionId !== r.regionId)
               if(isOverlapping(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)) moveAllowed = false
             })
-            if(moveAllowed)
+            if(moveAllowed){
             outputTrack.regions = AudioEngine.updateRegion(outputTrack.regions, action.updatedRegion)
+            }
           }
         }) 
         
@@ -177,7 +178,7 @@ function tracksReducer(state,action){
       })
 
       if(!moveAllowed){
-        return {...state,lastMoveLegal:false}
+        return {...state, current:currentCopy, lastMoveLegal:false}
       }
 
       if(state.historyPointer !== state.history.length-1){
@@ -276,24 +277,24 @@ function App() {
     if(!begun) {
       let ttt = [
         AudioEngine.newTrack(),
-        AudioEngine.newTrack(),
-        AudioEngine.newTrack(),
+        //AudioEngine.newTrack(),
+        //AudioEngine.newTrack(),
       ]
 
       ttt[0].regions = AudioEngine.setRegions([
         AudioEngine.newRegion(newid(),10,1),
         AudioEngine.newRegion(newid(),0,2),
-        AudioEngine.newRegion(newid(),3,4),
+        //AudioEngine.newRegion(newid(),3,4),
       ])
 
-      ttt[1].regions =  AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),0,2),
-        AudioEngine.newRegion(newid(),5,5),
-      ])
+      // ttt[1].regions =  AudioEngine.setRegions([
+      //   AudioEngine.newRegion(newid(),0,2),
+      //   AudioEngine.newRegion(newid(),5,5),
+      // ])
 
-      ttt[2].regions =  AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),1,10),
-      ])
+      // ttt[2].regions =  AudioEngine.setRegions([
+      //   AudioEngine.newRegion(newid(),1,10),
+      // ])
 
       tracksDispatch({type:'load', tracks:ttt})
       setSongTitle('test_init_regions')
@@ -306,9 +307,7 @@ function App() {
     if(!begun) return
     console.log('song changed')
     console.log(tracks)
-    // if(!tracks.lastMoveLegal){
-    //   setEditorStats({...editorStats, lastMoveLegal:false})
-    // }
+    //setEditorStats({...editorStats,lastMoveLegal:tracks.lastMoveLegal})
 
     let sm = 0
     tracks.current.forEach(t => {
@@ -412,7 +411,7 @@ function App() {
 
       <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
         {tracks.current.map((track,i) => { 
-          return <AudioTrack key={i}>
+          return <AudioTrack key={i} id={track.id}>
             {track.regions.map((r,j,a) => {
               return <AudioRegion 
                   key={j} 

@@ -1,5 +1,6 @@
 import './components.css';
-import {useState,useEffect,useRef, useReducer} from 'react'
+import {useState,useEffect,useRef} from 'react'
+import { logcss, useRenders } from '../Util';
 
 const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStats})=>{
 
@@ -19,6 +20,9 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
   const audioRegionRef = useRef()
   const [height, setHeight] = useState(0)
 
+  console.log(`id:${region.regionId} off:${region.rOffset}`)
+  //useRenders(region.regionId,'yellow')
+
   useEffect(()=>{
     setrOffset(editorStats.barLength*region.rOffset)
     setRDuration(editorStats.barLength*region.rDuration)
@@ -28,6 +32,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
     setFadeOut(region.rFadeOut*editorStats.barLength)
     // setFadeIn(100)
     // setFadeOut(30)
+    console.log({lbl:'new region/editorStats',region})
   },[region,editorStats])
 
   useEffect(()=>{
