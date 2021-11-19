@@ -267,7 +267,7 @@ function App() {
 
   const [begun, setBegun] = useState(false)
   const [songMeasures, setSongMeasures] = useState(16)
-  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:50, toolMode:'grab'})
+  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:50, trackHeight:60, toolMode:'grab'})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   const undoButtonRef = useRef()
@@ -277,20 +277,20 @@ function App() {
     if(!begun) {
       let ttt = [
         AudioEngine.newTrack(),
-        //AudioEngine.newTrack(),
-        //AudioEngine.newTrack(),
+        AudioEngine.newTrack(),
+        AudioEngine.newTrack(),
       ]
 
-      ttt[0].regions = AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),10,1),
-        AudioEngine.newRegion(newid(),0,2),
-        //AudioEngine.newRegion(newid(),3,4),
-      ])
-
-      // ttt[1].regions =  AudioEngine.setRegions([
+      // ttt[0].regions = AudioEngine.setRegions([
+      //   AudioEngine.newRegion(newid(),10,1),
       //   AudioEngine.newRegion(newid(),0,2),
-      //   AudioEngine.newRegion(newid(),5,5),
+      //   //AudioEngine.newRegion(newid(),3,4),
       // ])
+
+      ttt[1].regions =  AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),0,2),
+        AudioEngine.newRegion(newid(),5,5),
+      ])
 
       // ttt[2].regions =  AudioEngine.setRegions([
       //   AudioEngine.newRegion(newid(),1,10),
@@ -308,7 +308,9 @@ function App() {
     console.log('song changed')
     console.log(tracks)
     //setEditorStats({...editorStats,lastMoveLegal:tracks.lastMoveLegal})
-
+ 
+ 
+    //calc song length based on longest most further away clip
     let sm = 0
     tracks.current.forEach(t => {
       if(t.regions.length){
@@ -410,14 +412,15 @@ function App() {
       <br/>
 
       <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
-        {tracks.current.map((track,i) => { 
-          return <AudioTrack key={i} id={track.id}>
+        {tracks.current.map((track,i,tt) => { 
+          return <AudioTrack key={i} id={track.id} editorStats={editorStats}>
             {track.regions.map((r,j,a) => {
               return <AudioRegion 
                   key={j} 
                   region={r} 
                   prevRegion={j>0 ? a[j-1] : null}
                   nextRegion={j<a.length-1 ? a[j+1] : null}
+                  trackInfo={{idx:i, max:tt.length}}
                   tracksDispatch={tracksDispatch}
                   editorStats={editorStats}
               />

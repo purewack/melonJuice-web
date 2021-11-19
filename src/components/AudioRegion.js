@@ -2,7 +2,7 @@ import './components.css';
 import {useState,useEffect,useRef} from 'react'
 import { logcss, useRenders } from '../Util';
 
-const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStats})=>{
+const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{
 
   const [rOffset, setrOffset] = useState()
   const [rDuration, setRDuration] = useState()
@@ -13,17 +13,17 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
   const [fadeIn, setFadeIn] = useState(0)
   const [fadeOut, setFadeOut] = useState(0)
   const [handleHitbox, setHandleHitbox] = useState(null)
+  const [maxHeight, setMaxHeight] = useState(0)
+  const [dragVOffset, setDragVOffset] = useState(0)
   const [cutPos , setCutPos] = useState(null)
   const [isHovering, setIsHovering] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const regionStatsPrev = useRef()
-  const resizeArea = 10;
-  const audioRegionRef = useRef()
-  const [height, setHeight] = useState(0)
+  const resizeHandleArea = 10;
 
-  console.log(`id:${region.regionId} off:${region.rOffset}`)
-  //useRenders(region.regionId,'yellow')
 
   useEffect(()=>{
+    setDragVOffset(0)
     setrOffset(editorStats.barLength*region.rOffset)
     setRDuration(editorStats.barLength*region.rDuration)
     setRBOffset(editorStats.barLength*region.bOffset)
@@ -32,12 +32,15 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
     setFadeOut(region.rFadeOut*editorStats.barLength)
     // setFadeIn(100)
     // setFadeOut(30)
-    console.log({lbl:'new region/editorStats',region})
+    setMaxHeight(editorStats.trackHeight)
+    
   },[region,editorStats])
 
-  useEffect(()=>{
-    setHeight(audioRegionRef.current ? audioRegionRef.current.getBoundingClientRect().height : 0)
-  },[audioRegionRef])
+  const snapVCalc = (ll)=>{
+    let b = (maxHeight)
+    let l = Math.floor(ll/b)*b
+    return l;
+  }
 
   const snapCalc = (ll)=>{
     if(editorStats.snapGrain){
@@ -53,7 +56,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
     const n = nextRegion ?  nextRegion.rOffset*editorStats.barLength : null
     const offsetPrev = p ? s - p : null
     const offsetNext = n ? n - e : null
-    console.log({s,e,offsetPrev,offsetNext})
+    //console.log({s,e,offsetPrev,offsetNext})
     return (offsetPrev >= 0 && offsetNext >= 0)
   }
 
@@ -70,12 +73,16 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
   const duringAdjust = (type,pointer)=>{
 
     const r = regionStatsPrev.current
-    regionStatsPrev.current.cursorDelta += pointer
-    const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
+    regionStatsPrev.current.cursorDelta.x = pointer.x - regionStatsPrev.current.cursorInitial.x
+    regionStatsPrev.current.cursorDelta.y = pointer.y - regionStatsPrev.current.cursorInitial.y
+    const deltax = regionStatsPrev.current.cursorDelta.x
+    const deltay = regionStatsPrev.current.cursorDelta.y
+    // console.log({deltax,deltay:snapVCalc(deltay)})
+    // const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
 
     switch (r.target) {
       case 'EndHandle':{
-          const d = snapCalc(r.right + delta) - r.left
+          const d = snapCalc(r.right + deltax) - r.left
           const max = (rBDuration-rBOffset)
           if(d <= max && isNeighbourClear(r.left,d+r.left)){
             setRDuration(d)
@@ -85,10 +92,10 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
         break;
       
       case 'StartHandle':{
-          const d = snapCalc(r.left + delta)
+          const d = snapCalc(r.left + deltax)
           const o = r.rrbo+(d-r.left)
 
-          if( d >= 0 && o >= 0 && d < r.right-resizeArea && isNeighbourClear(d,r.right)){
+          if( d >= 0 && o >= 0 && d < r.right-resizeHandleArea && isNeighbourClear(d,r.right)){
             regionStatsPrev.current.rbo = o
             setRBOffset(o)
             setrOffset(d)
@@ -101,19 +108,26 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
         break;
 
       default:
-        const o = snapCalc(r.left + delta)
+        const o = snapCalc(r.left + deltax)
         // if(o >= 0 && isNeighbourClear(o,o+rDuration)) {
         if(o >= 0) {
           setrOffset(o)
           regionStatsPrev.current.rOffset = o
         }
-        break;
+
+        const voff = snapVCalc(deltay)
+        const tidx = (dragVOffset+voff) / editorStats.trackHeight
+        console.log(trackInfo)
+        if(tidx + trackInfo.idx >= 0 && tidx + tidx + trackInfo.idx <= trackInfo.max)
+        setDragVOffset(voff)
+        regionStatsPrev.current.dragVOffset = voff
+      break;
     }
   }
 
   const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
-  const mousemove = (e)=>{e.preventDefault();  duringAdjust('mouse',e.movementX)}
-  const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',e.touches[0].pageX)}
+  const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
+  const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})}
   const touchup = (e)=>{endAdjust('touch')}
   
   const startAdjust = (type,target,cursorInitial)=>{  
@@ -128,7 +142,8 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
       rOffset:rOffset,
       rDuration:rDuration,
       rBOffset:rBOffset,
-      cursorDelta:0,
+      dragVOffset:0,
+      cursorDelta:{x:0,y:0},
       cursorInitial,
     }
     
@@ -161,8 +176,9 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
     const d = regionStatsPrev.current.rDuration/editorStats.barLength;
     const o = regionStatsPrev.current.rBOffset/editorStats.barLength;
     const newRegion = {...region, rOffset:s, rDuration:d, bOffset:o}
-
-    tracksDispatch({type:'update_region', updatedRegion:newRegion})
+    let newTrack = null
+    if(regionStatsPrev.current.dragVOffset) newTrack = Math.floor(regionStatsPrev.current.dragVOffset / editorStats.trackHeight)
+    tracksDispatch({type:'update_region', updatedRegion:newRegion, jumpRelativeTracks:newTrack})
   }  
 
   // const cancelEdit = (e)=>{
@@ -174,29 +190,28 @@ const AudioRegion = ({region, prevRegion, nextRegion, tracksDispatch, editorStat
 
   return(<>
   <div
-    ref={audioRegionRef}
-    style={{width: rDuration, left: rOffset}}
+    style={{height:'100%', width: rDuration, left: rOffset, top:dragVOffset}}
     className={
       editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
-      (handleHitbox ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
+      (handleHitbox || isHovered ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
     } 
-    onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse',e.target.className,0)} : cutCommit}
+    onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} : cutCommit}
     onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
     onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : (e)=>{setIsHovering(true)}}
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
-    // onTouchStart={(e=>{startAdjust('touch',e.target.className,e.touches[0].pageX)})}
+    // onTouchStart={(e=>{startAdjust( 'touch',e.target.className,{ x:e.touches[0].clientX, y:touches[0].clientY } )})}
     >
-    <svg style={{pointerEvents:"none"}} width={rDuration} height={height}>
-      <line x1={0} x2={rDuration-1} y1={height/2} y2={height/2} stroke="white"></line>
-      <polygon points={`0,0 0,${height} ${fadeIn},0`} fill="blue"></polygon>
-      <polygon points={`${rDuration},0 ${rDuration},${height} ${rDuration - (fadeOut)},0`} fill="blue"></polygon>
+    <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
+      <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
+      <polygon points={`0,0 0,${maxHeight} ${fadeIn},0`} fill="white"></polygon>
+      <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
 
     </svg>
-    {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeArea}}>|</span>}
+    {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeHandleArea}}>|</span>}
       {/* <span style={{pointerEvents:'none'}}> 
         {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
       </span> */}
-    {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeArea}}>|</span> }  
+    {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeHandleArea}}>|</span> }  
   </div>
 
   {
