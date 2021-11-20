@@ -22,7 +22,7 @@ export const isOvercasting = (a,b, c,d) => {
 
 export const isContained = (a,b, c,d) => {
     //console.log({a,b,c,d})
-    return (a > c && b < b)
+    return (a > c && b < d)
 
     //   A-----B
     // C---------D
@@ -37,3 +37,7 @@ export const useRenders = (id, color = 'yellow')=>{
     renders.current += 1
     logcss(`==${renders.current}== id: ${id} `,color)
   }
+
+export const simpleTest = ()=>{
+    return 'i am tested'
+}
