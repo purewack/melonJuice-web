@@ -56,14 +56,11 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     const n = nextRegion ?  nextRegion.rOffset*editorStats.barLength : null
     const offsetPrev = p ? s - p : null
     const offsetNext = n ? n - e : null
-    //console.log({s,e,offsetPrev,offsetNext})
     return (offsetPrev >= 0 && offsetNext >= 0)
   }
 
   const cutCommit = (e)=>{
     const cutPosCommit = (cutPos/editorStats.barLength)
-    console.log(cutPosCommit)
-    console.log(region)
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (e)=>{
@@ -77,7 +74,6 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     regionStatsPrev.current.cursorDelta.y = pointer.y - regionStatsPrev.current.cursorInitial.y
     const deltax = regionStatsPrev.current.cursorDelta.x
     const deltay = regionStatsPrev.current.cursorDelta.y
-    // console.log({deltax,deltay:snapVCalc(deltay)})
     // const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
 
     switch (r.target) {
@@ -118,7 +114,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
         const voff = snapVCalc(deltay)
         const tidx = (dragVOffset+voff) / editorStats.trackHeight
         
-        if(tidx + trackInfo.idx >= 0 && tidx + tidx + trackInfo.idx <= trackInfo.max)
+        if(tidx + trackInfo.idx >= 0 &&  tidx + trackInfo.idx <= trackInfo.max)
         setDragVOffset(voff)
         regionStatsPrev.current.dragVOffset = voff
       break;
@@ -201,12 +197,14 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
     // onTouchStart={(e=>{startAdjust( 'touch',e.target.className,{ x:e.touches[0].clientX, y:touches[0].clientY } )})}
     >
-    <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
-      <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
-      <polygon points={`0,0 0,${maxHeight} ${fadeIn},0`} fill="white"></polygon>
-      <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
-
-    </svg>
+    {rDuration ? 
+      <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
+        <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
+        <polygon points={`0,0 0,${maxHeight} ${fadeIn},0`} fill="white"></polygon>
+        <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
+      </svg>
+    : null}
+    
     {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeHandleArea}}>|</span>}
       {/* <span style={{pointerEvents:'none'}}> 
         {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
