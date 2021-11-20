@@ -279,7 +279,15 @@ export const AudioEngine = {
   },
   
   removeRegion(regions,region){
-    let idx = regions.indexOf(region)
-    return calculateRegionRelations(regions.filter((r,i) => i !== idx))
+    let idx = null
+    regions.forEach((r,i) => {
+      if(r.regionId === region.regionId)
+        idx = i
+    })
+
+    if(idx !== null)
+      return calculateRegionRelations( regions.filter((r,i) => {return i !== idx}))
+    else
+    return regions
   }
 };
