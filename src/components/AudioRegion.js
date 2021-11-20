@@ -114,7 +114,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
         const voff = snapVCalc(deltay)
         const tidx = (dragVOffset+voff) / editorStats.trackHeight
         
-        if(tidx + trackInfo.idx >= 0 &&  tidx + trackInfo.idx <= trackInfo.max)
+        if(tidx + trackInfo.idx >= 0 &&  tidx + trackInfo.idx <= trackInfo.max-1)
         setDragVOffset(voff)
         regionStatsPrev.current.dragVOffset = voff
       break;

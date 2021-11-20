@@ -1,5 +1,5 @@
 import { AudioEngine } from "../audio/AudioEngine"
-import { isOverlapping } from '../Util';
+import { contactType } from '../Util';
 import newid from 'uniqid';
 
 export function tracksReducer(state,action){
@@ -17,12 +17,12 @@ export function tracksReducer(state,action){
       
       const currentCopy = state.current.map((t,i) => {
         let jidx = (action.jumpRelativeTracks ? action.jumpRelativeTracks : 0)
-
         t.regions.forEach(r => {
           if(r.regionId === u.regionId){
-            const idx = i + jidx
-            if(idx >= 0 && idx < state.current.length)
-              destTrack = state.current[idx]
+            let idx = i + jidx
+            if(idx < 0) idx = 0
+            if(idx > state.current.length-1) idx =  state.current.length-1
+            destTrack = state.current[idx]
             sourceTrack = t
           }
         })
@@ -31,16 +31,17 @@ export function tracksReducer(state,action){
         return {...t, regions:[...t.regions.map(r => {return {...r}})]}
       })
 
-      console.log({destTrack, sourceTrack, currentCopy})
-      let overlaps = []
+      let contacts = []
       destTrack.regions.forEach(r => {
         //dont check self
-        if(u.regionId !== r.regionId)
-          if(isOverlapping(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)) overlaps.push(r)
+        if(u.regionId !== r.regionId){
+          const ct = contactType(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)
+          if(ct != null) contacts.push({region:r, type:ct})
+        }
       })
-      if(overlaps.length){
-        console.log('detected overlaps!')
-        console.log(overlaps)
+      if(contacts.length){
+        console.log('detected contacts!')
+        console.log(contacts)
         return {...state, current:currentCopy}
       }
       
