@@ -22,7 +22,7 @@ export function tracksReducer(state,action){
           if(r.regionId === u.regionId){
             const idx = i + jidx
             if(idx >= 0 && idx < state.current.length)
-              destTrack =  state.current[idx]
+              destTrack = state.current[idx]
             sourceTrack = t
           }
         })
@@ -31,17 +31,19 @@ export function tracksReducer(state,action){
         return {...t, regions:[...t.regions.map(r => {return {...r}})]}
       })
 
-      // let overlaps = []
-      // destTrack.regions.forEach(r => {
-      //   //dont check self
-      //   if(u.regionId !== r.regionId)
-      //     if(isOverlapping(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)) overlaps.push(r)
-      // })
+      console.log({destTrack, sourceTrack, currentCopy})
+      let overlaps = []
+      destTrack.regions.forEach(r => {
+        //dont check self
+        if(u.regionId !== r.regionId)
+          if(isOverlapping(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)) overlaps.push(r)
+      })
+      if(overlaps.length){
+        console.log('detected overlaps!')
+        console.log(overlaps)
+        return {...state, current:currentCopy}
+      }
       
-      // //bail early if illegal move
-      // if(overlaps.length){
-      //   return {...state, current:currentCopy}
-      // }
 
       const newMove = currentCopy.map((t,i) => {
         let tt = {...t}
