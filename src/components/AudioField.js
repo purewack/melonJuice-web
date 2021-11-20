@@ -50,7 +50,7 @@ const AudioField = ({ songMeasures, timer, editorStats ,children}) => {
                 return (<div key={i}
                     className='TimelineBar'
                     style={{width:editorStats.barLength}}>
-                    {1+ i}
+                    { i}
                 </div>)
             })}
         </span>

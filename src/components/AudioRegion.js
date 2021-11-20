@@ -117,7 +117,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
 
         const voff = snapVCalc(deltay)
         const tidx = (dragVOffset+voff) / editorStats.trackHeight
-        console.log(trackInfo)
+        
         if(tidx + trackInfo.idx >= 0 && tidx + tidx + trackInfo.idx <= trackInfo.max)
         setDragVOffset(voff)
         regionStatsPrev.current.dragVOffset = voff

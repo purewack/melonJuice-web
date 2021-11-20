@@ -137,131 +137,13 @@
 
 import './App.css';
 import { useState, useEffect, useReducer, useRef} from 'react';
-import { isOverlapping } from './Util';
+
 import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
 import AudioRegion from './components/AudioRegion';
-
-function tracksReducer(state,action){
-  switch(action.type){
-    case 'new':
-      return {current: [AudioEngine.newTrack()], history: [[]], historyPointer:0}
-
-    case 'load':
-      return {current: [...action.tracks], history: [[...action.tracks]], historyPointer:0}
-
-    case 'update_region':{
-      const currentCopy = state.current.map(t => {
-        return {...t, regions:[...t.regions.map(r => {return {...r}})]}
-      })
-
-      let moveAllowed = true
-      const newMove = currentCopy.map(t => {
-        let outputTrack = t
-        const u = action.updatedRegion
-        
-        t.regions.forEach(r => {
-          if(r.regionId === u.regionId){
-            outputTrack.regions.forEach(r => {
-              if(u.regionId !== r.regionId)
-              if(isOverlapping(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)) moveAllowed = false
-            })
-            if(moveAllowed){
-            outputTrack.regions = AudioEngine.updateRegion(outputTrack.regions, action.updatedRegion)
-            }
-          }
-        }) 
-        
-        return outputTrack
-      })
-
-      if(!moveAllowed){
-        return {...state, current:currentCopy, lastMoveLegal:false}
-      }
-
-      if(state.historyPointer !== state.history.length-1){
-        //console.log(state.history.slice(0,state.historyPointer+1))
-        return {
-          historyPointer: state.historyPointer+1,
-          history:  [...state.history.slice(0,state.historyPointer+1), newMove],
-          current: newMove,
-          lastMoveLegal:true,
-        }
-      }
-
-      return {
-        historyPointer: state.historyPointer+1,
-        history:  [...state.history, newMove],
-        current: newMove,
-        lastMoveLegal:true,
-      }
-    }
-    
-    case 'cut_region':{
-      const currentCopy = state.current.map(t => {
-        return {...t, regions:[...t.regions]}
-      })
-
-      const newMove = currentCopy.map(t => {
-        let outputTrack = t
-        t.regions.forEach(r => {
-          if(r.regionId === action.regionToCut.regionId){
-            let r1 = AudioEngine.cloneRegion(action.regionToCut)
-            let r2 = AudioEngine.cloneRegion(action.regionToCut)
-            const trackNewRegions = AudioEngine.removeRegion(outputTrack.regions, action.regionToCut)
-            r1.rDuration = action.regionCutLength
-            r2.rDuration -= action.regionCutLength
-            r2.bOffset += action.regionCutLength
-            r2.rOffset += action.regionCutLength
-            r1.regionId = newid()
-            r2.regionId = newid()
-            outputTrack.regions = AudioEngine.setRegions([...trackNewRegions,r1,r2])
-          }
-        }) 
-        return outputTrack
-      })
-
-      if(state.historyPointer !== state.history.length-1){
-        //console.log(state.history.slice(0,state.historyPointer+1))
-        return {
-          historyPointer: state.historyPointer+1,
-          history:  [...state.history.slice(0,state.historyPointer+1), newMove],
-          current: newMove,
-        }
-      }
-
-      return {
-        historyPointer: state.historyPointer+1,
-        history:  [...state.history, newMove],
-        current: newMove,
-      }
-    }
-
-    case 'undo':
-      if(state.historyPointer > 0){
-        return {
-          ...state,
-          current: state.history[state.historyPointer-1],
-          historyPointer: state.historyPointer-1,
-        }
-      }
-      break;
-    case 'redo':
-      if(state.historyPointer < state.history.length-1){
-        return {
-          ...state,
-          current: state.history[state.historyPointer+1],
-          historyPointer: state.historyPointer+1,
-        }
-      }
-      break;
-      
-    default:
-      return state;
-  }
-}
+import { tracksReducer } from './reducers/TracksReducer'
 
 function App() {
 
@@ -413,10 +295,10 @@ function App() {
 
       <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
         {tracks.current.map((track,i,tt) => { 
-          return <AudioTrack key={i} id={track.id} editorStats={editorStats}>
+          return <AudioTrack key={track.trackId} id={track.trackId} editorStats={editorStats}>
             {track.regions.map((r,j,a) => {
               return <AudioRegion 
-                  key={j} 
+                  key={r.regionId} 
                   region={r} 
                   prevRegion={j>0 ? a[j-1] : null}
                   nextRegion={j<a.length-1 ? a[j+1] : null}

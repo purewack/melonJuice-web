@@ -1,9 +1,9 @@
 
-const TimelineBar = ({bar, number}) => {
+const TimelineBar = ({bar, number, debug}) => {
     return(<div 
         className='TimelineBar'
         style={{width:bar}}>
-        {1+ number}
+        {0 + number}
     </div>)
 }
 
