@@ -29,9 +29,9 @@ export const isContained = (a,b, c,d) => {
 }
 
 export const contactType = (a,b, c,d) => {
-    if(isContained(a,b,c,d)) return 'contained'
-    if(isOvercasting(a,b,c,d)) return 'overcast'
-    if(isOverlapping(a,b,c,d)) return 'overlap'
+    if(isContained(a,b,c,d)) return {type:'contains', left:a-c, right:d-b}
+    if(isOverlapping(a,b,c,d)) return {type:'overlap', left:d-a, right:b-c}
+    if(isOvercasting(a,b,c,d)) return {type:'overcast', dt:null}
     return null
 }
 
