@@ -1,25 +1,31 @@
-
 import { useRef } from "react"
 
 export const isOverlapping = (a,b, c,d) => {
-    console.log({a,b,c,d})
-    return !(a > d || c > b)
+    //console.log({a,b,c,d})
+    return (d < b && d > a && c < a) || (c > a && c < b && d > b)
 
-    //   A-----B
-    // C---------D
-    //
-    // A--------B
-    //   C----D
-    //
     //   A----------B
     // C---------D
     //
     // A--------B
     //   C---------D
-    //
-    //            A---------B  C-------D
-    // C-------D  A---------B
-    //return (as+aw >= bs && as+aw <= bs+bw) || (as >= bs && as <= bs+bw) || (as <= bs && as+aw >= bs+bw) || (as >= bs && as+aw <= bs+bw)
+
+}
+
+export const isOvercasting = (a,b, c,d) => {
+    //console.log({a,b,c,d})
+    return (a <= c && b >= d)
+
+    // A--------B
+    //   C----D
+}
+
+export const isContained = (a,b, c,d) => {
+    //console.log({a,b,c,d})
+    return (a > c && b < b)
+
+    //   A-----B
+    // C---------D
 }
 
 export const logcss = (log, color = 'red') => {
