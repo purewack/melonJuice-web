@@ -28,6 +28,13 @@ export const isContained = (a,b, c,d) => {
     // C---------D
 }
 
+export const contactType = (a,b, c,d) => {
+    if(isContained(a,b,c,d)) return 'contained'
+    if(isOvercasting(a,b,c,d)) return 'overcast'
+    if(isOverlapping(a,b,c,d)) return 'overlap'
+    return null
+}
+
 export const logcss = (log, color = 'red') => {
     console.log(`%c${log}`,`border:solid ${color} 2px`)
 }
