@@ -58,4 +58,5 @@ button{
     background-color: black;
     color:white;
     display: none;
+    pointer-events: none;
 }
