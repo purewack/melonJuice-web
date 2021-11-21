@@ -154,6 +154,12 @@ function App() {
   const [songTitle, setSongTitle] = useState('')
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
+  const [buffers, setBuffers] = useState([])
+
+  // eslint-disable-next-line 
+  useEffect(()=>{
+    setBuffers(AudioEngine.bufferPool)
+  },[AudioEngine.bufferPool])
 
   useEffect(() => {
     if(!begun) {
@@ -163,21 +169,21 @@ function App() {
         AudioEngine.newTrack(),
       ]
 
-      ttt[0].regions = AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),10,1),
-        AudioEngine.newRegion(newid(),0,2),
-        AudioEngine.newRegion(newid(),3,4),
-        AudioEngine.newRegion(newid(),15,20),
-      ])
+      // ttt[0].regions = AudioEngine.setRegions([
+      //   AudioEngine.newRegion(newid(),10,1),
+      //   AudioEngine.newRegion(newid(),0,2),
+      //   AudioEngine.newRegion(newid(),3,4),
+      //   AudioEngine.newRegion(newid(),15,20),
+      // ])
 
       ttt[1].regions =  AudioEngine.setRegions([
         AudioEngine.newRegion(newid(),0,2),
         AudioEngine.newRegion(newid(),5,5),
       ])
 
-      ttt[2].regions =  AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),1,10),
-      ])
+      // ttt[2].regions =  AudioEngine.setRegions([
+      //   AudioEngine.newRegion(newid(),1,10),
+      // ])
 
       tracksDispatch({type:'load', tracks:ttt})
       setSongTitle('test_init_regions')
@@ -312,7 +318,36 @@ function App() {
         })}
       </AudioField>
 
-     
+      <p>Debug Map</p>
+      <div className="DebugMap">
+        <div>
+          <p>Buffers</p>
+          {buffers.map(b => {
+            return <div className="DebugBuffer">ID:<b>{b.bufferId}</b> - Duration: <b>{b.duration}</b></div>
+          })}
+        </div>
+
+        <div>
+          <p>Regions</p>
+          {tracks.current.map(t=>{
+            
+            return <div className="DebugTrack">
+              <p>TrackID: {t.trackId}</p>
+              {t.regions.map(r => {
+                return <div className="DebugRegion">
+                  ID:<b>{r.regionId}</b> -
+                  Start:<b>{r.rOffset}</b> -
+                  End:<b>{r.rDuration-r.rOffset}</b> -
+                  Duration:<b>{r.rDuration}</b> -
+                  BufferOffset:<b>{r.bOffset}</b> -
+                  BufferID:<b>{r.bufferId}</b>
+                  
+                </div>
+              })}
+            </div>
+          })}
+        </div>
+      </div>
   </>
   }
   </>);

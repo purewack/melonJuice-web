@@ -87,7 +87,7 @@ export const AudioEngine = {
   micNode: null,
   lastRecording: new Float32Array(0),
   lastBufferId: null,
-  bufferPool: Object.create(null),
+  bufferPool: [],
   connections: [],
     
   init() {
@@ -244,6 +244,8 @@ export const AudioEngine = {
   },
 
   newRegion(bufferId, offset, duration){
+    this.bufferPool = [...this.bufferPool, {bufferId,duration}]
+
     return {
       regionId: newid(),
       bufferId: bufferId,

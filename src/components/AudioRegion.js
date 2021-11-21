@@ -211,6 +211,8 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
         {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
       </span> */}
     {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeHandleArea}}>|</span> }  
+    
+    <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
   </div>
 
   {

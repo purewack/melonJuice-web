@@ -1,3 +1,56 @@
 button{
     margin:5px;
 }
+
+.DebugMap{
+    width:100vw;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.DebugBuffer{
+    color:black;
+    background:rgba(83, 184, 0, 0.5);
+    border-width:2px;  
+    border-style:dashed;
+    height:50px;  
+    margin:10px;
+    padding: 10px;
+}
+
+.DebugTrack{
+    margin-bottom: 5px;
+    position:relative;
+}
+.DebugTrack::before{
+    content: '';
+    position: absolute;
+    border-style:dashed;
+    border-right: none;
+    margin-bottom: 5px;
+    width: 100px;
+    height: 100%;
+}
+
+.DebugRegion {
+    color:black;
+    background:rgba(184, 0, 129, 0.5);
+    border-width:2px;  
+    border-style:dashed;
+    height:50px;  
+    margin:10px;
+    padding:10px;
+}
+
+
+
+.AudioRegion:hover .AudioRegionDebugTooltip{
+    display: block;
+}
+.AudioRegionDebugTooltip {
+    position:fixed;
+    border: solid red 1px;
+    background-color: black;
+    color:white;
+    display: none;
+}
