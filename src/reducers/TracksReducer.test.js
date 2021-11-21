@@ -8,7 +8,10 @@ test('move region to different track over existing region', ()=>{
         jumpRelativeTracks: -1,
     }
 
-    const state = {current:
+    const state = {
+        historyPointer: 0,
+        history: [],
+        current:
         [
             {
                 trackId:'tr1',
@@ -63,7 +66,10 @@ test('move region to different track into an existing region forcing a split and
         jumpRelativeTracks: -1,
     }
 
-    const state = {current:
+    const state = {
+        historyPointer: 0,
+        history: [],
+        current:
         [
             {
                 trackId:'tr1',

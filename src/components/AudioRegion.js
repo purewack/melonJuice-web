@@ -1,6 +1,5 @@
 import './components.css';
 import {useState,useEffect,useRef} from 'react'
-import { logcss, useRenders } from '../Util';
 
 const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{
 
@@ -33,7 +32,9 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     // setFadeIn(100)
     // setFadeOut(30)
     setMaxHeight(editorStats.trackHeight)
-    
+
+    //temp resolve later
+    setIsHovered(false)
   },[region,editorStats])
 
   const snapVCalc = (ll)=>{

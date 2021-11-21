@@ -167,16 +167,17 @@ function App() {
         AudioEngine.newRegion(newid(),10,1),
         AudioEngine.newRegion(newid(),0,2),
         AudioEngine.newRegion(newid(),3,4),
+        AudioEngine.newRegion(newid(),15,20),
       ])
 
-      // ttt[1].regions =  AudioEngine.setRegions([
-      //   AudioEngine.newRegion(newid(),0,2),
-      //   AudioEngine.newRegion(newid(),5,5),
-      // ])
+      ttt[1].regions =  AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),0,2),
+        AudioEngine.newRegion(newid(),5,5),
+      ])
 
-      // ttt[2].regions =  AudioEngine.setRegions([
-      //   AudioEngine.newRegion(newid(),1,10),
-      // ])
+      ttt[2].regions =  AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),1,10),
+      ])
 
       tracksDispatch({type:'load', tracks:ttt})
       setSongTitle('test_init_regions')
@@ -267,7 +268,7 @@ function App() {
             }}/>
           🖐 Grab
         </label>
-        <label>
+        {/* <label>
           <input type="radio" value="fade" 
             checked={(editorStats.toolMode === 'fade')} 
             onChange={e=>{
@@ -277,7 +278,7 @@ function App() {
               })
             }}/>
           🌗 Fade
-        </label>
+        </label> */}
         <label>
           <input type="radio" value="cut" 
             checked={(editorStats.toolMode === 'cut')} 

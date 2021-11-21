@@ -35,7 +35,7 @@ export function tracksReducer(state,action){
 
       destTrack = currentCopy[destTrackIdx]
       sourceTrack = currentCopy[sourceTrackIdx]
-      if(destTrackIdx != sourceTrackIdx){
+      if(destTrackIdx !== sourceTrackIdx){
         sourceTrack.regions = AudioEngine.removeRegion(sourceTrack.regions, u)
       }
 
@@ -44,7 +44,7 @@ export function tracksReducer(state,action){
         //dont check self
         if(u.regionId !== r.regionId){
           const ct = contactType(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)
-          if(ct != null) {
+          if(ct !== null) {
             contacts.push({region:r, ...ct})
           }
         }
@@ -57,10 +57,12 @@ export function tracksReducer(state,action){
             destTrack.regions = AudioEngine.removeRegion(destTrack.regions, c.region)
             break;
           case 'overlap':
+              const roff = (c.side === 'left' ? c.region.rOffset + c.dt : c.region.rOffset)
               const rr = {
                 ...c.region, 
                 rDuration: c.region.rDuration - c.dt,
-                rOffset: (c.side === 'left' ? c.region.rOffset + c.dt : c.region.rOffset)
+                rOffset: roff,
+                bOffset: c.region.bOffset + (roff-c.region.rOffset)
               }
 
               destTrack.regions = AudioEngine.updateRegion(destTrack.regions, rr)
@@ -81,32 +83,34 @@ export function tracksReducer(state,action){
             destTrack.regions = AudioEngine.removeRegion(destTrack.regions, c.region)
             destTrack.regions = AudioEngine.pushRegion(destTrack.regions, rrLeft)
             destTrack.regions = AudioEngine.pushRegion(destTrack.regions, rrRight)
+            break;
+
+          default:
+            break;
         }
       })
 
-      if(destTrackIdx != sourceTrackIdx){
+      if(destTrackIdx !== sourceTrackIdx){
         destTrack.regions = AudioEngine.pushRegion(destTrack.regions, u)
       }
       else{
         destTrack.regions = AudioEngine.updateRegion(destTrack.regions, u)
       }
 
-      return {current:currentCopy, contacts}
-
-
       if(state.historyPointer !== state.history.length-1){
-        //console.log(state.history.slice(0,state.historyPointer+1))
         return {
           historyPointer: state.historyPointer+1,
-          history:  [...state.history.slice(0,state.historyPointer+1), newMove],
-          current: newMove,
+          history:  [...state.history.slice(0,state.historyPointer+1), currentCopy],
+          current: currentCopy,
+          contacts
         }
       }
 
       return {
         historyPointer: state.historyPointer+1,
-        history:  [...state.history, newMove],
-        current: newMove,
+        history:  [...state.history, currentCopy],
+        current: currentCopy,
+        contacts
       }
     }
     
