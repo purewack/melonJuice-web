@@ -56,7 +56,8 @@ export function tracksReducer(state,action){
           case 'overcast':
             destTrack.regions = AudioEngine.removeRegion(destTrack.regions, c.region)
             break;
-          case 'overlap':
+            
+          case 'overlap':{
               const roff = (c.side === 'left' ? c.region.rOffset + c.dt : c.region.rOffset)
               const rr = {
                 ...c.region, 
@@ -66,23 +67,28 @@ export function tracksReducer(state,action){
               }
 
               destTrack.regions = AudioEngine.updateRegion(destTrack.regions, rr)
-              break;
-          case 'contains':
+            }
+            break;
+          case 'contains':{
             const rrLeft = {
               ...c.region, 
               regionId:newid(), 
               rDuration: c.left
             }
+
+            const roff = c.region.rOffset + (c.region.rDuration - c.right)
             const rrRight = {
               ...c.region, 
               regionId:newid(), 
               rDuration: c.right,
-              rOffset: c.region.rOffset + (c.region.rDuration - c.right),
+              rOffset: roff,
+              bOffset: c.region.bOffset + (roff-c.region.rOffset)
             }
             
             destTrack.regions = AudioEngine.removeRegion(destTrack.regions, c.region)
             destTrack.regions = AudioEngine.pushRegion(destTrack.regions, rrLeft)
             destTrack.regions = AudioEngine.pushRegion(destTrack.regions, rrRight)
+            }
             break;
 
           default:
