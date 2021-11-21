@@ -172,21 +172,21 @@ function App() {
         AudioEngine.newTrack(),
       ]
 
-      // ttt[0].regions = AudioEngine.setRegions([
-      //   AudioEngine.newRegion(newid(),10,1),
-      //   AudioEngine.newRegion(newid(),0,2),
-      //   AudioEngine.newRegion(newid(),3,4),
-      //   AudioEngine.newRegion(newid(),15,20),
-      // ])
+      ttt[0].regions = AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),10,1),
+        AudioEngine.newRegion(newid(),0,2),
+        AudioEngine.newRegion(newid(),3,4),
+        AudioEngine.newRegion(newid(),15,20),
+      ])
 
       ttt[1].regions =  AudioEngine.setRegions([
         AudioEngine.newRegion(newid(),0,2),
         AudioEngine.newRegion(newid(),5,5),
       ])
 
-      // ttt[2].regions =  AudioEngine.setRegions([
-      //   AudioEngine.newRegion(newid(),1,10),
-      // ])
+      ttt[2].regions =  AudioEngine.setRegions([
+        AudioEngine.newRegion(newid(),1,10),
+      ])
 
       tracksDispatch({type:'load', tracks:ttt})
       setSongTitle('test_init_regions')
