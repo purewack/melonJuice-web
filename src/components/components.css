@@ -24,6 +24,7 @@ svg {
 .AudioRegionCutIndicator {
     position: absolute;
     border-left: solid red 2px;
+    height:100%;
     z-index: 10;
     pointer-events: none;
 }
