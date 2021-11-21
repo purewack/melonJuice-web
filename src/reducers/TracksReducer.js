@@ -68,12 +68,12 @@ export function tracksReducer(state,action){
           case 'contains':
             const rrLeft = {
               ...c.region, 
-              regionId:'split1', 
+              regionId:newid(), 
               rDuration: c.left
             }
             const rrRight = {
               ...c.region, 
-              regionId:'split2', 
+              regionId:newid(), 
               rDuration: c.right,
               rOffset: c.region.rOffset + (c.region.rDuration - c.right),
             }

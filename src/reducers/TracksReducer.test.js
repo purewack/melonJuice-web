@@ -86,9 +86,9 @@ test('move region to different track into an existing region forcing a split and
             {
                 trackId:'tr1',
                 regions:[
-                    {regionId:'split1',rOffset:1, rDuration:2}, 
+                    {rOffset:1, rDuration:2}, 
                     {regionId:'tr2r1', rOffset:3, rDuration:2}, 
-                    {regionId:'split2',rOffset:5, rDuration:6},
+                    {rOffset:5, rDuration:6},
                     {regionId:'tr1r2',rOffset:11,rDuration:2},
                 ]
             },
