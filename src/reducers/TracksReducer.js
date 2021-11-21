@@ -14,7 +14,9 @@ export function tracksReducer(state,action){
       const u = action.updatedRegion
       let destTrack = null
       let sourceTrack = null
-      
+      let destTrackIdx = null
+      let sourceTrackIdx = null
+
       const currentCopy = state.current.map((t,i) => {
         let jidx = (action.jumpRelativeTracks ? action.jumpRelativeTracks : 0)
         t.regions.forEach(r => {
@@ -22,8 +24,8 @@ export function tracksReducer(state,action){
             let idx = i + jidx
             if(idx < 0) idx = 0
             if(idx > state.current.length-1) idx =  state.current.length-1
-            destTrack = state.current[idx]
-            sourceTrack = t
+              destTrackIdx = idx
+            sourceTrackIdx = i
           }
         })
 
@@ -31,41 +33,34 @@ export function tracksReducer(state,action){
         return {...t, regions:[...t.regions.map(r => {return {...r}})]}
       })
 
+      destTrack = currentCopy[destTrackIdx]
+      sourceTrack = currentCopy[sourceTrackIdx]
+      if(destTrackIdx != sourceTrackIdx){
+        sourceTrack.regions = AudioEngine.removeRegion(sourceTrack.regions, u)
+      }
+
       let contacts = []
       destTrack.regions.forEach(r => {
         //dont check self
         if(u.regionId !== r.regionId){
           const ct = contactType(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)
-          if(ct != null) contacts.push({region:r, type:ct})
-        }
-      })
-      if(contacts.length){
-        console.log('detected contacts!')
-        console.log(contacts)
-        return {...state, current:currentCopy}
-      }
-      
-
-      const newMove = currentCopy.map((t,i) => {
-        let tt = {...t}
-
-        if(destTrack.trackId !== sourceTrack.trackId){
-          if(sourceTrack.trackId === tt.trackId){
-            tt.regions = AudioEngine.removeRegion(tt.regions, action.updatedRegion)
-          }
-          else if(destTrack.trackId === tt.trackId){
-            tt.regions = AudioEngine.pushRegion(tt.regions, action.updatedRegion)
-          }
-        }
-        else
-          t.regions.forEach(r => {
-            if(r.regionId === u.regionId){
-                tt.regions = AudioEngine.updateRegion(tt.regions, action.updatedRegion)
+          if(ct != null) {
+            contacts.push({regionId:r.regionId, ...ct})
+            switch(ct.type){
+              case 'overcast':
+                break;
             }
-          }) 
-
-        return tt
+          }
+        }
       })
+      // if(contacts.length){
+      //   console.log('detected contacts!')
+      //   console.log(contacts)
+      //   return {...state, current:currentCopy}
+      // }
+
+      return {current:currentCopy, contacts}
+
 
       if(state.historyPointer !== state.history.length-1){
         //console.log(state.history.slice(0,state.historyPointer+1))
@@ -146,3 +141,62 @@ export function tracksReducer(state,action){
       return state;
   }
 }
+
+
+// const currentCopy = state.current.map((t,i) => {
+//   let jidx = (action.jumpRelativeTracks ? action.jumpRelativeTracks : 0)
+//   t.regions.forEach(r => {
+//     if(r.regionId === u.regionId){
+//       let idx = i + jidx
+//       if(idx < 0) idx = 0
+//       if(idx > state.current.length-1) idx =  state.current.length-1
+//       destTrack = state.current[idx]
+//       sourceTrack = t
+//     }
+//   })
+
+//   //make deep copy
+//   return {...t, regions:[...t.regions.map(r => {return {...r}})]}
+// })
+
+// let contacts = []
+// destTrack.regions.forEach(r => {
+//   //dont check self
+//   if(u.regionId !== r.regionId){
+//     const ct = contactType(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)
+//     if(ct != null) {
+//       contacts.push({regionId:r.regionId, ...ct})
+//       switch(ct.type){
+//         case 'overcast':
+//           break;
+//       }
+//     }
+//   }
+// })
+// if(contacts.length){
+//   console.log('detected contacts!')
+//   console.log(contacts)
+//   return {...state, current:currentCopy}
+// }
+
+
+// const newMove = currentCopy.map((t,i) => {
+//   let tt = {...t}
+
+//   if(destTrack.trackId !== sourceTrack.trackId){
+//     if(sourceTrack.trackId === tt.trackId){
+//       tt.regions = AudioEngine.removeRegion(tt.regions, action.updatedRegion)
+//     }
+//     else if(destTrack.trackId === tt.trackId){
+//       tt.regions = AudioEngine.pushRegion(tt.regions, action.updatedRegion)
+//     }
+//   }
+//   else
+//     t.regions.forEach(r => {
+//       if(r.regionId === u.regionId){
+//           tt.regions = AudioEngine.updateRegion(tt.regions, action.updatedRegion)
+//       }
+//     }) 
+
+//   return tt
+// })
