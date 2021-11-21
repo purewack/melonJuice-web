@@ -1,37 +1,28 @@
 import { useRef } from "react"
 
-export const isOverlapping = (a,b, c,d) => {
-    //console.log({a,b,c,d})
-    return (d < b && d > a && c < a) || (c > a && c < b && d > b)
-
-    //   A----------B
-    // C---------D
-    //
-    // A--------B
-    //   C---------D
-
-}
-
-export const isOvercasting = (a,b, c,d) => {
-    //console.log({a,b,c,d})
-    return (a <= c && b >= d)
-
-    // A--------B
-    //   C----D
-}
-
-export const isContained = (a,b, c,d) => {
-    //console.log({a,b,c,d})
-    return (a > c && b < d)
-
-    //   A-----B
-    // C---------D
-}
 
 export const contactType = (a,b, c,d) => {
-    if(isContained(a,b,c,d)) return {type:'contains', left:a-c, right:d-b}
-    if(isOverlapping(a,b,c,d)) return {type:'overlap', left:d-a, right:b-c}
-    if(isOvercasting(a,b,c,d)) return {type:'overcast', dt:null}
+    
+    //overlap right
+    //   A----------B <Main
+    // C---------D
+
+    //overlap left
+    // A--------B     <Main
+    //   C---------D
+
+    //overcast
+    // A--------B     <Main
+    //   C----D
+
+    //contained
+    //   A-----B      <Main
+    // C---------D
+
+    if((a <= c && b >= d)) return {type:'overcast'}
+    if((a > c && b < d)) return {type:'contains', left:a-c, right:d-b}
+    if((c > a && c < b && d > b)) return {type:'overlap', side: 'left', dt:b-c}
+    if((d < b && d > a && c < a)) return {type:'overlap', side: 'right', dt:d-a}
     return null
 }
 

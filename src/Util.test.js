@@ -30,11 +30,11 @@ test('no contact R1 R2', ()=>{
 })
 
 test('R1 overlaps R2', ()=>{
-    expect(contactType(10,45, 40,50)).toMatchObject({type:'overlap'})
+    expect(contactType(20,30, 25,50)).toMatchObject({type:'overlap', side:'left', dt:5})
 })
 
 test('R2 overlaps R1', ()=>{
-    expect(contactType(20,30, 25,50)).toMatchObject({type:'overlap'})
+    expect(contactType(38,60, 25,50)).toMatchObject({type:'overlap', side:'right', dt:12})
 })
 
 test('R1 inside R2', ()=>{
