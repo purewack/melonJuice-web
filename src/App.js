@@ -342,7 +342,7 @@ function App() {
                 return <div className="DebugRegion">
                   ID:<b>{r.regionId}</b> -
                   Start:<b>{r.rOffset}</b> -
-                  End:<b>{r.rDuration-r.rOffset}</b> -
+                  End:<b>{r.rDuration+r.rOffset}</b> -
                   Duration:<b>{r.rDuration}</b> -
                   BufferOffset:<b>{r.bOffset}</b> -
                   BufferID:<b>{r.bufferId}</b>
