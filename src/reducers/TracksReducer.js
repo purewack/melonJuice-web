@@ -45,19 +45,35 @@ export function tracksReducer(state,action){
         if(u.regionId !== r.regionId){
           const ct = contactType(u.rOffset, u.rOffset+u.rDuration,  r.rOffset, r.rOffset+r.rDuration)
           if(ct != null) {
-            contacts.push({regionId:r.regionId, ...ct})
-            switch(ct.type){
-              case 'overcast':
-                break;
-            }
+            contacts.push({region:r, ...ct})
           }
         }
       })
-      // if(contacts.length){
-      //   console.log('detected contacts!')
-      //   console.log(contacts)
-      //   return {...state, current:currentCopy}
-      // }
+
+      contacts.forEach(c => {
+        //take action
+        switch(c.type){
+          case 'overcast':
+            destTrack.regions = AudioEngine.removeRegion(destTrack.regions, c.region)
+            break;
+          case 'overlap':
+              let rr = {...c.region}
+              rr.rDuration -= c.dt
+              
+              if(c.side === 'left')
+                rr.rOffset += c.dt
+
+              destTrack.regions = AudioEngine.updateRegion(destTrack.regions, rr)
+              break;
+        }
+      })
+
+      if(destTrackIdx != sourceTrackIdx){
+        destTrack.regions = AudioEngine.pushRegion(destTrack.regions, u)
+      }
+      else{
+        destTrack.regions = AudioEngine.updateRegion(destTrack.regions, u)
+      }
 
       return {current:currentCopy, contacts}
 
