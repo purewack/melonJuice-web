@@ -242,10 +242,10 @@ function App() {
         }}
       />
 
-      <button onClick={()=>{
+      {/* <button onClick={()=>{
         tracksDispatch({type:'new'})
         setSongTitle('untitled')
-      }}> New... </button>
+      }}> New... </button> */}
 
       <button 
         style={{width:100}}
