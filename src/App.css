@@ -2,6 +2,11 @@ button{
     margin:5px;
 }
 
+.DebugControls{
+    display: flex;
+    justify-content: space-evenly;
+}
+
 .DebugMap{
     width:100vw;
     display: flex;

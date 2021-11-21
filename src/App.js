@@ -154,12 +154,25 @@ function App() {
   const [songTitle, setSongTitle] = useState('')
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
-  const [buffers, setBuffers] = useState([])
 
+  const [buffers, setBuffers] = useState([])
+  // const [newTrack, setNewTrack] = useState()
+  // const [newStart, setNewStart] = useState()
+  // const [newDur, setNewDur] = useState()
+  // const [newBuf, setNewBuf] = useState()
+  // const addNewTrack = (tr,st,dr,bufid) => {
+  //   if(dr === null){
+  //     //load
+  //   }
+  // }
   // eslint-disable-next-line 
   useEffect(()=>{
     setBuffers(AudioEngine.bufferPool)
+    // eslint-disable-next-line
   },[AudioEngine.bufferPool])
+
+  
+
 
   useEffect(() => {
     if(!begun) {
@@ -261,6 +274,90 @@ function App() {
 
         {editorStats.snapGrain ? 'Q:'+editorStats.snapGrain : 'No-snap'}
       </button>
+
+      {/* <div className="DebugControls">
+      
+      <form>
+        <p>Add new region (no user input checks!!!!)</p>
+        <label>
+          Track (zero indexed):
+          <input type="number"
+            onChange={e=>{
+              setNewTrack(e.target.value)
+            }}
+          />
+        </label>
+        <br/>
+
+        <label>
+          Start:
+          <input type="number"
+            onChange={e=>{
+              setNewStart(e.target.value)
+            }}
+          />
+        </label>
+        <br/>
+
+        <label>
+          Duration:
+          <input type="number"
+            onChange={e=>{
+              setNewDur(e.target.value)
+            }}
+          />
+        </label>
+        <br/>
+
+        <input type="button" value="
+          'Record' new region!" 
+          onClick={e=>{
+            addNewTrack(newTrack,newStart,newDur,newid())
+          }}/>
+        <br/>
+      </form>
+
+      
+      <form>
+        <p>Duplicate region (no user input checks!!!!)</p>
+        <label>
+          Track (zero indexed):
+          <input type="number"
+            onChange={e=>{
+              setNewTrack(e.target.value)
+            }}
+          />
+        </label>
+        <br/>
+
+        <label>
+          Start:
+          <input type="number"
+            onChange={e=>{
+              setNewStart(e.target.value)
+            }}
+          />
+        </label>
+        <br/>
+
+        <label>
+          BufferID:
+          <input type="number"
+            onChange={e=>{
+              setNewBuf(e.target.value)
+            }}
+          />
+        </label>
+        <br/>
+
+        <input type="button" value="
+          Dupe new region!" 
+          onClick={e=>{
+            addNewTrack(newTrack,newStart,null,newBuf)
+          }}/>
+        <br/>
+      </form>
+      </div> */}
 
       <form>
         <label>
