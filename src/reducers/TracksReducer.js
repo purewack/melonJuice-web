@@ -57,14 +57,30 @@ export function tracksReducer(state,action){
             destTrack.regions = AudioEngine.removeRegion(destTrack.regions, c.region)
             break;
           case 'overlap':
-              let rr = {...c.region}
-              rr.rDuration -= c.dt
-              
-              if(c.side === 'left')
-                rr.rOffset += c.dt
+              const rr = {
+                ...c.region, 
+                rDuration: c.region.rDuration - c.dt,
+                rOffset: (c.side === 'left' ? c.region.rOffset + c.dt : c.region.rOffset)
+              }
 
               destTrack.regions = AudioEngine.updateRegion(destTrack.regions, rr)
               break;
+          case 'contains':
+            const rrLeft = {
+              ...c.region, 
+              regionId:'split1', 
+              rDuration: c.left
+            }
+            const rrRight = {
+              ...c.region, 
+              regionId:'split2', 
+              rDuration: c.right,
+              rOffset: c.region.rOffset + (c.region.rDuration - c.right),
+            }
+            
+            destTrack.regions = AudioEngine.removeRegion(destTrack.regions, c.region)
+            destTrack.regions = AudioEngine.pushRegion(destTrack.regions, rrLeft)
+            destTrack.regions = AudioEngine.pushRegion(destTrack.regions, rrRight)
         }
       })
 
