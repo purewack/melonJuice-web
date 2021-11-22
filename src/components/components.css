@@ -77,23 +77,47 @@ svg {
     width:100%;
 }
 
+.AudioTrackArmed{
+    background:blue;
+}
+
+.AudioTrackHeading {
+    background:yellow;
+    z-index: 10;
+    position:absolute;
+    left:0;
+    height:100%;
+    width:50px;
+}
+
+.Editor{
+    position:relative; 
+    width:max-content; 
+}
+.ControlField{
+    position:sticky;
+    left:0;
+    width:min-content;
+    padding-bottom:20px;
+}
 .EditorField{
     border: solid black 1px;
     width:max-content;
     position: relative;
     display:flex;
+    flex-direction: row;
 }
 .ToolField{
     width:min-content;
     display:inline-block;
     width: 100px;
     position: sticky;
+    left:0;
+    z-index: 8;
 }
 .AudioField{
     position: relative;
-    left:100px;
     width:max-content;
-    overflow:hidden;
     display:inline-block;
 }
 
@@ -127,11 +151,12 @@ svg {
 
 .TransportTimer{
     display:inline-block;
-    position: sticky;
-    left:0;
     border:solid black 1px;
+    margin:0;
+    width:100%;
     background:white;
     text-align: center;
+    height:2rem;
 }
 .Timeline{
     position:relative;

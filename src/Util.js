@@ -21,8 +21,8 @@ export const contactType = (a,b, c,d) => {
 
     if((a <= c && b >= d)) return {type:'overcast'}
     if((a > c && b < d)) return {type:'contains', left:a-c, right:d-b}
-    if((c > a && c < b && d > b)) return {type:'overlap', side: 'left', dt:b-c}
-    if((d < b && d > a && c < a)) return {type:'overlap', side: 'right', dt:d-a}
+    if((c >= a && c <= b && d >= b)) return {type:'overlap', side: 'left', dt:b-c}
+    if((d <= b && d >= a && c <= a)) return {type:'overlap', side: 'right', dt:d-a}
     return null
 }
 

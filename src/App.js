@@ -144,6 +144,8 @@ import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
 import AudioRegion from './components/AudioRegion';
 import { tracksReducer } from './reducers/TracksReducer'
+import ToolField from './components/ToolField';
+import TrackTool from './components/TrackTool';
 
 function App() {
 
@@ -154,8 +156,11 @@ function App() {
   const [songTitle, setSongTitle] = useState('')
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
+  const [armedId, setArmedId] = useState(null)
 
   const [buffers, setBuffers] = useState([])
+  const [recStart, setRecStart] = useState(0)
+  const [recEnd, setRecEnd] = useState(0)
   
   // eslint-disable-next-line 
   useEffect(()=>{
@@ -222,106 +227,152 @@ function App() {
   },[editorStats])
 
   return (<>
-    {!begun ? <p>Loading...</p> : 
-    <> 
-      <p>{songTitle}</p>
+    {!begun ? <p>Loading...</p> :
 
-      <button ref={undoButtonRef} onClick={()=>{tracksDispatch({type:'undo'})}}>Undo</button>
-      <button ref={redoButtonRef} onClick={()=>{tracksDispatch({type:'redo'})}}>Redo</button>
+    <div className="Editor"> 
+      <div className='ControlField'>
+        <p>{songTitle}</p>
 
-      <input 
-        type="range" 
-        min="20" 
-        max="400" 
-        defaultValue="90"
-        onChange={(e)=>{
-          setEditorStats({
-            ...editorStats, 
-            barLength:Number(e.target.value)
-          })
-        }}
-      />
+        <button ref={undoButtonRef} onClick={()=>{tracksDispatch({type:'undo'})}}>Undo</button>
+        <button ref={redoButtonRef} onClick={()=>{tracksDispatch({type:'redo'})}}>Redo</button>
 
-      {/* <button onClick={()=>{
-        tracksDispatch({type:'new'})
-        setSongTitle('untitled')
-      }}> New... </button> */}
+        <input 
+          type="range" 
+          min="20" 
+          max="400" 
+          defaultValue="90"
+          onChange={(e)=>{
+            setEditorStats({
+              ...editorStats, 
+              barLength:Number(e.target.value)
+            })
+          }}
+        />
 
-      <button 
-        style={{width:100}}
-        onClick={()=>{
-          let snap = editorStats.snapGrain
-          if(snap === null){
-            setEditorStats({...editorStats, snapGrain:2})
-          }
-          else if(snap < 16){
-            setEditorStats({...editorStats, snapGrain:snap*2})
-          }
-          else{
-            setEditorStats({...editorStats, snapGrain:null})
+        {/* <button onClick={()=>{
+          tracksDispatch({type:'new'})
+          setSongTitle('untitled')
+        }}> New... </button> */}
+
+        <button 
+          style={{width:100}}
+          onClick={()=>{
+            let snap = editorStats.snapGrain
+            if(snap === null){
+              setEditorStats({...editorStats, snapGrain:2})
+            }
+            else if(snap < 16){
+              setEditorStats({...editorStats, snapGrain:snap*2})
+            }
+            else{
+              setEditorStats({...editorStats, snapGrain:null})
+            }
+          }}>
+
+          {editorStats.snapGrain ? 'Q:'+editorStats.snapGrain : 'No-snap'}
+        </button>
+
+
+
+        <form>
+          <label>
+            <input type="radio" value="grab" 
+              checked={(editorStats.toolMode === 'grab')} 
+              onChange={e=>{
+                setEditorStats({
+                  ...editorStats, 
+                  toolMode: e.target.value,
+                })
+              }}/>
+            🖐 Grab
+          </label>
+          {/* <label>
+            <input type="radio" value="fade" 
+              checked={(editorStats.toolMode === 'fade')} 
+              onChange={e=>{
+                setEditorStats({
+                  ...editorStats, 
+                  toolMode: e.target.value,
+                })
+              }}/>
+            🌗 Fade
+          </label> */}
+          <label>
+            <input type="radio" value="cut" 
+              checked={(editorStats.toolMode === 'cut')} 
+              onChange={e=>{
+                setEditorStats({
+                  ...editorStats, 
+                  toolMode: e.target.value,
+                })
+              }}/>
+            ✂️ Split
+          </label>
+        </form>
+
+        <br/>
+
+        <form onSubmit={e=>{
+          e.preventDefault()
+          if(armedId && (recEnd > recStart)){
+            const rr = AudioEngine.newRegion(newid(),Number(recStart),recEnd-recStart)
+            console.log(rr)
+            tracksDispatch({type:'record_region', trackId:armedId, region:rr})
           }
         }}>
+          <label>
+            Record Start
+            <input type='number' value={recStart} onChange={e=>{setRecStart(Number(e.target.value))}}/>
+          </label>
+          <br/>
 
-        {editorStats.snapGrain ? 'Q:'+editorStats.snapGrain : 'No-snap'}
-      </button>
+          <label>
+            Record End
+            <input type='number' value={recEnd} onChange={e=>{setRecEnd(Number(e.target.value))}}/>
+          </label>
+          <br/>
 
+          <input type="submit" value="Sim. Record" />
+          <br/>
+        </form>
+      </div>
 
+      <div className="EditorField">
+        <ToolField>
+          <p className="TransportTimer">Timer</p>
+          {tracks.current.map(t=>{
+            return <TrackTool onArm={
+              ()=>{
+                if(armedId === t.trackId) setArmedId(null)
+                else setArmedId(t.trackId)
+              }
+            } height={editorStats.trackHeight}/>
+          })}
+        </ToolField>
 
-      <form>
-        <label>
-          <input type="radio" value="grab" 
-            checked={(editorStats.toolMode === 'grab')} 
-            onChange={e=>{
-              setEditorStats({
-                ...editorStats, 
-                toolMode: e.target.value,
-              })
-            }}/>
-          🖐 Grab
-        </label>
-        {/* <label>
-          <input type="radio" value="fade" 
-            checked={(editorStats.toolMode === 'fade')} 
-            onChange={e=>{
-              setEditorStats({
-                ...editorStats, 
-                toolMode: e.target.value,
-              })
-            }}/>
-          🌗 Fade
-        </label> */}
-        <label>
-          <input type="radio" value="cut" 
-            checked={(editorStats.toolMode === 'cut')} 
-            onChange={e=>{
-              setEditorStats({
-                ...editorStats, 
-                toolMode: e.target.value,
-              })
-            }}/>
-          ✂️ Split
-        </label>
-      </form>
-
-      <br/>
-
-      <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
-        {tracks.current.map((track,i,tt) => { 
-          return <AudioTrack key={track.trackId} id={track.trackId} editorStats={editorStats}>
-            {track.regions.map((r,j,a) => {
-              return <AudioRegion 
-                  key={r.regionId} 
-                  region={r} 
-                  prevRegion={j>0 ? a[j-1] : null}
-                  nextRegion={j<a.length-1 ? a[j+1] : null}
-                  trackInfo={{idx:i, max:tt.length}}
-                  tracksDispatch={tracksDispatch}
-                  editorStats={editorStats}
-              />
-            })}
-            </AudioTrack>
-        })}
-      </AudioField>
+        <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
+          {tracks.current.map((track,i,tt) => { 
+            return <AudioTrack 
+              key={track.trackId} 
+              id={track.trackId} 
+              armedId={armedId}
+              editorStats={editorStats}
+            >
+              {track.regions.map((r,j,a) => {
+                return <AudioRegion 
+                    key={r.regionId} 
+                    region={r} 
+                    prevRegion={j>0 ? a[j-1] : null}
+                    nextRegion={j<a.length-1 ? a[j+1] : null}
+                    trackInfo={{idx:i, max:tt.length}}
+                    tracksDispatch={tracksDispatch}
+                    editorStats={editorStats}
+                />
+              })}
+              </AudioTrack>
+          })}
+        </AudioField>
+      </div>
 
       <p>Debug Map</p>
       <div className="DebugMap">
@@ -353,7 +404,7 @@ function App() {
           })}
         </div>
       </div>
-  </>
+  </div>
   }
   </>);
 }

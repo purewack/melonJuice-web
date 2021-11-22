@@ -1,8 +1,8 @@
 import React from 'react'
 
-export default function TrackTool({id, armedId, onArm}) {
+export default function TrackTool({id, armedId, onArm, height}) {
     return (
-        <div className={armedId === id ? 'TrackTool TrackToolArmed' : 'TrackTool'}>
+        <div className={armedId === id ? 'TrackTool TrackToolArmed' : 'TrackTool'} style={{height}}>
             <p>Icon</p>
             <div className='TrackToolHelper'>
                 <button onClick={onArm}>Rec Arm</button>
