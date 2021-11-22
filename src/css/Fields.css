@@ -1,0 +1,31 @@
+.Editor{
+    position:relative; 
+    width:max-content; 
+}
+.ControlField{
+    position:sticky;
+    left:0;
+    width:min-content;
+    padding-bottom:20px;
+}
+.EditorField{
+    border: solid black 1px;
+    width:max-content;
+    position: relative;
+    display:flex;
+    flex-direction: row;
+}
+.ToolField{
+    width:min-content;
+    display:inline-block;
+    width: 100px;
+    position: sticky;
+    left:0;
+    z-index: 8;
+}
+.AudioField{
+    position: relative;
+    width:max-content;
+    display:inline-block;
+}
+

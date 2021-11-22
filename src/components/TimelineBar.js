@@ -1,3 +1,4 @@
+import '../css/Time.css'
 
 const TimelineBar = ({bar, number, debug}) => {
     return(<div 

@@ -1,4 +1,4 @@
-import './components.css';
+import '../css/AudioRegion.css';
 import {useState,useEffect,useRef} from 'react'
 
 const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{

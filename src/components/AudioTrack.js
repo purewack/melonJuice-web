@@ -1,4 +1,4 @@
-import './components.css';
+import '../css/AudioTrack.css';
 
 const AudioTrack = ({id, armedId, children, editorStats})=>{
     

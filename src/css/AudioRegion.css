@@ -1,0 +1,63 @@
+
+.AudioRegion{
+    position:absolute;
+    background:pink;
+    border: solid black 1px;
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: 10px;
+}
+svg {
+    position: absolute;
+    left:0;
+    top:0;
+}
+.AudioRegionCutIndicator {
+    position: absolute;
+    border-left: solid red 2px;
+    height:100%;
+    z-index: 10;
+    pointer-events: none;
+}
+.AudioRegionGhostMove{
+    pointer-events: none;
+    z-index: 20;
+    background:rgba(255, 58, 245, 0.178);
+    border-width:2px;  
+    border-style:dashed;
+    height:100%;
+}
+.AudioRegionGhostBuffer{
+    pointer-events: none;
+    z-index: 20;
+    background:rgba(83, 184, 0, 0.5);
+    border-width:2px;  
+    border-style:dashed;
+    height:100%;
+}
+.AudioRegionDrag{
+    background:red;
+    z-index: 10;
+}
+.AudioRegion .StartHandle,
+.AudioRegion .EndHandle {
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    border: solid black 1px;
+    height:100%;
+}
+
+.AudioRegion .StartHandle:hover,
+.AudioRegion .EndHandle:hover{
+    cursor: col-resize;
+}
+.AudioRegion:hover {
+    cursor: grab;
+}
+.AudioRegionCut:hover {
+    cursor: pointer;
+}

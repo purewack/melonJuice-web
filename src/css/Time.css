@@ -1,0 +1,46 @@
+
+.TransportTimer{
+    display:inline-block;
+    border:solid black 1px;
+    margin:0;
+    width:100%;
+    background:white;
+    text-align: center;
+    height:2rem;
+}
+.Timeline{
+    position:relative;
+    width:max-content;
+    white-space: nowrap;
+}
+.Timeline .TimelineBar{
+    display:inline-block;
+    border-left:solid gray 1px;
+    position: relative;
+    height:2rem;
+}
+.Timeline .TimelineBar::before,
+.Timeline .TimelineBar::after{
+    content: '';
+    position:absolute;
+    left:0;
+    bottom: 0;
+    height: 50%;
+    width:25%;
+    border-right: solid gray 1px;
+}
+.Timeline .TimelineBar::after{
+    left:50%; 
+    border-left: solid gray 1px;
+    border-right: solid gray 1px;
+}
+
+.Timeline .Playhead{
+    position:absolute;
+    z-index: 100;
+    width:1px;
+    height:100vh;
+    left:20%;
+    background-color: red;
+    border:solid red 1px;
+}

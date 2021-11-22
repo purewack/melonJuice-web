@@ -31,7 +31,8 @@
 // }
 
 // export default AudioField
-
+import '../css/Fields.css'
+import '../css/Time.css'
 import {useState,useEffect} from 'react'
 
 const AudioField = ({ songMeasures, timer, editorStats ,children}) => {

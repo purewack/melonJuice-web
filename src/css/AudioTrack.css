@@ -1,0 +1,21 @@
+.AudioTrack{
+    background:cyan;
+    border:solid black 1px;
+    white-space: nowrap;
+    position:relative;
+    width:100%;
+}
+
+.AudioTrackArmed{
+    background:blue;
+}
+
+.AudioTrackHeading {
+    background:yellow;
+    z-index: 10;
+    position:absolute;
+    left:0;
+    height:100%;
+    width:50px;
+}
+

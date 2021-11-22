@@ -135,7 +135,9 @@
 //   // }</>
 
 
-import './App.css';
+import './css/App.css';
+import './css/Fields.css'
+import './css/Time.css'
 import { useState, useEffect, useReducer, useRef} from 'react';
 
 import newid from 'uniqid';
