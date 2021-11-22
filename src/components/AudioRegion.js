@@ -19,6 +19,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   const [isHovered, setIsHovered] = useState(false)
   const regionStatsPrev = useRef()
   const resizeHandleArea = 10;
+  const cutTarget = useRef()
 
 
   useEffect(()=>{
@@ -65,7 +66,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (e)=>{
-    setCutPos(snapCalc(e.clientX - e.target.getBoundingClientRect().left))
+    setCutPos(snapCalc(e.clientX - cutTarget.current.left))
   }
 
   const duringAdjust = (type,pointer)=>{
@@ -194,7 +195,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     } 
     onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} : cutCommit}
     onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
-    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : (e)=>{setIsHovering(true)}}
+    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{cutTarget.current = e.target.getBoundingClientRect(); setCutPos(null)} : (e)=>{setIsHovering(true)}}
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
     // onTouchStart={(e=>{startAdjust( 'touch',e.target.className,{ x:e.touches[0].clientX, y:touches[0].clientY } )})}
     >
