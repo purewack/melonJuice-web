@@ -66,7 +66,10 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (e)=>{
-    setCutPos(snapCalc(e.clientX - cutTarget.current.left))
+    if(cutTarget.current === null || cutTarget.current != e.target.getBoundingClientRect().left)
+      cutTarget.current = e.target.getBoundingClientRect().left
+    
+    setCutPos(snapCalc(e.clientX) - cutTarget.current)
   }
 
   const duringAdjust = (type,pointer)=>{
@@ -169,7 +172,11 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
       document.removeEventListener('touchend', touchup, { passive: false });
     }
     setHandleHitbox(null)
-    if(regionStatsPrev.current.cursorDelta === 0) return
+    if(regionStatsPrev.current.cursorDelta === 0) {
+      tracksDispatch({type:'select_region', region})
+      return
+    }
+
     const s = regionStatsPrev.current.rOffset/editorStats.barLength;
     const d = regionStatsPrev.current.rDuration/editorStats.barLength;
     const o = regionStatsPrev.current.rBOffset/editorStats.barLength;
@@ -195,7 +202,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     } 
     onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} : cutCommit}
     onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
-    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{cutTarget.current = e.target.getBoundingClientRect(); setCutPos(null)} : (e)=>{setIsHovering(true)}}
+    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : (e)=>{setIsHovering(true)}}
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
     // onTouchStart={(e=>{startAdjust( 'touch',e.target.className,{ x:e.touches[0].clientX, y:touches[0].clientY } )})}
     >
