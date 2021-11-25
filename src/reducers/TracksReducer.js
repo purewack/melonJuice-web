@@ -4,12 +4,16 @@ import newid from 'uniqid';
 
 export function tracksReducer(state,action){
   const publishHistory = (newMove, changes)=>{
+    const ch = newMove.map((t,i) => {
+      return changes.some(v => i===v) 
+    })
+    
     if(state.historyPointer !== state.history.length-1){
       return {
         historyPointer: state.historyPointer+1,
         history:  [...state.history.slice(0,state.historyPointer+1), newMove],
         current: newMove,
-        changes,
+        changes: ch,
       }
     }
 
@@ -17,7 +21,7 @@ export function tracksReducer(state,action){
       historyPointer: state.historyPointer+1,
       history:  [...state.history, newMove],
       current: newMove,
-      changes,
+      changes: ch,
     }
   }
 
@@ -88,10 +92,10 @@ export function tracksReducer(state,action){
 
   switch(action.type){
     case 'new':
-      return {current: [AudioEngine.newTrack()], history: [[]], historyPointer:0, changes:{}}
+      return {current: [AudioEngine.newTrack()], history: [[]], historyPointer:0, changes:[true] }
 
     case 'load':
-      return {current: [...action.tracks], history: [[...action.tracks]], historyPointer:0, changes:{}}
+      return {current: [...action.tracks], history: [[...action.tracks]], historyPointer:0, changes:action.tracks.map(t => {return true}) }
 
     case 'record_region':{
         let destTrackIdx
@@ -109,7 +113,7 @@ export function tracksReducer(state,action){
 
         track.regions = AudioEngine.pushRegion(track.regions, action.region)
 
-        return publishHistory(newMove, {destTrackIdx})
+        return publishHistory(newMove, [destTrackIdx])
       }
 
     case 'update_region':{
@@ -155,7 +159,7 @@ export function tracksReducer(state,action){
         destTrack.regions = AudioEngine.updateRegion(destTrack.regions, u)
       }
 
-      return publishHistory(newMove, {sourceTrackIdx, destTrackIdx})
+      return publishHistory(newMove, [sourceTrackIdx, destTrackIdx])
     }
     
     case 'cut_region':{
@@ -184,7 +188,7 @@ export function tracksReducer(state,action){
         return outputTrack
       })
 
-      return publishHistory(newMove, {destTrackIdx})
+      return publishHistory(newMove, [destTrackIdx])
     }
 
     case 'undo':
@@ -193,6 +197,7 @@ export function tracksReducer(state,action){
           ...state,
           current: state.history[state.historyPointer-1],
           historyPointer: state.historyPointer-1,
+          changes: state.current.map(t=>true)
         }
       }
       break;
@@ -202,12 +207,16 @@ export function tracksReducer(state,action){
           ...state,
           current: state.history[state.historyPointer+1],
           historyPointer: state.historyPointer+1,
+          changes: state.current.map(t=>true)
         }
       }
       break;
       
     default:
-      return state;
+      return {
+        ...state,
+        changes: state.current.map(t=>false)
+      };
   }
 }
 

@@ -226,6 +226,8 @@ function App() {
 
   useEffect(()=>{ 
     console.log(editorStats.toolMode)
+    if(tracks)
+    tracks.changes = tracks.changes.map(t => {return true})
   },[editorStats])
 
   return (<>
@@ -355,6 +357,7 @@ function App() {
         <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
           {tracks.current.map((track,i,tt) => { 
             return <AudioTrack 
+              hadChanges={tracks.changes[i]}
               key={track.trackId} 
               id={track.trackId} 
               armedId={armedId}

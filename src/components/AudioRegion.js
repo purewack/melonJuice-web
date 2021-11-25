@@ -4,7 +4,7 @@ import {useRenders} from '../Util'
 
 const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{
 
-  useRenders(region.regionId)
+  // useRenders(region.regionId)
 
   const [rOffset, setrOffset] = useState()
   const [rDuration, setRDuration] = useState()
@@ -175,7 +175,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
       document.removeEventListener('touchend', touchup, { passive: false });
     }
     setHandleHitbox(null)
-    if(regionStatsPrev.current.cursorDelta === 0) {
+    if(regionStatsPrev.current.cursorDelta.x === 0 && regionStatsPrev.current.cursorDelta.y === 0) {
       tracksDispatch({type:'select_region', region})
       return
     }

@@ -14,4 +14,6 @@ const AudioTrack = ({hadChanges, id, armedId, children, editorStats})=>{
     </div>)
 }
 
-export default memo(AudioTrack)
+export default memo(AudioTrack,(prevProps,nextProps)=>{
+    return !nextProps.hadChanges 
+})
