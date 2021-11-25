@@ -361,7 +361,7 @@ function App() {
               editorStats={editorStats}
             >
               {track.regions.map((r,j,a) => {
-                return <AudioRegion 
+                return <AudioRegion
                     key={r.regionId} 
                     region={r} 
                     prevRegion={j>0 ? a[j-1] : null}

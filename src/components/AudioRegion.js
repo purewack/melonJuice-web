@@ -1,7 +1,10 @@
 import '../css/AudioRegion.css';
 import {useState,useEffect,useRef} from 'react'
+import {useRenders} from '../Util'
 
 const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{
+
+  useRenders(region.regionId)
 
   const [rOffset, setrOffset] = useState()
   const [rDuration, setRDuration] = useState()
@@ -66,7 +69,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (e)=>{
-    if(cutTarget.current === null || cutTarget.current != e.target.getBoundingClientRect().left)
+    if(cutTarget.current === null || cutTarget.current !== e.target.getBoundingClientRect().left)
       cutTarget.current = e.target.getBoundingClientRect().left
     
     setCutPos(snapCalc(e.clientX) - cutTarget.current)
