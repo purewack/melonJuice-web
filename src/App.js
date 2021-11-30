@@ -224,11 +224,11 @@ function App() {
     redoButtonRef.current.disabled = (tracks.historyPointer === tracks.history.length-1)
   },[tracks,begun])
 
-  useEffect(()=>{ 
-    console.log(editorStats.toolMode)
-    if(tracks)
-    tracks.changes = tracks.changes.map(t => {return true})
-  },[editorStats])
+  // useEffect(()=>{ 
+  //   console.log(editorStats.toolMode)
+  //   if(tracks)
+  //   tracks.changes = tracks.changes.map(t => {return true})
+  // },[editorStats])
 
   return (<>
     {!begun ? <p>Loading...</p> :

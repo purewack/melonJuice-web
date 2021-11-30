@@ -1,6 +1,6 @@
 import '../css/AudioRegion.css';
 import {useState,useEffect,useRef} from 'react'
-import {useRenders} from '../Util'
+//import{useRenders} from '../Util'
 
 const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{
 
@@ -19,7 +19,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   const [dragVOffset, setDragVOffset] = useState(0)
   const [cutPos , setCutPos] = useState(null)
   const [isHovering, setIsHovering] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
+  const [isSelected, setIsSelected] = useState(false)
   const regionStatsPrev = useRef()
   const resizeHandleArea = 10;
   const cutTarget = useRef()
@@ -38,7 +38,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     setMaxHeight(editorStats.trackHeight)
 
     //temp resolve later
-    setIsHovered(false)
+    setIsSelected(false)
   },[region,editorStats])
 
   const snapVCalc = (ll)=>{
@@ -57,11 +57,12 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   }
 
   const isNeighbourClear = (s,e)=>{
-    const p = prevRegion ?  (prevRegion.rOffset+prevRegion.rDuration)*editorStats.barLength : null
-    const n = nextRegion ?  nextRegion.rOffset*editorStats.barLength : null
-    const offsetPrev = p ? s - p : null
-    const offsetNext = n ? n - e : null
-    return (offsetPrev >= 0 && offsetNext >= 0)
+    return true
+    // const p = prevRegion ?  (prevRegion.rOffset+prevRegion.rDuration)*editorStats.barLength : null
+    // const n = nextRegion ?  nextRegion.rOffset*editorStats.barLength : null
+    // const offsetPrev = p ? s - p : null
+    // const offsetNext = n ? n - e : null
+    // return (offsetPrev >= 0 && offsetNext >= 0)
   }
 
   const cutCommit = (e)=>{
@@ -128,7 +129,12 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
       break;
     }
   }
-
+  const mousedown = editorStats.toolMode === 'grab' ?
+    (e)=>{e.preventDefault(); startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} 
+    : cutCommit;
+  const touchdown = editorStats.toolMode === 'grab' ? 
+    (e=>{e.preventDefault(); startAdjust('touch',e.target.className,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
+    : null
   const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
   const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
   const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})}
@@ -201,13 +207,15 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     style={{height:'100%', width: rDuration, left: rOffset, top:dragVOffset}}
     className={
       editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
-      (handleHitbox || isHovered ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
+      (handleHitbox || isSelected ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
     } 
-    onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} : cutCommit}
+    onMouseDown={mousedown}
+    onTouchStart={touchdown}
+    
     onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
+    
     onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : (e)=>{setIsHovering(true)}}
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
-    // onTouchStart={(e=>{startAdjust( 'touch',e.target.className,{ x:e.touches[0].clientX, y:touches[0].clientY } )})}
     >
     {rDuration ? 
       <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
