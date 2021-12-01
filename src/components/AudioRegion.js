@@ -66,14 +66,19 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   }
 
   const cutCommit = (e)=>{
-    const cutPosCommit = (cutPos/editorStats.barLength)
+    const cp = regionStatsPrev.current.cp
+    const cutPosCommit = (cp/editorStats.barLength)
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (mode,e)=>{
     if(boundBox.current === null || boundBox.current !== e.target.getBoundingClientRect())
       boundBox.current = e.target.getBoundingClientRect()
     
-    setCutPos(snapCalc(mode === 'mouse' ? e.clientX : e.touches[0].clientX) - boundBox.current.left)
+    console.log(mode)
+    const tp = (mode === 'mouse' ? e.clientX : e.touches[0].clientX)
+    const cp = snapCalc(tp) - boundBox.current.left 
+    setCutPos(cp)
+    regionStatsPrev.current.cp = cp
   }
 
   const duringAdjust = (type,pointer)=>{
@@ -137,6 +142,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   const startcut = ()=>{
     setCutPos(null); 
     boundBox.current = null
+    regionStatsPrev.current = {cp:0}
   }
   const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
   const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
@@ -151,8 +157,8 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     ? (e=>{startAdjust('touch',e.target,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
     : (e=>{ 
       startcut()
-      document.addEventListener('touchmove', (e)=>{cutHover('touch',e)}, { passive: false });
-      document.addEventListener('touchend', cutCommit, { passive: false });
+      document.addEventListener('touchmove', (e)=>{e.preventDefault(); cutHover('touch',e)}, { passive: false });
+      document.addEventListener('touchend', (e)=>{e.preventDefault(); cutCommit()}, { passive: false });
     })
 
   const startAdjust = (type,target,cursorInitial)=>{  
