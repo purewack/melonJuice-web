@@ -9,6 +9,7 @@
     z-index: 1;
     overflow: hidden;
     border-radius: 10px;
+    touch-action: none;
 }
 svg {
     position: absolute;

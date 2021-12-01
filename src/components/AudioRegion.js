@@ -133,7 +133,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     (e)=>{e.preventDefault(); startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} 
     : cutCommit;
   const touchdown = editorStats.toolMode === 'grab' ? 
-    (e=>{e.preventDefault(); startAdjust('touch',e.target.className,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
+    (e=>{startAdjust('touch',e.target.className,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
     : null
   const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
   const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
