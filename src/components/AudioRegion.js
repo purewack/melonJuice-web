@@ -70,7 +70,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     regionStatsPrev.current = {boundBox:null, cp:null}
   }
   const cutCommit = (e)=>{
-    const cp = regionStatsPrev.current.cp
+    const cp = cutPos
     console.log(cp)
     if(!cp) return
     const cutPosCommit = (cp/editorStats.barLength)
@@ -83,8 +83,8 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     console.log(mode)
     const tp = (mode === 'mouse' ? e.clientX : e.touches[0].clientX)
     const cp = snapCalc(tp) - regionStatsPrev.current.boundBox.left 
-    setCutPos(cp)
-    regionStatsPrev.current.cp = cp
+    setCutPos(newcp => cp)
+    //regionStatsPrev.current.cp = cp
   }
 
   const duringAdjust = (type,pointer)=>{
