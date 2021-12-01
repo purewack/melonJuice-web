@@ -22,7 +22,6 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   const [isSelected, setIsSelected] = useState(false)
   const regionStatsPrev = useRef()
   const resizeHandleArea = 10;
-  const boundBox = useRef()
 
 
   useEffect(()=>{
@@ -51,7 +50,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     if(editorStats.snapGrain){
       let b = (editorStats.barLength/editorStats.snapGrain)
       let l = Math.floor(ll/b)*b
-      return l;
+     return l;
     }
     return ll
   }
@@ -63,20 +62,27 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     // const offsetPrev = p ? s - p : null
     // const offsetNext = n ? n - e : null
     // return (offsetPrev >= 0 && offsetNext >= 0)
+
   }
 
+  const cutStart = ()=>{
+    setCutPos(null); 
+    regionStatsPrev.current = {boundBox:null, cp:null}
+  }
   const cutCommit = (e)=>{
     const cp = regionStatsPrev.current.cp
+    console.log(cp)
+    if(!cp) return
     const cutPosCommit = (cp/editorStats.barLength)
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (mode,e)=>{
-    if(boundBox.current === null || boundBox.current !== e.target.getBoundingClientRect())
-      boundBox.current = e.target.getBoundingClientRect()
+    if(regionStatsPrev.current.boundBox === null || regionStatsPrev.current.boundBox.current !== e.target.getBoundingClientRect())
+      regionStatsPrev.current.boundBox = e.target.getBoundingClientRect()
     
     console.log(mode)
     const tp = (mode === 'mouse' ? e.clientX : e.touches[0].clientX)
-    const cp = snapCalc(tp) - boundBox.current.left 
+    const cp = snapCalc(tp) - regionStatsPrev.current.boundBox.left 
     setCutPos(cp)
     regionStatsPrev.current.cp = cp
   }
@@ -88,8 +94,8 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     regionStatsPrev.current.cursorDelta.y = pointer.y - regionStatsPrev.current.cursorInitial.y
     const deltax = regionStatsPrev.current.cursorDelta.x
     const deltay = regionStatsPrev.current.cursorDelta.y
-    if(boundBox.current === null || boundBox.current !== r.target.getBoundingClientRect())
-      boundBox.current = r.target.getBoundingClientRect()
+    if(regionStatsPrev.current.boundBox === null || regionStatsPrev.current.boundBox !== r.target.getBoundingClientRect())
+      regionStatsPrev.current.boundBox = r.target.getBoundingClientRect()
     
     // const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
 
@@ -128,7 +134,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
           regionStatsPrev.current.rOffset = o
         }
 
-        const bh = boundBox.current.height/2;
+        const bh = regionStatsPrev.current.boundBox.height/2;
         const voff = snapVCalc(deltay+bh);
         const tidx = (dragVOffset+voff) / editorStats.trackHeight
         
@@ -139,11 +145,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     }
   }
 
-  const startcut = ()=>{
-    setCutPos(null); 
-    boundBox.current = null
-    regionStatsPrev.current = {cp:0}
-  }
+
   const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
   const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
   const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})}
@@ -156,7 +158,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   const touchdown = editorStats.toolMode === 'grab'
     ? (e=>{startAdjust('touch',e.target,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
     : (e=>{ 
-      startcut()
+      cutStart()
       document.addEventListener('touchmove', (e)=>{e.preventDefault(); cutHover('touch',e)}, { passive: false });
       document.addEventListener('touchend', (e)=>{e.preventDefault(); cutCommit()}, { passive: false });
     })
@@ -164,6 +166,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   const startAdjust = (type,target,cursorInitial)=>{  
     regionStatsPrev.current = {
       target, 
+      boundBox:null,
       left: rOffset,
       width: rDuration, 
       right:rOffset+rDuration, 
@@ -234,7 +237,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     onTouchStart={touchdown}    
     onMouseDown={mousedown}
     onMouseMove={editorStats.toolMode === 'cut' ? (e)=>{cutHover('mouse',e)} : null}
-    onMouseEnter={editorStats.toolMode === 'cut' ? startcut : (e)=>{setIsHovering(true)}}
+    onMouseEnter={editorStats.toolMode === 'cut' ? cutStart : (e)=>{setIsHovering(true)}}
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
 
     >
