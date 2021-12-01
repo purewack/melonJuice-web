@@ -22,7 +22,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   const [isSelected, setIsSelected] = useState(false)
   const regionStatsPrev = useRef()
   const resizeHandleArea = 10;
-  const cutTarget = useRef()
+  const boundBox = useRef()
 
 
   useEffect(()=>{
@@ -70,10 +70,10 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (e)=>{
-    if(cutTarget.current === null || cutTarget.current !== e.target.getBoundingClientRect().left)
-      cutTarget.current = e.target.getBoundingClientRect().left
+    if(boundBox.current === null || boundBox.current !== e.target.getBoundingClientRect().left)
+      boundBox.current = e.target.getBoundingClientRect().left
     
-    setCutPos(snapCalc(e.clientX) - cutTarget.current)
+    setCutPos(snapCalc(e.clientX) - boundBox.current)
   }
 
   const duringAdjust = (type,pointer)=>{
@@ -83,9 +83,12 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     regionStatsPrev.current.cursorDelta.y = pointer.y - regionStatsPrev.current.cursorInitial.y
     const deltax = regionStatsPrev.current.cursorDelta.x
     const deltay = regionStatsPrev.current.cursorDelta.y
+    if(boundBox.current === null || boundBox.current !== r.target.getBoundingClientRect())
+      boundBox.current = r.target.getBoundingClientRect()
+    
     // const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
 
-    switch (r.target) {
+    switch (r.target.className) {
       case 'EndHandle':{
           const d = snapCalc(r.right + deltax) - r.left
           const max = (rBDuration-rBOffset)
@@ -120,7 +123,8 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
           regionStatsPrev.current.rOffset = o
         }
 
-        const voff = snapVCalc(deltay)
+        const bh = boundBox.current.height/2;
+        const voff = snapVCalc(deltay+bh);
         const tidx = (dragVOffset+voff) / editorStats.trackHeight
         
         if(tidx + trackInfo.idx >= 0 &&  tidx + trackInfo.idx <= trackInfo.max-1)
@@ -130,10 +134,10 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     }
   }
   const mousedown = editorStats.toolMode === 'grab' ?
-    (e)=>{e.preventDefault(); startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} 
+    (e)=>{e.preventDefault(); startAdjust('mouse', e.target, {x:e.clientX,y:e.clientY})} 
     : cutCommit;
   const touchdown = editorStats.toolMode === 'grab' ? 
-    (e=>{startAdjust('touch',e.target.className,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
+    (e=>{startAdjust('touch',e.target,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
     : null
   const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
   const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
@@ -159,7 +163,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     
     setrOffsetOld(rOffset)
     setRDurationOld(rDuration)
-    setHandleHitbox(target)
+    setHandleHitbox(target.className)
 
     if(type === 'mouse'){
       window.addEventListener('mouseup',mouseup)
