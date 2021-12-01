@@ -69,11 +69,11 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     const cutPosCommit = (cutPos/editorStats.barLength)
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
-  const cutHover = (e)=>{
-    if(boundBox.current === null || boundBox.current !== e.target.getBoundingClientRect().left)
-      boundBox.current = e.target.getBoundingClientRect().left
+  const cutHover = (mode,e)=>{
+    if(boundBox.current === null || boundBox.current !== e.target.getBoundingClientRect())
+      boundBox.current = e.target.getBoundingClientRect()
     
-    setCutPos(snapCalc(e.clientX) - boundBox.current)
+    setCutPos(snapCalc(mode === 'mouse' ? e.clientX : e.touches[0].clientX) - boundBox.current.left)
   }
 
   const duringAdjust = (type,pointer)=>{
@@ -133,17 +133,28 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
       break;
     }
   }
-  const mousedown = editorStats.toolMode === 'grab' ?
-    (e)=>{e.preventDefault(); startAdjust('mouse', e.target, {x:e.clientX,y:e.clientY})} 
-    : cutCommit;
-  const touchdown = editorStats.toolMode === 'grab' ? 
-    (e=>{startAdjust('touch',e.target,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
-    : null
+
+  const startcut = ()=>{
+    setCutPos(null); 
+    boundBox.current = null
+  }
   const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
   const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
   const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})}
   const touchup = (e)=>{endAdjust('touch')}
+
+  const mousedown = editorStats.toolMode === 'grab' ?
+    (e)=>{e.preventDefault(); startAdjust('mouse', e.target, {x:e.clientX,y:e.clientY})} 
+    : cutCommit;
   
+  const touchdown = editorStats.toolMode === 'grab'
+    ? (e=>{startAdjust('touch',e.target,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
+    : (e=>{ 
+      startcut()
+      document.addEventListener('touchmove', (e)=>{cutHover('touch',e)}, { passive: false });
+      document.addEventListener('touchend', cutCommit, { passive: false });
+    })
+
   const startAdjust = (type,target,cursorInitial)=>{  
     regionStatsPrev.current = {
       target, 
@@ -213,13 +224,13 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
       editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
       (handleHitbox || isSelected ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
     } 
+    
+    onTouchStart={touchdown}    
     onMouseDown={mousedown}
-    onTouchStart={touchdown}
-    
-    onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
-    
-    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)} : (e)=>{setIsHovering(true)}}
+    onMouseMove={editorStats.toolMode === 'cut' ? (e)=>{cutHover('mouse',e)} : null}
+    onMouseEnter={editorStats.toolMode === 'cut' ? startcut : (e)=>{setIsHovering(true)}}
     onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
+
     >
     {rDuration ? 
       <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
