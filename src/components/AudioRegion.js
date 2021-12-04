@@ -77,7 +77,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
   }
   const cutHover = (mode,e)=>{
-    if(regionStatsPrev.current.boundBox === null || regionStatsPrev.current.boundBox.current !== e.target.getBoundingClientRect())
+    if(regionStatsPrev.current.boundBox === null || regionStatsPrev.current.boundBox !== e.target.getBoundingClientRect())
       regionStatsPrev.current.boundBox = e.target.getBoundingClientRect()
     
     console.log(mode)

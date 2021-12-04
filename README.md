@@ -60,8 +60,9 @@ as some extra params like fade times.
 >Controls like undo and redo or new and load buttons reside here.
 
 **AudioEngine**:
->Holds a pool of recordings used by **AudioRegion**s and allows recording and playback of audio. 
+>Holds a pool of recordings used by **AudioRegion** and allows recording and playback of audio. 
 
+## Done So Far
 - You can drag (pink) regions within a (cyan) track and place it anywhere (even to different tracks).
 - If the region you're dragging overlaps existing ones slightly, the one underneath will get cropped.
 - If you cover an existing region, it gets deleted.
@@ -70,3 +71,4 @@ as some extra params like fade times.
 the region has a sound file associated with it (dotted green) and the sound file is immutable.
 - The region should allow you to adjust its start and end to the original recorded start and end even if the region was split
 Before, allowing non destructive editing.
+- Touch controls
