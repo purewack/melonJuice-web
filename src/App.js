@@ -159,6 +159,7 @@ function App() {
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
   const [armedId, setArmedId] = useState(null)
+  const [selectedRegion, setSelectedRegion] = useState(null)
 
   const [buffers, setBuffers] = useState([])
   const [recStart, setRecStart] = useState(0)
@@ -363,12 +364,12 @@ function App() {
               armedId={armedId}
               editorStats={editorStats}
             >
-              {track.regions.map((r,j,a) => {
+              {track.regions.map( r => {
                 return <AudioRegion
                     key={r.regionId} 
-                    region={r} 
-                    prevRegion={j>0 ? a[j-1] : null}
-                    nextRegion={j<a.length-1 ? a[j+1] : null}
+                    region={r}
+                    selectedRegion={selectedRegion}
+                    onSelect={setSelectedRegion} 
                     trackInfo={{idx:i, max:tt.length}}
                     tracksDispatch={tracksDispatch}
                     editorStats={editorStats}

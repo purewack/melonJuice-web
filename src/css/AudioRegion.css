@@ -39,7 +39,7 @@ svg {
     border-style:dashed;
     height:100%;
 }
-.AudioRegionDrag{
+.AudioRegionSelected{
     background:red;
     z-index: 10;
 }

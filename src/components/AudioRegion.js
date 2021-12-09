@@ -1,44 +1,35 @@
 import '../css/AudioRegion.css';
-import {useState,useEffect,useRef} from 'react'
+import {useState,useEffect,useRef,useCallback} from 'react'
+import { PointerHandle } from '../interfaces/PointerHandle';
 //import{useRenders} from '../Util'
 
-const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{
+const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatch, editorStats})=>{
 
-  // useRenders(region.regionId)
-
-  const [rOffset, setrOffset] = useState()
+  const [rOffset, setROffset] = useState()
   const [rDuration, setRDuration] = useState()
-  const [rOffsetOld, setrOffsetOld] = useState()
-  const [rDurationOld, setRDurationOld] = useState()
   const [rBOffset, setRBOffset] = useState()
   const [rBDuration, setRBDuration] = useState()
   const [fadeIn, setFadeIn] = useState(0)
   const [fadeOut, setFadeOut] = useState(0)
-  const [handleHitbox, setHandleHitbox] = useState(null)
   const [maxHeight, setMaxHeight] = useState(0)
-  const [dragVOffset, setDragVOffset] = useState(0)
   const [cutPos , setCutPos] = useState(null)
-  const [isHovering, setIsHovering] = useState(false)
   const [isSelected, setIsSelected] = useState(false)
-  const regionStatsPrev = useRef()
-  const resizeHandleArea = 10;
-
 
   useEffect(()=>{
-    setDragVOffset(0)
-    setrOffset(editorStats.barLength*region.rOffset)
+    setROffset(editorStats.barLength*region.rOffset)
     setRDuration(editorStats.barLength*region.rDuration)
     setRBOffset(editorStats.barLength*region.bOffset)
     setRBDuration(editorStats.barLength*region.bDuration)
-    setFadeIn(region.rFadeIn*editorStats.barLength)
-    setFadeOut(region.rFadeOut*editorStats.barLength)
+    setFadeIn(editorStats.barLength*region.rFadeIn)
+    setFadeOut(editorStats.barLength*region.rFadeIn)
     // setFadeIn(100)
     // setFadeOut(30)
     setMaxHeight(editorStats.trackHeight)
 
     //temp resolve later
-    setIsSelected(false)
-  },[region,editorStats])
+    const selected = selectedRegion && selectedRegion.regionId === region.regionId
+    setIsSelected(selected)
+  },[region,selectedRegion,editorStats])
 
   const snapVCalc = (ll)=>{
     let b = (maxHeight)
@@ -54,18 +45,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     }
     return ll
   }
-
-  const isNeighbourClear = (s,e)=>{
-    return true
-    // const p = prevRegion ?  (prevRegion.rOffset+prevRegion.rDuration)*editorStats.barLength : null
-    // const n = nextRegion ?  nextRegion.rOffset*editorStats.barLength : null
-    // const offsetPrev = p ? s - p : null
-    // const offsetNext = n ? n - e : null
-    // return (offsetPrev >= 0 && offsetNext >= 0)
-
-  }
-
-  const cutStart = ()=>{
+ /* const cutStart = ()=>{
     setCutPos(null); 
     regionStatsPrev.current = {boundBox:null, cp:null}
   }
@@ -97,13 +77,12 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     if(regionStatsPrev.current.boundBox === null || regionStatsPrev.current.boundBox !== r.target.getBoundingClientRect())
       regionStatsPrev.current.boundBox = r.target.getBoundingClientRect()
     
-    // const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
 
     switch (r.target.className) {
       case 'EndHandle':{
           const d = snapCalc(r.right + deltax) - r.left
           const max = (rBDuration-rBOffset)
-          if(d <= max && isNeighbourClear(r.left,d+r.left)){
+          if(d <= max){
             setRDuration(d)
             regionStatsPrev.current.rDuration = d
           }
@@ -114,7 +93,7 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
           const d = snapCalc(r.left + deltax)
           const o = r.rrbo+(d-r.left)
 
-          if( d >= 0 && o >= 0 && d < r.right-resizeHandleArea && isNeighbourClear(d,r.right)){
+          if( d >= 0 && o >= 0 && d < r.right-resizeHandleArea ){
             regionStatsPrev.current.rbo = o
             setRBOffset(o)
             setrOffset(d)
@@ -145,16 +124,37 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     }
   }
 
+  const mousedown = (e)=>{
+    e.preventDefault(); 
+    if(isSelected){
+    startAdjust('mouse', e.target, {x:e.clientX,y:e.clientY})  
+    }
+  } 
+  const mouseup = (e)=>{
+    e.preventDefault(); 
+    if(!isSelected) onSelect(region)
+    else{
+      endAdjust('mouse')
+    }
+  }
+  const mousemove = useCallback(
+    (e)=>{
+      e.preventDefault();
+      console.log(`reg ${isSelected}`)  
+      if(isSelected)
+      duringAdjust('mouse',{x:e.clientX, y:e.clientY})
+    },
+    [isSelected],
+  )
 
-  const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
-  const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
-  const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})}
-  const touchup = (e)=>{endAdjust('touch')}
 
-  const mousedown = editorStats.toolMode === 'grab' ?
-    (e)=>{e.preventDefault(); startAdjust('mouse', e.target, {x:e.clientX,y:e.clientY})} 
-    : cutCommit;
-  
+  const touchmove = (e)=>{
+    e.preventDefault();  
+    duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})
+  }
+  const touchup = (e)=>{
+    endAdjust('touch')
+  }
   const touchdown = editorStats.toolMode === 'grab'
     ? (e=>{startAdjust('touch',e.target,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
     : (e=>{ 
@@ -185,25 +185,13 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
     setRDurationOld(rDuration)
     setHandleHitbox(target.className)
 
-    if(type === 'mouse'){
-      window.addEventListener('mouseup',mouseup)
-      window.addEventListener('mousemove',mousemove)
-    }
-    else{
-      document.addEventListener('touchmove', touchmove, { passive: false });
-      document.addEventListener('touchend', touchup, { passive: false });
-    }
+    //  document.addEventListener('touchmove', touchmove, { passive: false });
+    //  document.addEventListener('touchend', touchup, { passive: false });
   }
 
   const endAdjust = (type)=>{
-    if(type === 'mouse'){
-      window.removeEventListener('mouseup',mouseup)
-      window.removeEventListener('mousemove',mousemove)
-    }
-    else{
-      document.removeEventListener('touchmove', touchmove, { passive: false })
-      document.removeEventListener('touchend', touchup, { passive: false });
-    }
+    //  document.removeEventListener('touchmove', touchmove, { passive: false })
+    //  document.removeEventListener('touchend', touchup, { passive: false });
     setHandleHitbox(null)
     if(regionStatsPrev.current.cursorDelta.x === 0 && regionStatsPrev.current.cursorDelta.y === 0) {
       tracksDispatch({type:'select_region', region})
@@ -225,20 +213,15 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
   //   setRDuration(rDurationOld)
   //   console.log('cancel')
   // }
+  */
 
   return(<>
   <div
     style={{height:'100%', width: rDuration, left: rOffset, top:dragVOffset}}
     className={
       editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
-      (handleHitbox || isSelected ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
-    } 
-    
-    onTouchStart={touchdown}    
-    onMouseDown={mousedown}
-    onMouseMove={editorStats.toolMode === 'cut' ? (e)=>{cutHover('mouse',e)} : null}
-    onMouseEnter={editorStats.toolMode === 'cut' ? cutStart : (e)=>{setIsHovering(true)}}
-    onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
+      ( isSelected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion')
+    }  
 
     >
     {rDuration ? 
@@ -248,24 +231,16 @@ const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch,
         <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
       </svg>
     : null}
-    
-    {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeHandleArea}}>|</span>}
-      {/* <span style={{pointerEvents:'none'}}> 
-        {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
-      </span> */}
-    {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeHandleArea}}>|</span> }  
-    
+
+    { 
+      <PointerHandle >
+        <div></div>
+      </PointerHandle> 
+    }
+      
     <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
   </div>
 
-  {
-    (editorStats.toolMode === 'cut' && cutPos) ? <div style={{left:rOffset+cutPos}} className='AudioRegionCutIndicator'></div> :
-    
-    (handleHitbox === 'StartHandle' || handleHitbox === 'EndHandle') 
-    ? <div style={{left: rOffsetOld-regionStatsPrev.current.rrbo, width: rBDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> 
-    : handleHitbox ? <div style={{width: rDurationOld, left: rOffsetOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
-     
-  }
   </>)
 }
 
