@@ -2,7 +2,6 @@ import {useRef, useState, Children, cloneElement}from 'react'
 
 const PointerHandle = ({ snap, onStart, onEnd, onChange, children }) => {
     const prevStats = useRef();
-    const [holding, setHolding] = useState(false);
   
     const getPointer = (e, type) => {
       return type === "touches" ? e.touches[0].clientX : e.clientX;
@@ -32,7 +31,6 @@ const PointerHandle = ({ snap, onStart, onEnd, onChange, children }) => {
     const pointerdown = (e, type) => {
       e.preventDefault();
       e.stopPropagation();
-      setHolding(true);
       const x = getPointer(e, type);
       const targetBox = e.target.getBoundingClientRect();
       prevStats.current = {
@@ -41,7 +39,7 @@ const PointerHandle = ({ snap, onStart, onEnd, onChange, children }) => {
         px: x,
         dx: 0
       };
-      onStart({...prevStats.current})
+      //onStart({...prevStats.current})
       window.addEventListener("mousemove", pointermove);
       window.addEventListener("mouseup", pointerup);
     };
@@ -49,9 +47,8 @@ const PointerHandle = ({ snap, onStart, onEnd, onChange, children }) => {
     const pointerup = (e, type) => {
       e.preventDefault();
       e.stopPropagation();
-      setHolding(false);
       onEnd({
-        dxx: prevStats.current.dx
+        dxx: calcSnap(prevStats.current.dx)
       });
       window.removeEventListener("mousemove", pointermove);
       window.removeEventListener("mouseup", pointerup);
@@ -63,4 +60,5 @@ const PointerHandle = ({ snap, onStart, onEnd, onChange, children }) => {
       })
     );
   };
-  export default PointerHandle;
+
+export default PointerHandle;

@@ -122,6 +122,7 @@ export function tracksReducer(state,action){
       let sourceTrack = null
       let destTrackIdx = null
       let sourceTrackIdx = null
+      console.log(u)
 
       const newMove = state.current.map((t,i) => {
         let jidx = (action.jumpRelativeTracks ? action.jumpRelativeTracks : 0)

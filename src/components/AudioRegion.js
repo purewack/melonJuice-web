@@ -1,36 +1,134 @@
 import '../css/AudioRegion.css';
 import {useState,useEffect,useRef,useCallback} from 'react'
-import { PointerHandle } from '../interfaces/PointerHandle';
+import PointerHandle  from '../interfaces/PointerHandle';
 //import{useRenders} from '../Util'
 
 const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatch, editorStats})=>{
+  const rOffset = (editorStats.barLength*region.rOffset)
+  const rDuration = (editorStats.barLength*region.rDuration)
+  const bOffset = (editorStats.barLength*region.bOffset)
+  const bDuration = (editorStats.barLength*region.bDuration)
+  const rFadeIn = (editorStats.barLength*region.rFadeIn)
+  const rFadeOut = (editorStats.barLength*region.rFadeIn)
+  const maxHeight = (editorStats.trackHeight)
+  const selected = selectedRegion && selectedRegion.regionId === region.regionId
+  const snap = {size: editorStats.barLength, grain: editorStats.snapGrain}
 
-  const [rOffset, setROffset] = useState()
-  const [rDuration, setRDuration] = useState()
-  const [rBOffset, setRBOffset] = useState()
-  const [rBDuration, setRBDuration] = useState()
-  const [fadeIn, setFadeIn] = useState(0)
-  const [fadeOut, setFadeOut] = useState(0)
-  const [maxHeight, setMaxHeight] = useState(0)
-  const [cutPos , setCutPos] = useState(null)
-  const [isSelected, setIsSelected] = useState(false)
+  const selectHandler = ()=>{
+    if(selectedRegion && selectedRegion.id === region.id)
+    onSelect(null)
+    else
+    onSelect(region)
+  } 
+  const [rrDuration, setRRDuration] = useState(0)
+  const [rrOffset, setRROffset] = useState(0)
+  const [rrTransform, setRRTransform] = useState(0)
+  
+  const onChangeDurationHandler = (stats)=>{
+    setRRDuration(stats.dxx)
+  }
+  const onChangeOffsetHandler = ({dxx})=>{
+    const rd = rOffset / editorStats.barLength
+    setRROffset(dxx)
+    setRRDuration(rd - dxx)
+  }
+  const onChangeGrabHandler = ({dxx})=>{
+    setRRTransform(`translateX(${dxx}px)`)
+  }
+
+  const onEndDurationHandler = ({dxx})=>{
+    if(dxx === 0) return
+      const rd = (rDuration + dxx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, rDuration:rd},
+       jumpRelativeTracks:0,
+      })
+  }
+  const onEndOffsetHandler = ({dxx})=>{
+    if(dxx === 0) return
+      const ro = (rOffset + dxx)/editorStats.barLength
+      const rd = (rDuration - dxx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, rOffset:ro, rDuration:rd},
+       jumpRelativeTracks:0,
+      })
+  }
+  const onEndGrabHandler = ({dxx})=>{
+    if(dxx === 0) {
+      selectHandler()
+      return
+    }
+      const ro = (rOffset + dxx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, rOffset:ro},
+       jumpRelativeTracks:0,
+      })
+  }
 
   useEffect(()=>{
-    setROffset(editorStats.barLength*region.rOffset)
-    setRDuration(editorStats.barLength*region.rDuration)
-    setRBOffset(editorStats.barLength*region.bOffset)
-    setRBDuration(editorStats.barLength*region.bDuration)
-    setFadeIn(editorStats.barLength*region.rFadeIn)
-    setFadeOut(editorStats.barLength*region.rFadeIn)
-    // setFadeIn(100)
-    // setFadeOut(30)
-    setMaxHeight(editorStats.trackHeight)
+    setRRDuration(0)
+    setRROffset(0)
+    setRRTransform('')
+  },[region])
+  
+  const styleRegion = {
+    height:'100%', 
+    width: rDuration + rrDuration, 
+    left: rOffset + rrOffset,
+    transform: rrTransform,
+  } 
+  const styleDurationHandle = {
+    height:30,
+    width:30,
+    borderRadius:'50%',
+    background:'green',
+    position:'absolute',
+    right:-15,
+  }
+  const styleOffsetHandle = {
+    ...styleDurationHandle,
+    right: undefined,
+    left: -15,
+  }
 
-    //temp resolve later
-    const selected = selectedRegion && selectedRegion.regionId === region.regionId
-    setIsSelected(selected)
-  },[region,selectedRegion,editorStats])
+  return(<>
+  <PointerHandle snap={snap} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
+  <div style={styleRegion} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
+      
+    { 
+      <PointerHandle snap={snap} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
+        <div className="AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
+      </PointerHandle> 
+    }
+    
+    {/* {rDuration ? 
+      <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
+        <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
+        <polygon points={`0,0 0,${maxHeight} ${fadeIn},0`} fill="white"></polygon>
+        <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
+      </svg>
+    : null} */}
 
+    { 
+      <PointerHandle snap={snap} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
+        <div className="AudioRegionDurationHandle" style={styleDurationHandle}></div>
+      </PointerHandle> 
+    }
+      
+    <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
+  </div>
+  </PointerHandle>
+  </>)
+}
+
+export default AudioRegion
+
+
+ /*
+  
   const snapVCalc = (ll)=>{
     let b = (maxHeight)
     let l = Math.floor(ll/b)*b
@@ -45,7 +143,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     }
     return ll
   }
- /* const cutStart = ()=>{
+  const cutStart = ()=>{
     setCutPos(null); 
     regionStatsPrev.current = {boundBox:null, cp:null}
   }
@@ -214,34 +312,3 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   //   console.log('cancel')
   // }
   */
-
-  return(<>
-  <div
-    style={{height:'100%', width: rDuration, left: rOffset, top:dragVOffset}}
-    className={
-      editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
-      ( isSelected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion')
-    }  
-
-    >
-    {rDuration ? 
-      <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
-        <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
-        <polygon points={`0,0 0,${maxHeight} ${fadeIn},0`} fill="white"></polygon>
-        <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
-      </svg>
-    : null}
-
-    { 
-      <PointerHandle >
-        <div></div>
-      </PointerHandle> 
-    }
-      
-    <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
-  </div>
-
-  </>)
-}
-
-export default AudioRegion
