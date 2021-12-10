@@ -12,10 +12,9 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const rFadeOut = (editorStats.barLength*region.rFadeIn)
   const maxHeight = (editorStats.trackHeight)
   const selected = selectedRegion && selectedRegion.regionId === region.regionId
-  const snap = {size: editorStats.barLength, grain: editorStats.snapGrain}
 
   const selectHandler = ()=>{
-    if(selectedRegion && selectedRegion.id === region.id)
+    if(selectedRegion)
     onSelect(null)
     else
     onSelect(region)
@@ -23,7 +22,9 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const [rrDuration, setRRDuration] = useState(0)
   const [rrOffset, setRROffset] = useState(0)
   const [rrTransform, setRRTransform] = useState(0)
-  
+  const [rcTransform, setRCTransform] = useState(0)
+  const [cutPos, setCutPos] = useState(0)
+
   const onChangeDurationHandler = (stats)=>{
     setRRDuration(stats.dxx)
   }
@@ -34,6 +35,13 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
   const onChangeGrabHandler = ({dxx})=>{
     setRRTransform(`translateX(${dxx}px)`)
+  }
+  const onChangeCutHandler = ({dxx, dyy})=>{
+    const tt = `translateX(${cutPos + dxx}px)`
+    setRCTransform(tt)
+  }
+  const onEndCutHandler = ({dxx,dyy}) => {
+    setCutPos(cutPos + dxx)
   }
 
   const onEndDurationHandler = ({dxx})=>{
@@ -55,19 +63,20 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
        jumpRelativeTracks:0,
       })
   }
-  const onEndGrabHandler = ({dxx})=>{
-    if(dxx === 0) {
+  const onEndGrabHandler = ({dxx, dyy})=>{
+    if(dxx === 0 && dyy === 0) {
       selectHandler()
       return
     }
-      const ro = (rOffset + dxx)/editorStats.barLength
+    if(dxx === 0) return
+    const ro = (rOffset + dxx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, rOffset:ro},
        jumpRelativeTracks:0,
       })
   }
-
+  
   useEffect(()=>{
     setRRDuration(0)
     setRROffset(0)
@@ -93,17 +102,25 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     right: undefined,
     left: -15,
   }
+  const styleCutHandle = {
+    ...styleDurationHandle,
+    right:undefined,
+    bottom:-15,
+    left:-15,
+    transform:rcTransform,
+  }
+  const styleCutHandleLine = {
+    height: editorStats.trackHeight-2,
+    width:2,
+    left:0,
+    bottom:0,
+    transform:rcTransform,
+  }
 
   return(<>
-  <PointerHandle snap={snap} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
+  <PointerHandle onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
   <div style={styleRegion} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
       
-    { 
-      <PointerHandle snap={snap} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
-        <div className="AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
-      </PointerHandle> 
-    }
-    
     {/* {rDuration ? 
       <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
         <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
@@ -112,12 +129,25 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       </svg>
     : null} */}
 
-    { 
-      <PointerHandle snap={snap} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
-        <div className="AudioRegionDurationHandle" style={styleDurationHandle}></div>
+    {/* { 
+      <PointerHandle onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
+        <div className="AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
       </PointerHandle> 
     }
+    
+    { 
+      <PointerHandle onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
+        <div className="AudioRegionDurationHandle" style={styleDurationHandle}></div>
+      </PointerHandle> 
+    } */}
       
+    {<> 
+      <PointerHandle shouldSnapToFirstDirection onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
+        <div className="AudioRegionCutHandle" style={styleCutHandle}></div>
+      </PointerHandle> 
+      <div className="AudioRegionCutHandleLine" style={styleCutHandleLine}></div>
+    </>}
+
     <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
   </div>
   </PointerHandle>

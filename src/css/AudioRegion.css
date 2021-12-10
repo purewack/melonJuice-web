@@ -61,3 +61,13 @@ svg {
 .AudioRegionCut:hover {
     cursor: pointer;
 }
+
+.AudioRegionCutHandle{
+    border-radius:'50%';
+    background:'green';
+    position:'absolute';
+}
+.AudioRegionCutHandleLine{
+    position:absolute;
+    background:green;
+}
