@@ -49,7 +49,9 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     setCutHandleLineTransform(thl)
 
     if(editorStats.trackHeight+dy <= 0 && editorStats.trackHeight+prev_dy > 0) {
-      console.log('cut')
+      const cp = cutPos + dx
+      const cutPosCommit = (cp/editorStats.barLength)
+      tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
     }
   }
   const onEndCutHandler = ({dx,dy}) => {
