@@ -159,12 +159,12 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       </PointerHandle> 
     } */}
       
-    {<> 
+    {selected ? <> 
       <PointerHandle onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
         <div className="AudioRegionCutHandle" style={styleCutHandle}></div>
       </PointerHandle> 
       <div className="AudioRegionCutHandleLine" style={styleCutHandleLine}></div>
-    </>}
+    </> : null}
 
     <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
   </div>
