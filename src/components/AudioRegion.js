@@ -22,54 +22,70 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const [rrDuration, setRRDuration] = useState(0)
   const [rrOffset, setRROffset] = useState(0)
   const [rrTransform, setRRTransform] = useState(0)
-  const [rcTransform, setRCTransform] = useState(0)
+  const [cutHandleTransform, setCutHandleTransform] = useState(0)
+  const [cutHandleLineTransform, setCutHandleLineTransform] = useState(0)
+  const cutHandleDxx = useRef(0)
   const [cutPos, setCutPos] = useState(0)
 
   const onChangeDurationHandler = (stats)=>{
-    setRRDuration(stats.dxx)
+    setRRDuration(stats.dx)
   }
-  const onChangeOffsetHandler = ({dxx})=>{
+  const onChangeOffsetHandler = ({dx})=>{
     const rd = rOffset / editorStats.barLength
-    setRROffset(dxx)
-    setRRDuration(rd - dxx)
+    setRROffset(dx)
+    setRRDuration(rd - dx)
   }
-  const onChangeGrabHandler = ({dxx})=>{
-    setRRTransform(`translateX(${dxx}px)`)
+  const onChangeGrabHandler = ({dx})=>{
+    setRRTransform(`translateX(${dx}px)`)
   }
-  const onChangeCutHandler = ({dxx, dyy})=>{
-    const tt = `translateX(${cutPos + dxx}px)`
-    setRCTransform(tt)
+  const onChangeCutHandler = ({dx, dy, prev_dy})=>{
+    if(dy+15 < -editorStats.trackHeight) return
+
+    const cutBonudary = -20
+    if(dy > cutBonudary) cutHandleDxx.current = dx
+    const thl = `translateX(${cutPos + cutHandleDxx.current}px)`
+    const th = thl + ` translateY(${dy <= cutBonudary ? dy : 0}px)`
+    setCutHandleTransform(th)
+    setCutHandleLineTransform(thl)
+
+    if(editorStats.trackHeight+dy <= 0 && editorStats.trackHeight+prev_dy > 0) {
+      console.log('cut')
+    }
   }
-  const onEndCutHandler = ({dxx,dyy}) => {
-    setCutPos(cutPos + dxx)
+  const onEndCutHandler = ({dx,dy}) => {
+    setCutPos(cutPos + dx)
+    const thl = `translateX(${cutPos + cutHandleDxx.current}px)`
+    const th = thl + ` translateY(0px)`
+    setCutHandleTransform(th)
+    setCutHandleLineTransform(thl)
   }
 
-  const onEndDurationHandler = ({dxx})=>{
-    if(dxx === 0) return
-      const rd = (rDuration + dxx)/editorStats.barLength
+  const onEndDurationHandler = ({dx})=>{
+    if(dx === 0) return
+      const rd = (rDuration + dx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, rDuration:rd},
        jumpRelativeTracks:0,
       })
   }
-  const onEndOffsetHandler = ({dxx})=>{
-    if(dxx === 0) return
-      const ro = (rOffset + dxx)/editorStats.barLength
-      const rd = (rDuration - dxx)/editorStats.barLength
+  const onEndOffsetHandler = ({dx})=>{
+    if(dx === 0) return
+      const ro = (rOffset + dx)/editorStats.barLength
+      const rd = (rDuration - dx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, rOffset:ro, rDuration:rd},
        jumpRelativeTracks:0,
       })
   }
-  const onEndGrabHandler = ({dxx, dyy})=>{
-    if(dxx === 0 && dyy === 0) {
+  const onEndGrabHandler = ({dx, dy})=>{
+    if(dx === 0 && dy === 0) {
       selectHandler()
       return
     }
-    if(dxx === 0) return
-    const ro = (rOffset + dxx)/editorStats.barLength
+    if(dx === 0) return
+    const ro = (rOffset + dx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, rOffset:ro},
@@ -105,16 +121,16 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const styleCutHandle = {
     ...styleDurationHandle,
     right:undefined,
-    bottom:-15,
+    bottom:-30,
     left:-15,
-    transform:rcTransform,
+    transform:cutHandleTransform, 
   }
   const styleCutHandleLine = {
     height: editorStats.trackHeight-2,
     width:2,
     left:0,
     bottom:0,
-    transform:rcTransform,
+    transform:cutHandleLineTransform,
   }
 
   return(<>
@@ -142,7 +158,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     } */}
       
     {<> 
-      <PointerHandle shouldSnapToFirstDirection onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
+      <PointerHandle onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
         <div className="AudioRegionCutHandle" style={styleCutHandle}></div>
       </PointerHandle> 
       <div className="AudioRegionCutHandleLine" style={styleCutHandleLine}></div>

@@ -3,14 +3,17 @@ import {useRef, useState, Children, cloneElement}from 'react'
 const PointerHandle = ({ onStart, onEnd, onChange, shouldSnapToFirstDirection, children }) => {
     const prevStats = useRef();
   
-    const getPointer = (e, type) => {
-      return type === "touches" ? [e.touches[0].clientX, e.touches[0].clientY] : [e.clientX, e.clientY];
+    const getPointer = (e, touch) => {
+      return touch ? [e.touches[0].clientX, e.touches[0].clientY] : [e.clientX, e.clientY];
     };
   
-    const pointermove = (e, type) => {
+    const pointermove = (e, touch) => {
       e.preventDefault();
       e.stopPropagation();
-      const [x,y] = getPointer(e, type);
+      const [x,y] = getPointer(e, touch);
+
+      prevStats.current.prev_dx = prevStats.current.dx
+      prevStats.current.prev_dy = prevStats.current.dy
 
       prevStats.current.dx = x - prevStats.current.px;
       const tx = prevStats.current.ix + prevStats.current.dx;
@@ -30,23 +33,30 @@ const PointerHandle = ({ onStart, onEnd, onChange, shouldSnapToFirstDirection, c
         }
         else 
           onChange({
-            dxx: prevStats.current.passedStartMargin === 'x' ? prevStats.current.dx : 0,
-            dyy: prevStats.current.passedStartMargin === 'y' ? prevStats.current.dy : 0,
+            dx: prevStats.current.passedStartMargin === 'x' ? prevStats.current.dx : 0,
+            dy: prevStats.current.passedStartMargin === 'y' ? prevStats.current.dy : 0,
+            prev_dx: prevStats.current.prev_dx,
+            prev_dy: prevStats.current.prev_dy,
           })
         return
       }
 
       //if (tx >= 0)
       onChange({
-        dxx: (prevStats.current.dx),
-        dyy: (prevStats.current.dy)
+        dx: (prevStats.current.dx),
+        dy: (prevStats.current.dy),
+        prev_dx: prevStats.current.prev_dx,
+        prev_dy: prevStats.current.prev_dy,
       });
     };
-  
-    const pointerdown = (e, type) => {
+    
+    const touchmove = (e)=>{pointermove(e,true)}
+    const touchend = (e)=>{pointerup(e,true)}
+
+    const pointerdown = (e, touch) => {
       e.preventDefault();
       e.stopPropagation();
-      const [x,y] = getPointer(e, type);
+      const [x,y] = getPointer(e, touch);
       const targetBox = e.target.getBoundingClientRect();
 
       prevStats.current = {
@@ -54,41 +64,60 @@ const PointerHandle = ({ onStart, onEnd, onChange, shouldSnapToFirstDirection, c
         ix: targetBox.left - e.target.offsetLeft,
         px: x,
         dx: 0,
+        prev_dx:0,
         iy: targetBox.top - e.target.offsetTop,
         py: y,
         dy: 0,
+        prev_dy:0,
         passedStartMargin: null,
       };
 
       //onStart({...prevStats.current})
-      window.addEventListener("mousemove", pointermove);
-      window.addEventListener("mouseup", pointerup);
+      if(touch){  
+        document.addEventListener('touchmove', touchmove, { passive: false });
+        document.addEventListener('touchend', touchend, { passive: false });
+      }
+      else{
+        window.addEventListener("mousemove", pointermove);
+        window.addEventListener("mouseup", pointerup);
+      }
     };
   
-    const pointerup = (e, type) => {
+    const pointerup = (e, touch) => {
       e.preventDefault();
       e.stopPropagation();
       
-      window.removeEventListener("mousemove", pointermove);
-      window.removeEventListener("mouseup", pointerup);
+      if(touch){  
+        document.removeEventListener('touchmove', touchmove, { passive: false });
+        document.removeEventListener('touchend', touchend, { passive: false });
+      }
+      else{
+        window.removeEventListener("mousemove", pointermove);
+        window.removeEventListener("mouseup", pointerup);
+      }
       
       if(shouldSnapToFirstDirection ){
         onEnd({
-          dxx: prevStats.current.passedStartMargin === 'x' ? prevStats.current.dx : 0,
-          dyy: prevStats.current.passedStartMargin === 'y' ? prevStats.current.dy : 0,
+          dx: prevStats.current.passedStartMargin === 'x' ? prevStats.current.dx : 0,
+          dy: prevStats.current.passedStartMargin === 'y' ? prevStats.current.dy : 0,
+          prev_dx: prevStats.current.prev_dx,
+          prev_dy: prevStats.current.prev_dy,
         })
         return
       }
 
       onEnd({
-        dxx: (prevStats.current.dx),
-        dyy: (prevStats.current.dy) 
+        dx: (prevStats.current.dx),
+        dy: (prevStats.current.dy),
+        prev_dx: prevStats.current.prev_dx,
+        prev_dy: prevStats.current.prev_dy,
       });
     };
   
     return Children.only(
       cloneElement(children, {
-        onMouseDown: pointerdown
+        onMouseDown: pointerdown,
+        onTouchStart: (e)=>{pointerdown(e,'touch')}
       })
     );
   };
