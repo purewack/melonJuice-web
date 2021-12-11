@@ -10,18 +10,20 @@
     border-radius: 10px;
     touch-action: none;
 }
-svg {
+.AudioRegionSVGContainer{
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    width:100%;
+    height:100%;
+}
+.AudioRegionFadeSVG {
     position: absolute;
     left:0;
     top:0;
+    width:100%;
 }
-.AudioRegionCutIndicator {
-    position: absolute;
-    border-left: solid red 2px;
-    height:100%;
-    z-index: 10;
-    pointer-events: none;
-}
+
 .AudioRegionGhostMove{
     pointer-events: none;
     z-index: 20;
@@ -40,27 +42,13 @@ svg {
 }
 .AudioRegionSelected{
     background:red;
-    z-index: 10;
-}
-.AudioRegion .StartHandle,
-.AudioRegion .EndHandle {
-    display:flex;
-    justify-content: center;
-    align-items: center;
-    border: solid black 1px;
-    height:100%;
+    z-index: 5;
 }
 
-.AudioRegion .StartHandle:hover,
-.AudioRegion .EndHandle:hover{
-    cursor: col-resize;
-}
 .AudioRegion:hover {
     cursor: grab;
 }
-.AudioRegionCut:hover {
-    cursor: pointer;
-}
+
 
 .AudioRegionCutHandle{
     border-radius:'50%';

@@ -1,6 +1,6 @@
 import {useRef, useState, Children, cloneElement}from 'react'
 
-const PointerHandle = ({ onStart, onEnd, onChange, shouldSnapToFirstDirection, children }) => {
+const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDirection, children }) => {
     const prevStats = useRef();
   
     const getPointer = (e, touch) => {
@@ -114,12 +114,17 @@ const PointerHandle = ({ onStart, onEnd, onChange, shouldSnapToFirstDirection, c
       });
     };
   
-    return Children.only(
-      cloneElement(children, {
-        onMouseDown: pointerdown,
-        onTouchStart: (e)=>{pointerdown(e,'touch')}
-      })
-    );
+    return (<>
+      {!disable ?
+        Children.only(
+        cloneElement(children, {
+          onMouseDown: pointerdown,
+          onTouchStart: (e)=>{pointerdown(e,'touch')}
+        }))
+        :
+        children  
+      }
+    </>)
   };
 
 export default PointerHandle;

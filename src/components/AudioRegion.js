@@ -9,9 +9,12 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const bOffset = (editorStats.barLength*region.bOffset)
   const bDuration = (editorStats.barLength*region.bDuration)
   const rFadeIn = (editorStats.barLength*region.rFadeIn)
-  const rFadeOut = (editorStats.barLength*region.rFadeIn)
+  const rFadeOut = (editorStats.barLength*region.rFadeOut)
   const maxHeight = (editorStats.trackHeight)
   const selected = selectedRegion && selectedRegion.regionId === region.regionId
+  const isGrabbing = editorStats.toolMode === 'grab'
+  const isFading = editorStats.toolMode === 'fade'
+  const isCutting = editorStats.toolMode === 'cut'
 
   const selectHandler = ()=>{
     if(selectedRegion)
@@ -21,19 +24,20 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   } 
   const [rrDuration, setRRDuration] = useState(0)
   const [rrOffset, setRROffset] = useState(0)
+  const [rrFadeIn, setRRFadeIn] = useState(0)
+  const [rrFadeOut, setRRFadeOut] = useState(0)
   const [rrTransform, setRRTransform] = useState(0)
   const [cutHandleTransform, setCutHandleTransform] = useState(0)
   const [cutHandleLineTransform, setCutHandleLineTransform] = useState(0)
   const cutHandleDxx = useRef(0)
   const [cutPos, setCutPos] = useState(0)
 
-  const onChangeDurationHandler = (stats)=>{
-    setRRDuration(stats.dx)
+  const onChangeDurationHandler = ({dx})=>{
+    setRRDuration(dx)
   }
   const onChangeOffsetHandler = ({dx})=>{
-    const rd = rOffset / editorStats.barLength
     setRROffset(dx)
-    setRRDuration(rd - dx)
+    setRRDuration(-dx)
   }
   const onChangeGrabHandler = ({dx})=>{
     setRRTransform(`translateX(${dx}px)`)
@@ -51,6 +55,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     if(editorStats.trackHeight+dy <= 0 && editorStats.trackHeight+prev_dy > 0) {
       const cp = cutPos + dx
       const cutPosCommit = (cp/editorStats.barLength)
+      onSelect(null)
       tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
     }
   }
@@ -82,10 +87,6 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       })
   }
   const onEndGrabHandler = ({dx, dy})=>{
-    if(dx === 0 && dy === 0) {
-      selectHandler()
-      return
-    }
     if(dx === 0) return
     const ro = (rOffset + dx)/editorStats.barLength
       tracksDispatch({
@@ -94,10 +95,36 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
        jumpRelativeTracks:0,
       })
   }
-  
+ 
+  const onChangeFadeInHandler = ({dx})=>{
+    setRRFadeIn(dx)
+  }
+  const onEndFadeInHandler = ({dx})=>{
+    const rfi = (rFadeIn+dx)/editorStats.barLength
+    tracksDispatch({
+      type:'update_region',
+      updatedRegion: {...region, rFadeIn:rfi},
+      jumpRelativeTracks:0,
+    })
+  }
+
+  const onChangeFadeOutHandler = ({dx})=>{
+    setRRFadeOut(-dx)
+  }
+  const onEndFadeOutHandler = ({dx})=>{
+    const rfo = (rFadeOut-dx)/editorStats.barLength
+    tracksDispatch({
+      type:'update_region',
+      updatedRegion: {...region, rFadeOut:rfo},
+      jumpRelativeTracks:0,
+    })
+  }
+
   useEffect(()=>{
     setRRDuration(0)
     setRROffset(0)
+    setRRFadeIn(0)
+    setRRFadeOut(0)
     setRRTransform('')
   },[region])
   
@@ -107,21 +134,25 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     left: rOffset + rrOffset,
     transform: rrTransform,
   } 
-  const styleDurationHandle = {
+
+  const styleHandle = {
     height:30,
     width:30,
     borderRadius:'50%',
     background:'green',
     position:'absolute',
+  }
+  const styleDurationHandle = {
+    ...styleHandle,
     right:-15,
   }
   const styleOffsetHandle = {
-    ...styleDurationHandle,
+    ...styleHandle,
     right: undefined,
     left: -15,
   }
   const styleCutHandle = {
-    ...styleDurationHandle,
+    ...styleHandle,
     right:undefined,
     bottom:-30,
     left:-15,
@@ -134,32 +165,57 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     bottom:0,
     transform:cutHandleLineTransform,
   }
-
+  const styleFadeInHandle = {
+    ...styleHandle,
+    left: 0,
+    top:-15,
+    transform: `translateX(${rFadeIn+rrFadeIn}px)`
+  }
+  const styleFadeOutHandle = {
+    ...styleHandle,
+    right: 0,
+    top:-15,
+    transform: `translateX(${-(rFadeOut+rrFadeOut)}px)`
+  }
+  
+ 
   return(<>
-  <PointerHandle onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
-  <div style={styleRegion} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
-      
-    {/* {rDuration ? 
-      <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
-        <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
-        <polygon points={`0,0 0,${maxHeight} ${fadeIn},0`} fill="white"></polygon>
-        <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
+  <PointerHandle disable={!(selected && isGrabbing)} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
+  <div onClick={!selected ? selectHandler : null} style={styleRegion} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
+    
+    { !isGrabbing ?
+    <div className='AudioRegionSVGContainer'>
+      <svg className={'AudioRegionFadeSVG'} height={maxHeight}>
+        <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} fill="white"></polygon>
+        <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration-(rFadeOut+rrFadeOut)},0`} fill="yellow"></polygon>
       </svg>
-    : null} */}
+    </div>
+    : null 
+    }
 
-    {/* { 
+    { selected && isGrabbing ? <>
       <PointerHandle onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
         <div className="AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
-      </PointerHandle> 
-    }
-    
-    { 
+      </PointerHandle>
       <PointerHandle onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
         <div className="AudioRegionDurationHandle" style={styleDurationHandle}></div>
       </PointerHandle> 
-    } */}
-      
-    {selected ? <> 
+      </>
+      :
+      null 
+    }
+    { selected && isFading ? <>
+      <PointerHandle onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
+        <div className="AudioRegionFadeInHandle" style={styleFadeInHandle}></div>
+      </PointerHandle>
+      <PointerHandle onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
+        <div className="AudioRegionFadeOutHandle" style={styleFadeOutHandle}></div>
+      </PointerHandle>
+      </>
+      :
+      null 
+    }
+    {selected && isCutting ? <> 
       <PointerHandle onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
         <div className="AudioRegionCutHandle" style={styleCutHandle}></div>
       </PointerHandle> 
@@ -169,7 +225,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
   </div>
   </PointerHandle>
-  </>)
+  </>
+  )
 }
 
 export default AudioRegion
