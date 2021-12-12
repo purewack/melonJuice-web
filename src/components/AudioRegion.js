@@ -57,6 +57,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     setRRDuration(dx)
   }
   const onEndDurationHandler = ({dx})=>{
+    setPointerState('')
     if(dx === 0) return
       const rd = (rDuration + dx)/editorStats.barLength
       tracksDispatch({
@@ -71,6 +72,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     setRRDuration(-dx)
   }
   const onEndOffsetHandler = ({dx})=>{
+    setPointerState('')
     if(dx === 0) return
       const ro = (rOffset + dx)/editorStats.barLength
       const rd = (rDuration - dx)/editorStats.barLength
