@@ -54,12 +54,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
 
   const onChangeDurationHandler = ({dx})=>{
-    setRRDuration(dx)
+    const dxx = snapCalc(dx)-(rDuration - snapCalc(rDuration))
+    setRRDuration(dxx)
   }
   const onEndDurationHandler = ({dx})=>{
     setPointerState('')
     if(dx === 0) return
-      const rd = (rDuration + dx)/editorStats.barLength
+      const dxx = snapCalc(dx)-(rDuration - snapCalc(rDuration))
+      const rd = (rDuration + dxx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, rDuration:rd},
@@ -68,15 +70,17 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
 
   const onChangeOffsetHandler = ({dx})=>{
-    setRROffset(dx)
-    setRRDuration(-dx)
+    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    setRROffset(dxx)
+    setRRDuration(-dxx)
   }
   const onEndOffsetHandler = ({dx})=>{
     setPointerState('')
     if(dx === 0) return
-      const ro = (rOffset + dx)/editorStats.barLength
-      const rd = (rDuration - dx)/editorStats.barLength
-      const bo = (bOffset + dx)/editorStats.barLength
+      const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+      const ro = (rOffset + dxx)/editorStats.barLength
+      const rd = (rDuration - dxx)/editorStats.barLength
+      const bo = (bOffset + dxx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, bOffset:bo, rOffset:ro, rDuration:rd},
@@ -85,15 +89,16 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
 
   const onChangeGrabHandler = ({dx, dy})=>{
-    setRRTransform(`translateX(${dx}px) translateY(${snapVCalc(dy + editorStats.trackHeight/2)}px)`)
+    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    setRRTransform(`translateX(${dxx}px) translateY(${snapVCalc(dy + editorStats.trackHeight/2)}px)`)
   }
   const onEndGrabHandler = ({dx, dy})=>{
     setPointerState('')
     if(dx === 0) return
 
     const jumps = (snapVCalc(dy + editorStats.trackHeight/2)/editorStats.trackHeight)
-
-    const ro = (rOffset + dx)/editorStats.barLength
+    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    const ro = (rOffset + dxx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, rOffset:ro},
@@ -104,15 +109,16 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const onChangeCutHandler = ({dx, dy, prev_dy})=>{
     if(dy+15 < -editorStats.trackHeight) return
 
+    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
     const cutBonudary = -20
-    if(dy > cutBonudary) cutHandleDxx.current = dx
+    if(dy > cutBonudary) cutHandleDxx.current = dxx
     const thl = `translateX(${cutPos + cutHandleDxx.current}px)`
     const th = thl + ` translateY(${dy <= cutBonudary ? dy : 0}px)`
     setCutHandleTransform(th)
     setCutHandleLineTransform(thl)
 
     if(editorStats.trackHeight+dy <= 0 && editorStats.trackHeight+prev_dy > 0) {
-      const cp = cutPos + dx
+      const cp = cutPos + dxx
       const cutPosCommit = (cp/editorStats.barLength)
       onSelect(null)
       tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
@@ -216,7 +222,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   return(<>
   <PointerHandle disable={!(selected && isGrabbing)} 
     bounds={{
-      minDX:-rOffset,
+      minDX:-snapCalc(rOffset),
       minDY:-(trackInfo.idx * editorStats.trackHeight),
       maxDY:(trackInfo.max-1-trackInfo.idx)*editorStats.trackHeight,
     }} 
