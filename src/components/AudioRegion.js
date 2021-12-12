@@ -16,6 +16,19 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const isFading = editorStats.toolMode === 'fade'
   const isCutting = editorStats.toolMode === 'cut'
 
+  const snapVCalc = (ll)=>{
+    let b = (maxHeight)
+    let l = Math.floor(ll/b)*b
+    return l;
+  }
+  const snapCalc = (ll)=>{
+    if(editorStats.snapGrain){
+      let b = (editorStats.barLength/editorStats.snapGrain)
+      let l = Math.floor(ll/b)*b
+     return l;
+    }
+    return ll
+  }
   const selectHandler = ()=>{
     if(selectedRegion)
     onSelect(null)
@@ -31,17 +44,61 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const [cutHandleLineTransform, setCutHandleLineTransform] = useState(0)
   const cutHandleDxx = useRef(0)
   const [cutPos, setCutPos] = useState(0)
+  const [pointerState, setPointerState] = useState('')
+
+  const onStartResizeHandler = ()=>{
+    setPointerState('resize-change')
+  }
+  const onStartMoveChange = ()=>{
+    setPointerState('move-change')
+  }
 
   const onChangeDurationHandler = ({dx})=>{
     setRRDuration(dx)
   }
+  const onEndDurationHandler = ({dx})=>{
+    if(dx === 0) return
+      const rd = (rDuration + dx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, rDuration:rd},
+       jumpRelativeTracks:0,
+      })
+  }
+
   const onChangeOffsetHandler = ({dx})=>{
     setRROffset(dx)
     setRRDuration(-dx)
   }
-  const onChangeGrabHandler = ({dx})=>{
-    setRRTransform(`translateX(${dx}px)`)
+  const onEndOffsetHandler = ({dx})=>{
+    if(dx === 0) return
+      const ro = (rOffset + dx)/editorStats.barLength
+      const rd = (rDuration - dx)/editorStats.barLength
+      const bo = (bOffset + dx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, bOffset:bo, rOffset:ro, rDuration:rd},
+       jumpRelativeTracks:0,
+      })
   }
+
+  const onChangeGrabHandler = ({dx, dy})=>{
+    setRRTransform(`translateX(${dx}px) translateY(${snapVCalc(dy + editorStats.trackHeight/2)}px)`)
+  }
+  const onEndGrabHandler = ({dx, dy})=>{
+    setPointerState('')
+    if(dx === 0) return
+
+    const jumps = (snapVCalc(dy + editorStats.trackHeight/2)/editorStats.trackHeight)
+
+    const ro = (rOffset + dx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, rOffset:ro},
+       jumpRelativeTracks:jumps,
+      })
+  }
+
   const onChangeCutHandler = ({dx, dy, prev_dy})=>{
     if(dy+15 < -editorStats.trackHeight) return
 
@@ -67,34 +124,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     setCutHandleLineTransform(thl)
   }
 
-  const onEndDurationHandler = ({dx})=>{
-    if(dx === 0) return
-      const rd = (rDuration + dx)/editorStats.barLength
-      tracksDispatch({
-       type:'update_region',
-       updatedRegion: {...region, rDuration:rd},
-       jumpRelativeTracks:0,
-      })
-  }
-  const onEndOffsetHandler = ({dx})=>{
-    if(dx === 0) return
-      const ro = (rOffset + dx)/editorStats.barLength
-      const rd = (rDuration - dx)/editorStats.barLength
-      tracksDispatch({
-       type:'update_region',
-       updatedRegion: {...region, rOffset:ro, rDuration:rd},
-       jumpRelativeTracks:0,
-      })
-  }
-  const onEndGrabHandler = ({dx, dy})=>{
-    if(dx === 0) return
-    const ro = (rOffset + dx)/editorStats.barLength
-      tracksDispatch({
-       type:'update_region',
-       updatedRegion: {...region, rOffset:ro},
-       jumpRelativeTracks:0,
-      })
-  }
+ 
  
   const onChangeFadeInHandler = ({dx})=>{
     setRRFadeIn(dx)
@@ -126,6 +156,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     setRRFadeIn(0)
     setRRFadeOut(0)
     setRRTransform('')
+    setCutPos(0)
+    setPointerState('')
   },[region])
   
   const styleRegion = {
@@ -167,23 +199,29 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
   const styleFadeInHandle = {
     ...styleHandle,
-    left: 0,
-    top:-15,
+    left: -15,
+    top:0,
     transform: `translateX(${rFadeIn+rrFadeIn}px)`
   }
   const styleFadeOutHandle = {
     ...styleHandle,
-    right: 0,
-    top:-15,
+    right: -15,
+    bottom:0,
     transform: `translateX(${-(rFadeOut+rrFadeOut)}px)`
   }
   
  
   return(<>
-  <PointerHandle disable={!(selected && isGrabbing)} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
+  <PointerHandle disable={!(selected && isGrabbing)} 
+    bounds={{
+      minDX:-rOffset,
+      minDY:-(trackInfo.idx * editorStats.trackHeight),
+      maxDY:(trackInfo.max-1-trackInfo.idx)*editorStats.trackHeight,
+    }} 
+    onStart={onStartMoveChange} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
   <div onClick={!selected ? selectHandler : null} style={styleRegion} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
     
-    { !isGrabbing ?
+    { !(selected && isGrabbing) ?
     <div className='AudioRegionSVGContainer'>
       <svg className={'AudioRegionFadeSVG'} height={maxHeight}>
         <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} fill="white"></polygon>
@@ -192,12 +230,36 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     </div>
     : null 
     }
-
+    {/*      
+                               │                    │
+                               ├──────rDur──────────┤
+        │                      │                    │
+        ├─────────roff─────────┤
+        │                      │
+        │              ┌-------┼────────────────────┐
+        │              │       │                    │
+        │              │       │                    │
+        │              └-------┼────────────────────┘
+                               │
+                       │       │                    │
+                       │boff───┘                    │
+                       │                            │
+                       ├─bdur───────────────────────┤
+                       │                            │
+    */}
     { selected && isGrabbing ? <>
-      <PointerHandle onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
+      <PointerHandle bounds={{
+          minDX:-bOffset, 
+          maxDX:bDuration-bOffset,
+        }}  
+        onStart={onStartResizeHandler} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
         <div className="AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
       </PointerHandle>
-      <PointerHandle onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
+      <PointerHandle bounds={{
+          minDX:-rDuration, 
+          maxDX:(bDuration-bOffset)-rDuration,
+        }} 
+        onStart={onStartResizeHandler} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
         <div className="AudioRegionDurationHandle" style={styleDurationHandle}></div>
       </PointerHandle> 
       </>
@@ -205,10 +267,18 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       null 
     }
     { selected && isFading ? <>
-      <PointerHandle onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
+      <PointerHandle bounds={{
+          minDX:-rFadeIn,
+          maxDX:(rDuration-rFadeOut)-rFadeIn,
+        }}
+        onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
         <div className="AudioRegionFadeInHandle" style={styleFadeInHandle}></div>
       </PointerHandle>
-      <PointerHandle onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
+      <PointerHandle bounds={{
+          minDX:-(rDuration-rFadeOut)+rFadeIn,
+          maxDX:rFadeOut,
+        }} 
+        onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
         <div className="AudioRegionFadeOutHandle" style={styleFadeOutHandle}></div>
       </PointerHandle>
       </>
@@ -216,19 +286,26 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       null 
     }
     {selected && isCutting ? <> 
-      <PointerHandle onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
+      <PointerHandle bounds={{
+        minDX:-cutPos,
+        maxDX:rDuration-cutPos-2,
+      }}        
+      onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
         <div className="AudioRegionCutHandle" style={styleCutHandle}></div>
       </PointerHandle> 
       <div className="AudioRegionCutHandleLine" style={styleCutHandleLine}></div>
     </> : null}
 
-    <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
   </div>
   </PointerHandle>
+
+  {pointerState === 'resize-change' ? <div style={{left: rOffset-bOffset, width: bDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
+  {pointerState === 'move-change' ? <div style={{left: rOffset, width: rDuration}} className='AudioRegion AudioRegionGhostMove'></div> : null}   
+
   </>
   )
 }
-
+//  :  ? <div style={{width: rDurationOld, left: rOffsetOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
 export default AudioRegion
 
 

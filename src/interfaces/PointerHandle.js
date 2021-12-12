@@ -1,6 +1,6 @@
-import {useRef, useState, Children, cloneElement}from 'react'
+import {useRef, Children, cloneElement}from 'react'
 
-const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDirection, children }) => {
+const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDirection, bounds, children }) => {
     const prevStats = useRef();
   
     const getPointer = (e, touch) => {
@@ -12,14 +12,25 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
       e.stopPropagation();
       const [x,y] = getPointer(e, touch);
 
+
       prevStats.current.prev_dx = prevStats.current.dx
       prevStats.current.prev_dy = prevStats.current.dy
 
-      prevStats.current.dx = x - prevStats.current.px;
-      const tx = prevStats.current.ix + prevStats.current.dx;
+      let dx = x - prevStats.current.px; 
+      console.log(dx)
+      console.log(bounds)
+      if(bounds?.maxDX !== null && dx >= bounds?.maxDX) dx = bounds.maxDX
+      else if(bounds?.minDX !== null && dx <= bounds?.minDX) dx = bounds.minDX
+      prevStats.current.dx = dx
+      console.log(dx)
+      console.log('---')
+      //const tx = prevStats.current.ix + prevStats.current.dx;
 
-      prevStats.current.dy = y - prevStats.current.py;
-      const ty = prevStats.current.iy + prevStats.current.dy;
+      let dy = y - prevStats.current.py;
+      if(bounds?.maxDY !== null && dy >= bounds?.maxDY) dy = bounds.maxDY
+      else if(bounds?.minDY != null && dy <= bounds?.minDY) dy = bounds.minDY
+      prevStats.current.dy = dy
+      //const ty = prevStats.current.iy + prevStats.current.dy;
 
       if(shouldSnapToFirstDirection ){
         if(!prevStats.current.passedStartMargin){
@@ -32,7 +43,7 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
           }
         }
         else 
-          onChange({
+          onChange && onChange({
             dx: prevStats.current.passedStartMargin === 'x' ? prevStats.current.dx : 0,
             dy: prevStats.current.passedStartMargin === 'y' ? prevStats.current.dy : 0,
             prev_dx: prevStats.current.prev_dx,
@@ -42,7 +53,7 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
       }
 
       //if (tx >= 0)
-      onChange({
+      onChange && onChange({
         dx: (prevStats.current.dx),
         dy: (prevStats.current.dy),
         prev_dx: prevStats.current.prev_dx,
@@ -72,7 +83,8 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
         passedStartMargin: null,
       };
 
-      //onStart({...prevStats.current})
+      onStart && onStart({...prevStats.current})
+
       if(touch){  
         document.addEventListener('touchmove', touchmove, { passive: false });
         document.addEventListener('touchend', touchend, { passive: false });
@@ -97,7 +109,7 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
       }
       
       if(shouldSnapToFirstDirection ){
-        onEnd({
+        onEnd && onEnd({
           dx: prevStats.current.passedStartMargin === 'x' ? prevStats.current.dx : 0,
           dy: prevStats.current.passedStartMargin === 'y' ? prevStats.current.dy : 0,
           prev_dx: prevStats.current.prev_dx,
@@ -106,7 +118,7 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
         return
       }
 
-      onEnd({
+      onEnd && onEnd({
         dx: (prevStats.current.dx),
         dy: (prevStats.current.dy),
         prev_dx: prevStats.current.prev_dx,

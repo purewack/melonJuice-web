@@ -182,6 +182,8 @@ export function tracksReducer(state,action){
             r2.rOffset += action.regionCutLength
             r1.regionId = newid()
             r2.regionId = newid()
+            r1.rFadeOut = 0
+            r2.rFadeIn = 0
             outputTrack.regions = AudioEngine.setRegions([...trackNewRegions,r1,r2])
             destTrackIdx = i
           }
