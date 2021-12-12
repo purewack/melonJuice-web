@@ -45,8 +45,14 @@ button{
     margin:10px;
     padding:10px;
 }
-
-
+.DebugSelection{
+    background: lavender;
+    font-size: 1rem;
+    font-family: monospace;
+}
+.DebugSelection p{
+    margin:0;
+}
 
 .AudioRegion:hover .AudioRegionDebugTooltip{
     display: block;

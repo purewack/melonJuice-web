@@ -369,7 +369,9 @@ function App() {
                     key={r.regionId} 
                     region={r}
                     selectedRegion={selectedRegion}
-                    onSelect={setSelectedRegion} 
+                    onSelect={(r)=>{
+                      setSelectedRegion(r)
+                    }}
                     trackInfo={{idx:i, max:tt.length}}
                     tracksDispatch={tracksDispatch}
                     editorStats={editorStats}
@@ -381,6 +383,28 @@ function App() {
       </div>
 
       <p>Debug Map</p>
+        
+      {selectedRegion ? 
+      tracks.current.map(t => {
+          return t.regions.map(r => {
+            if(r.regionId === selectedRegion.regionId){
+              return <div className='DebugSelection'>
+                <p>regionId:{r.regionId}</p>
+                <p>bufferId:{r.bufferId}</p>
+                <p>bOffset:{r.bOffset}</p>
+                <p>bDuration:{r.bDuration}</p>
+                <p>rOffset:{r.rOffset}</p>
+                <p>rDuration:{r.rDuration}</p>
+                <p>rFadeIn:{r.rFadeIn}</p>
+                <p>rFadeOut:{r.rFadeOut}</p>
+              </div> 
+            }
+            else 
+            return null
+          })
+        })
+      : null}
+
       <div className="DebugMap">
         <div>
           <p>Buffers</p>
