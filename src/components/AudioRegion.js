@@ -3,6 +3,24 @@ import {useState,useEffect,useRef,useCallback} from 'react'
 import PointerHandle  from '../interfaces/PointerHandle';
 //import{useRenders} from '../Util'
 
+    /*      
+                               │                    │
+                               ├──────rDur──────────┤
+        │                      │                    │
+        ├─────────roff─────────┤
+        │                      │
+        │              ┌-------┼────────────────────┐
+        │              │       │                    │
+        │              │       │                    │
+        │              └-------┼────────────────────┘
+                               │
+                       │       │                    │
+                       │boff───┘                    │
+                       │                            │
+                       ├─bdur───────────────────────┤
+                       │                            │
+    */
+
 const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatch, editorStats})=>{
   const rOffset = (editorStats.barLength*region.rOffset)
   const rDuration = (editorStats.barLength*region.rDuration)
@@ -21,19 +39,23 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     let l = Math.floor(ll/b)*b
     return l;
   }
-  const snapCalc = (ll)=>{
-    if(editorStats.snapGrain){
+  const snapCalc = (ll, min, max, cancel)=>{
+    if(editorStats.snapGrain && !cancel){
       let b = (editorStats.barLength/editorStats.snapGrain)
       let l = Math.floor(ll/b)*b
+      if(min !== null && l < min) l = min
+      if(max !== null && l > max) l = max
      return l;
     }
     return ll
   }
   const selectHandler = ()=>{
+      resetCutPos()
     if(selectedRegion)
     onSelect(null)
-    else
-    onSelect(region)
+    else{
+      onSelect(region)
+    }
   } 
   const [rrDuration, setRRDuration] = useState(0)
   const [rrOffset, setRROffset] = useState(0)
@@ -46,6 +68,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const [cutPos, setCutPos] = useState(0)
   const [pointerState, setPointerState] = useState('')
 
+
   const onStartResizeHandler = ()=>{
     setPointerState('resize-change')
   }
@@ -54,13 +77,22 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
 
   const onChangeDurationHandler = ({dx})=>{
-    const dxx = snapCalc(dx)-(rDuration - snapCalc(rDuration))
+    const left = rOffset
+    const right = left+rDuration
+    let dxx = snapCalc(dx)-(right - snapCalc(right))
+    const max = (bDuration-bOffset)-rDuration
+    if(dx === max) dxx = max 
+    console.log({dxx,rDuration,crdur:snapCalc(rDuration)})
     setRRDuration(dxx)
   }
   const onEndDurationHandler = ({dx})=>{
     setPointerState('')
     if(dx === 0) return
-      const dxx = snapCalc(dx)-(rDuration - snapCalc(rDuration))
+      const left = rOffset
+      const right = left+rDuration
+      let dxx = snapCalc(dx)-(right - snapCalc(right))
+      const max = (bDuration-bOffset)-rDuration
+      if(dx === max) dxx = max 
       const rd = (rDuration + dxx)/editorStats.barLength
       tracksDispatch({
        type:'update_region',
@@ -70,14 +102,16 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
 
   const onChangeOffsetHandler = ({dx})=>{
-    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    let dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    if(dxx <= -bOffset) dxx = -bOffset
     setRROffset(dxx)
     setRRDuration(-dxx)
   }
   const onEndOffsetHandler = ({dx})=>{
     setPointerState('')
     if(dx === 0) return
-      const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+      let dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+      if(dxx <= -bOffset) dxx = -bOffset
       const ro = (rOffset + dxx)/editorStats.barLength
       const rd = (rDuration - dxx)/editorStats.barLength
       const bo = (bOffset + dxx)/editorStats.barLength
@@ -106,27 +140,42 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       })
   }
 
+  const resetCutPos = ()=>{
+    setCutPos(rDuration/2)
+    setCutHandleTransform(`translateX(${rDuration/2}px)`)
+    setCutHandleLineTransform(`translateX(${rDuration/2}px)`)
+  }
   const onChangeCutHandler = ({dx, dy, prev_dy})=>{
     if(dy+15 < -editorStats.trackHeight) return
 
-    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    const max = rDuration-cutPos;
+    let dxx = snapCalc(rOffset + cutPos + dx) - rOffset//snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    if(dxx < 0) dxx = 0
+    else if(dx === max) dxx = rDuration
+
     const cutBonudary = -20
     if(dy > cutBonudary) cutHandleDxx.current = dxx
-    const thl = `translateX(${cutPos + cutHandleDxx.current}px)`
+    const thl = `translateX(${cutHandleDxx.current}px)`
     const th = thl + ` translateY(${dy <= cutBonudary ? dy : 0}px)`
     setCutHandleTransform(th)
     setCutHandleLineTransform(thl)
 
     if(editorStats.trackHeight+dy <= 0 && editorStats.trackHeight+prev_dy > 0) {
-      const cp = cutPos + dxx
+      if(dxx === 0 || dxx === rDuration) return
+      const cp = dxx
       const cutPosCommit = (cp/editorStats.barLength)
       onSelect(null)
       tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
     }
   }
   const onEndCutHandler = ({dx,dy}) => {
-    setCutPos(cutPos + dx)
-    const thl = `translateX(${cutPos + cutHandleDxx.current}px)`
+    const max = rDuration-cutPos;
+    let dxx = snapCalc(rOffset + cutPos + dx) - rOffset//snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    if(dxx < 0) dxx = 0
+    else if(dx === max) dxx = rDuration
+    
+    setCutPos(dxx)
+    const thl = `translateX(${dxx}px)`
     const th = thl + ` translateY(0px)`
     setCutHandleTransform(th)
     setCutHandleLineTransform(thl)
@@ -164,8 +213,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     setRRFadeIn(0)
     setRRFadeOut(0)
     setRRTransform('')
-    setCutPos(0)
     setPointerState('')
+    resetCutPos()
   },[region])
   
   const styleRegion = {
@@ -199,10 +248,10 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     transform:cutHandleTransform, 
   }
   const styleCutHandleLine = {
-    height: editorStats.trackHeight-2,
-    width:2,
-    left:0,
-    bottom:0,
+    height: editorStats.trackHeight,
+    width:4,
+    left:-2,
+    bottom:-2,
     transform:cutHandleLineTransform,
   }
   const styleFadeInHandle = {
@@ -222,7 +271,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   return(<>
   <PointerHandle disable={!(selected && isGrabbing)} 
     bounds={{
-      minDX:-snapCalc(rOffset),
+      minDX:-rOffset,
       minDY:-(trackInfo.idx * editorStats.trackHeight),
       maxDY:(trackInfo.max-1-trackInfo.idx)*editorStats.trackHeight,
     }} 
@@ -238,23 +287,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     </div>
     : null 
     }
-    {/*      
-                               │                    │
-                               ├──────rDur──────────┤
-        │                      │                    │
-        ├─────────roff─────────┤
-        │                      │
-        │              ┌-------┼────────────────────┐
-        │              │       │                    │
-        │              │       │                    │
-        │              └-------┼────────────────────┘
-                               │
-                       │       │                    │
-                       │boff───┘                    │
-                       │                            │
-                       ├─bdur───────────────────────┤
-                       │                            │
-    */}
+
     { selected && isGrabbing ? <>
       <PointerHandle bounds={{
           minDX:-bOffset, 
@@ -296,7 +329,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     {selected && isCutting ? <> 
       <PointerHandle bounds={{
         minDX:-cutPos,
-        maxDX:rDuration-cutPos-2,
+        maxDX:rDuration-cutPos,
       }}        
       onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
         <div className="AudioRegionCutHandle" style={styleCutHandle}></div>
