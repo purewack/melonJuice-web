@@ -218,7 +218,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   },[region])
   
   const styleRegion = {
-    height:'100%', 
+    height:'90%', 
+    top:'5%',
     width: rDuration + rrDuration, 
     left: rOffset + rrOffset,
     transform: rrTransform,
@@ -227,8 +228,6 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const styleHandle = {
     height:30,
     width:30,
-    borderRadius:'50%',
-    background:'green',
     position:'absolute',
   }
   const styleDurationHandle = {
@@ -257,13 +256,13 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   const styleFadeInHandle = {
     ...styleHandle,
     left: -15,
-    top:0,
+    top:-30,
     transform: `translateX(${rFadeIn+rrFadeIn}px)`
   }
   const styleFadeOutHandle = {
     ...styleHandle,
     right: -15,
-    bottom:0,
+    top:-30,
     transform: `translateX(${-(rFadeOut+rrFadeOut)}px)`
   }
   
@@ -294,14 +293,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           maxDX:bDuration-bOffset,
         }}  
         onStart={onStartResizeHandler} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
-        <div className="AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
+        <div className="DragHandle AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-rDuration, 
           maxDX:(bDuration-bOffset)-rDuration,
         }} 
         onStart={onStartResizeHandler} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
-        <div className="AudioRegionDurationHandle" style={styleDurationHandle}></div>
+        <div className="DragHandle AudioRegionDurationHandle" style={styleDurationHandle}></div>
       </PointerHandle> 
       </>
       :
@@ -313,14 +312,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           maxDX:(rDuration-rFadeOut)-rFadeIn,
         }}
         onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
-        <div className="AudioRegionFadeInHandle" style={styleFadeInHandle}></div>
+        <div className="DragHandle AudioRegionFadeInHandle" style={styleFadeInHandle}></div>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-(rDuration-rFadeOut)+rFadeIn,
           maxDX:rFadeOut,
         }} 
         onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
-        <div className="AudioRegionFadeOutHandle" style={styleFadeOutHandle}></div>
+        <div className="DragHandle AudioRegionFadeOutHandle" style={styleFadeOutHandle}></div>
       </PointerHandle>
       </>
       :
@@ -332,7 +331,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
         maxDX:rDuration-cutPos,
       }}        
       onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
-        <div className="AudioRegionCutHandle" style={styleCutHandle}></div>
+        <div className="DragHandle AudioRegionCutHandle" style={styleCutHandle}></div>
       </PointerHandle> 
       <div className="AudioRegionCutHandleLine" style={styleCutHandleLine}></div>
     </> : null}
@@ -346,192 +345,5 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   </>
   )
 }
-//  :  ? <div style={{width: rDurationOld, left: rOffsetOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
+
 export default AudioRegion
-
-
- /*
-  
-  const snapVCalc = (ll)=>{
-    let b = (maxHeight)
-    let l = Math.floor(ll/b)*b
-    return l;
-  }
-
-  const snapCalc = (ll)=>{
-    if(editorStats.snapGrain){
-      let b = (editorStats.barLength/editorStats.snapGrain)
-      let l = Math.floor(ll/b)*b
-     return l;
-    }
-    return ll
-  }
-  const cutStart = ()=>{
-    setCutPos(null); 
-    regionStatsPrev.current = {boundBox:null, cp:null}
-  }
-  const cutCommit = (e)=>{
-    const cp = cutPos
-    console.log(cp)
-    if(!cp) return
-    const cutPosCommit = (cp/editorStats.barLength)
-    tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
-  }
-  const cutHover = (mode,e)=>{
-    if(regionStatsPrev.current.boundBox === null || regionStatsPrev.current.boundBox !== e.target.getBoundingClientRect())
-      regionStatsPrev.current.boundBox = e.target.getBoundingClientRect()
-    
-    console.log(mode)
-    const tp = (mode === 'mouse' ? e.clientX : e.touches[0].clientX)
-    const cp = snapCalc(tp) - regionStatsPrev.current.boundBox.left 
-    setCutPos(newcp => cp)
-    //regionStatsPrev.current.cp = cp
-  }
-
-  const duringAdjust = (type,pointer)=>{
-
-    const r = regionStatsPrev.current
-    regionStatsPrev.current.cursorDelta.x = pointer.x - regionStatsPrev.current.cursorInitial.x
-    regionStatsPrev.current.cursorDelta.y = pointer.y - regionStatsPrev.current.cursorInitial.y
-    const deltax = regionStatsPrev.current.cursorDelta.x
-    const deltay = regionStatsPrev.current.cursorDelta.y
-    if(regionStatsPrev.current.boundBox === null || regionStatsPrev.current.boundBox !== r.target.getBoundingClientRect())
-      regionStatsPrev.current.boundBox = r.target.getBoundingClientRect()
-    
-
-    switch (r.target.className) {
-      case 'EndHandle':{
-          const d = snapCalc(r.right + deltax) - r.left
-          const max = (rBDuration-rBOffset)
-          if(d <= max){
-            setRDuration(d)
-            regionStatsPrev.current.rDuration = d
-          }
-        }
-        break;
-      
-      case 'StartHandle':{
-          const d = snapCalc(r.left + deltax)
-          const o = r.rrbo+(d-r.left)
-
-          if( d >= 0 && o >= 0 && d < r.right-resizeHandleArea ){
-            regionStatsPrev.current.rbo = o
-            setRBOffset(o)
-            setrOffset(d)
-            setRDuration(r.right-d)
-            regionStatsPrev.current.rBOffset = o
-            regionStatsPrev.current.rOffset = d
-            regionStatsPrev.current.rDuration = r.right-d
-          }
-        }
-        break;
-
-      default:
-        const o = snapCalc(r.left + deltax)
-        // if(o >= 0 && isNeighbourClear(o,o+rDuration)) {
-        if(o >= 0) {
-          setrOffset(o)
-          regionStatsPrev.current.rOffset = o
-        }
-
-        const bh = regionStatsPrev.current.boundBox.height/2;
-        const voff = snapVCalc(deltay+bh);
-        const tidx = (dragVOffset+voff) / editorStats.trackHeight
-        
-        if(tidx + trackInfo.idx >= 0 &&  tidx + trackInfo.idx <= trackInfo.max-1)
-        setDragVOffset(voff)
-        regionStatsPrev.current.dragVOffset = voff
-      break;
-    }
-  }
-
-  const mousedown = (e)=>{
-    e.preventDefault(); 
-    if(isSelected){
-    startAdjust('mouse', e.target, {x:e.clientX,y:e.clientY})  
-    }
-  } 
-  const mouseup = (e)=>{
-    e.preventDefault(); 
-    if(!isSelected) onSelect(region)
-    else{
-      endAdjust('mouse')
-    }
-  }
-  const mousemove = useCallback(
-    (e)=>{
-      e.preventDefault();
-      console.log(`reg ${isSelected}`)  
-      if(isSelected)
-      duringAdjust('mouse',{x:e.clientX, y:e.clientY})
-    },
-    [isSelected],
-  )
-
-
-  const touchmove = (e)=>{
-    e.preventDefault();  
-    duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})
-  }
-  const touchup = (e)=>{
-    endAdjust('touch')
-  }
-  const touchdown = editorStats.toolMode === 'grab'
-    ? (e=>{startAdjust('touch',e.target,{ x:e.touches[0].clientX, y:e.touches[0].clientY } )}) 
-    : (e=>{ 
-      cutStart()
-      document.addEventListener('touchmove', (e)=>{e.preventDefault(); cutHover('touch',e)}, { passive: false });
-      document.addEventListener('touchend', (e)=>{e.preventDefault(); cutCommit()}, { passive: false });
-    })
-
-  const startAdjust = (type,target,cursorInitial)=>{  
-    regionStatsPrev.current = {
-      target, 
-      boundBox:null,
-      left: rOffset,
-      width: rDuration, 
-      right:rOffset+rDuration, 
-      rbo:rBOffset,
-      rbd:rBDuration,
-      rrbo:rBOffset,
-      rOffset:rOffset,
-      rDuration:rDuration,
-      rBOffset:rBOffset,
-      dragVOffset:0,
-      cursorDelta:{x:0,y:0},
-      cursorInitial,
-    }
-    
-    setrOffsetOld(rOffset)
-    setRDurationOld(rDuration)
-    setHandleHitbox(target.className)
-
-    //  document.addEventListener('touchmove', touchmove, { passive: false });
-    //  document.addEventListener('touchend', touchup, { passive: false });
-  }
-
-  const endAdjust = (type)=>{
-    //  document.removeEventListener('touchmove', touchmove, { passive: false })
-    //  document.removeEventListener('touchend', touchup, { passive: false });
-    setHandleHitbox(null)
-    if(regionStatsPrev.current.cursorDelta.x === 0 && regionStatsPrev.current.cursorDelta.y === 0) {
-      tracksDispatch({type:'select_region', region})
-      return
-    }
-
-    const s = regionStatsPrev.current.rOffset/editorStats.barLength;
-    const d = regionStatsPrev.current.rDuration/editorStats.barLength;
-    const o = regionStatsPrev.current.rBOffset/editorStats.barLength;
-    const newRegion = {...region, rOffset:s, rDuration:d, bOffset:o}
-    let newTrack = null
-    if(regionStatsPrev.current.dragVOffset) newTrack = Math.floor(regionStatsPrev.current.dragVOffset / editorStats.trackHeight)
-    tracksDispatch({type:'update_region', updatedRegion:newRegion, jumpRelativeTracks:newTrack})
-  }  
-
-  // const cancelEdit = (e)=>{
-  //   mouseUp(null)
-  //   setrOffset(rOffsetOld)
-  //   setRDuration(rDurationOld)
-  //   console.log('cancel')
-  // }
-  */
