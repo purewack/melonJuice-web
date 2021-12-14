@@ -142,8 +142,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
 
   const resetCutPos = ()=>{
     setCutPos(rDuration/2)
-    setCutHandleTransform(`translateX(${rDuration/2}px)`)
-    setCutHandleLineTransform(`translateX(${rDuration/2}px)`)
+    setCutHandleTransform(`translate(${rDuration/2},0)`)
+    setCutHandleLineTransform(`translate(${rDuration/2},0)`)
   }
   const onChangeCutHandler = ({dx, dy, prev_dy})=>{
     if(dy+15 < -editorStats.trackHeight) return
@@ -155,8 +155,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
 
     const cutBonudary = -20
     if(dy > cutBonudary) cutHandleDxx.current = dxx
-    const thl = `translateX(${cutHandleDxx.current}px)`
-    const th = thl + ` translateY(${dy <= cutBonudary ? dy : 0}px)`
+    const thl = `translate(${cutHandleDxx.current}, ${dy <= cutBonudary ? dy : 0})`
+    const th = thl
     setCutHandleTransform(th)
     setCutHandleLineTransform(thl)
 
@@ -175,8 +175,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     else if(dx === max) dxx = rDuration
     
     setCutPos(dxx)
-    const thl = `translateX(${dxx}px)`
-    const th = thl + ` translateY(0px)`
+    const thl = `translate(${dxx}, 0)`
+    const th = thl
     setCutHandleTransform(th)
     setCutHandleLineTransform(thl)
   }
@@ -218,54 +218,15 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   },[region])
   
   const styleRegion = {
-    height:'90%', 
-    top:'5%',
-    width: rDuration + rrDuration, 
-    left: rOffset + rrOffset,
+    height: maxHeight,
+    width: rDuration, 
+    left: rOffset,
     transform: rrTransform,
   } 
 
-  const styleHandle = {
-    height:30,
-    width:30,
-    position:'absolute',
-  }
-  const styleDurationHandle = {
-    ...styleHandle,
-    right:-15,
-  }
-  const styleOffsetHandle = {
-    ...styleHandle,
-    right: undefined,
-    left: -15,
-  }
-  const styleCutHandle = {
-    ...styleHandle,
-    right:undefined,
-    bottom:-30,
-    left:-15,
-    transform:cutHandleTransform, 
-  }
-  const styleCutHandleLine = {
-    height: editorStats.trackHeight,
-    width:4,
-    left:-2,
-    bottom:-2,
-    transform:cutHandleLineTransform,
-  }
-  const styleFadeInHandle = {
-    ...styleHandle,
-    left: -15,
-    top:-30,
-    transform: `translateX(${rFadeIn+rrFadeIn}px)`
-  }
-  const styleFadeOutHandle = {
-    ...styleHandle,
-    right: -15,
-    top:-30,
-    transform: `translateX(${-(rFadeOut+rrFadeOut)}px)`
-  }
-  
+  const rww = rDuration + rrDuration;
+  const svgtt = `translate(${rrOffset},0)`
+
  
   return(<>
   <PointerHandle disable={!(selected && isGrabbing)} 
@@ -275,72 +236,88 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       maxDY:(trackInfo.max-1-trackInfo.idx)*editorStats.trackHeight,
     }} 
     onStart={onStartMoveChange} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
-  <div onClick={!selected ? selectHandler : null} style={styleRegion} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
+  <svg width={rDuration} height={maxHeight} transform={svgtt} style={styleRegion} onClick={!selected ? selectHandler : null} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
     
-    { !(selected && isGrabbing) ?
-    <div className='AudioRegionSVGContainer'>
-      <svg className={'AudioRegionFadeSVG'} height={maxHeight}>
-        <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} fill="white"></polygon>
-        <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration-(rFadeOut+rrFadeOut)},0`} fill="yellow"></polygon>
-      </svg>
-    </div>
-    : null 
-    }
+    <defs>
+      <clipPath id={`svgframe-${region.regionId}`}>
+        <rect width={rww} height={maxHeight} rx="10"/>
+      </clipPath>
+    </defs>
 
+    <g clipPath={`url(#svgframe-${region.regionId})`}>
+      { true || !(selected && isGrabbing) ? <> 
+        <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} fill="white"></polygon>
+        <polygon points={`${rww},0 ${rww},${maxHeight} ${rww-(rFadeOut+rrFadeOut)},0`} fill="yellow"></polygon>
+      </> : null }
+      <rect className="AudioRegionFrame" width={rww} height={maxHeight}></rect>
+    </g>
+    
     { selected && isGrabbing ? <>
       <PointerHandle bounds={{
           minDX:-bOffset, 
           maxDX:bDuration-bOffset,
         }}  
         onStart={onStartResizeHandler} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
-        <div className="DragHandle AudioRegionOffsetHandle" style={styleOffsetHandle}></div>
+        <g className="DragHandle ">
+          <circle r={maxHeight/4} cy={maxHeight/2}/>
+        </g>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-rDuration, 
           maxDX:(bDuration-bOffset)-rDuration,
         }} 
         onStart={onStartResizeHandler} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
-        <div className="DragHandle AudioRegionDurationHandle" style={styleDurationHandle}></div>
+        <g className="DragHandle "> 
+          <circle r={maxHeight/4} cx={rww} cy={maxHeight/2}/>
+        </g>
       </PointerHandle> 
       </>
       :
       null 
     }
+
     { selected && isFading ? <>
       <PointerHandle bounds={{
           minDX:-rFadeIn,
           maxDX:(rDuration-rFadeOut)-rFadeIn,
         }}
         onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
-        <div className="DragHandle AudioRegionFadeInHandle" style={styleFadeInHandle}></div>
+        <g className="DragHandle " >
+          <circle r={maxHeight/4} cx={rFadeIn+rrFadeIn} cy={-15}/>
+        </g>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-(rDuration-rFadeOut)+rFadeIn,
           maxDX:rFadeOut,
         }} 
         onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
-        <div className="DragHandle AudioRegionFadeOutHandle" style={styleFadeOutHandle}></div>
+        <g className="DragHandle " >
+          <circle r={maxHeight/4} cx={rww - (rFadeOut+rrFadeOut)} cy={-15}/>
+        </g>
       </PointerHandle>
       </>
       :
       null 
     }
+
     {selected && isCutting ? <> 
       <PointerHandle bounds={{
         minDX:-cutPos,
         maxDX:rDuration-cutPos,
       }}        
       onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
-        <div className="DragHandle AudioRegionCutHandle" style={styleCutHandle}></div>
+        <g className="DragHandle " >
+          <circle r={maxHeight/4} cx={0} cy={maxHeight} transform={cutHandleTransform}/>
+        </g>
       </PointerHandle> 
-      <div className="AudioRegionCutHandleLine" style={styleCutHandleLine}></div>
+      
     </> : null}
 
-  </div>
+  </svg>
   </PointerHandle>
 
-  {pointerState === 'resize-change' ? <div style={{left: rOffset-bOffset, width: bDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
-  {pointerState === 'move-change' ? <div style={{left: rOffset, width: rDuration}} className='AudioRegion AudioRegionGhostMove'></div> : null}   
+  {/* {pointerState === 'resize-change' ? <div style={{left: rOffset-bOffset, width: bDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
+  {pointerState === 'move-change' ? <div style={{left: rOffset, width: rDuration}} className='AudioRegion AudioRegionGhostMove'></div> : null}    */}
 
   </>
   )

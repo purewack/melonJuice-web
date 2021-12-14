@@ -1,8 +1,7 @@
 
 .AudioRegion{
     position:absolute;
-    background:pink;
-    border: solid black 3px;
+    /*border: solid black 10px;*/
     display:flex;
     justify-content: space-between;
     align-items: center;
@@ -10,20 +9,15 @@
     border-radius: 10px;
     touch-action: none;
     box-sizing: border-box;
+    overflow: visible;
 }
-.AudioRegionSVGContainer{
-    position: relative;
-    border-radius: 10px;
-    overflow: hidden;
-    width:100%;
-    height:100%;
+.AudioRegionFrame{
+    fill:none;
+    stroke:black;
+    stroke-width: 6px;
+    rx: 10px;
 }
-.AudioRegionFadeSVG {
-    position: absolute;
-    left:0;
-    top:0;
-    width:100%;
-}
+
 
 .AudioRegionGhostMove{
     pointer-events: none;
@@ -44,7 +38,6 @@
     top:5%;
 }
 .AudioRegionSelected{
-    background:red;
     z-index: 5;
 }
 
@@ -52,24 +45,6 @@
     cursor: grab;
 }
 
-.DragHandle {
-    background:green;
-    border-radius: 50%;
-}
-
-.AudioRegionFadeInHandle{
-    clip-path: polygon(0 0, 50% 0, 50% 100%, 0% 100%);
-}
-.AudioRegionFadeOutHandle{
-    clip-path: polygon(100% 0, 50% 0, 50% 100%, 100% 100%);
-}
-
-.AudioRegionCutHandle{
-    border-radius:'50%';
-    background:'green';
-    position:'absolute';
-}
-.AudioRegionCutHandleLine{
-    position:absolute;
-    background:green;
+.DragHandle circle{
+    fill:green;
 }
