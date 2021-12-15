@@ -1,21 +1,17 @@
 
 .AudioRegion{
     position:absolute;
-    /*border: solid black 10px;*/
-    display:flex;
-    justify-content: space-between;
-    align-items: center;
+    display:block;
     z-index: 1;
-    border-radius: 10px;
     touch-action: none;
     box-sizing: border-box;
     overflow: visible;
+    /* transform-box: fill-box; */
 }
 .AudioRegionFrame{
     fill:none;
     stroke:black;
     stroke-width: 6px;
-    rx: 10px;
 }
 
 

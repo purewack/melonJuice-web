@@ -106,6 +106,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     if(dxx <= -bOffset) dxx = -bOffset
     setRROffset(dxx)
     setRRDuration(-dxx)
+    console.log({dxx, dddd:0})
+    setRRTransform(`translateX(${dxx}px)`)
   }
   const onEndOffsetHandler = ({dx})=>{
     setPointerState('')
@@ -155,8 +157,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
 
     const cutBonudary = -20
     if(dy > cutBonudary) cutHandleDxx.current = dxx
-    const thl = `translate(${cutHandleDxx.current}, ${dy <= cutBonudary ? dy : 0})`
-    const th = thl
+    const th = `translate(${cutHandleDxx.current}, ${dy <= cutBonudary ? dy : 0})`
+    const thl = `translate(${cutHandleDxx.current}, 0)`
     setCutHandleTransform(th)
     setCutHandleLineTransform(thl)
 
@@ -175,13 +177,12 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     else if(dx === max) dxx = rDuration
     
     setCutPos(dxx)
-    const thl = `translate(${dxx}, 0)`
-    const th = thl
+    const th = `translate(${dxx}, 0)`
+    const thl = th
     setCutHandleTransform(th)
     setCutHandleLineTransform(thl)
   }
 
- 
  
   const onChangeFadeInHandler = ({dx})=>{
     setRRFadeIn(dx)
@@ -218,38 +219,37 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   },[region])
   
   const styleRegion = {
-    height: maxHeight,
-    width: rDuration, 
     left: rOffset,
     transform: rrTransform,
   } 
 
   const rww = rDuration + rrDuration;
-  const svgtt = `translate(${rrOffset},0)`
-
  
   return(<>
-  <PointerHandle disable={!(selected && isGrabbing)} 
+  {/* <PointerHandle disable={!(selected && isGrabbing)} 
     bounds={{
       minDX:-rOffset,
       minDY:-(trackInfo.idx * editorStats.trackHeight),
       maxDY:(trackInfo.max-1-trackInfo.idx)*editorStats.trackHeight,
     }} 
-    onStart={onStartMoveChange} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
-  <svg width={rDuration} height={maxHeight} transform={svgtt} style={styleRegion} onClick={!selected ? selectHandler : null} className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
+    onStart={onStartMoveChange} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}> */}
+  <svg xmlns="http://www.w3.org/2000/svg"
+    width={rDuration} 
+    height={maxHeight} 
+    style={styleRegion} 
+    onClick={!selected ? selectHandler : null} 
+    className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}>
     
     <defs>
       <clipPath id={`svgframe-${region.regionId}`}>
-        <rect width={rww} height={maxHeight} rx="10"/>
+        <rect width={rww} height={maxHeight} rx="10" ry="10"/>
       </clipPath>
     </defs>
 
-    <g clipPath={`url(#svgframe-${region.regionId})`}>
-      { true || !(selected && isGrabbing) ? <> 
-        <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} fill="white"></polygon>
-        <polygon points={`${rww},0 ${rww},${maxHeight} ${rww-(rFadeOut+rrFadeOut)},0`} fill="yellow"></polygon>
-      </> : null }
-      <rect className="AudioRegionFrame" width={rww} height={maxHeight}></rect>
+    <g clipPath={`url(#svgframe-${region.regionId})`}> 
+      <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} fill="white"></polygon>
+      <polygon points={`${rww},0 ${rww},${maxHeight} ${rww-(rFadeOut+rrFadeOut)},0`} fill="yellow"></polygon>
+      <rect className="AudioRegionFrame" width={rww} height={maxHeight} rx={10} ry={10}/>
     </g>
     
     { selected && isGrabbing ? <>
@@ -281,20 +281,22 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           minDX:-rFadeIn,
           maxDX:(rDuration-rFadeOut)-rFadeIn,
         }}
+        onStart={()=>{console.log('fade start')}}
         onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
         <g className="DragHandle " >
           <circle r={maxHeight/4} cx={rFadeIn+rrFadeIn} cy={-15}/>
         </g>
       </PointerHandle>
-      <PointerHandle bounds={{
+      {/* <PointerHandle bounds={{
           minDX:-(rDuration-rFadeOut)+rFadeIn,
           maxDX:rFadeOut,
         }} 
-        onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
-        <g className="DragHandle " >
-          <circle r={maxHeight/4} cx={rww - (rFadeOut+rrFadeOut)} cy={-15}/>
+        onStart={()=>{console.log('fade out start')}}
+        onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}> */}
+        <g className="DragHandle " onClick={(e)=>{e.preventDefault(); e.stopPropagation(); console.log('fadeoutclick')}} >
+          <circle r={maxHeight/4} cx={rww - (rFadeOut+rrFadeOut)} cy={-5}/>
         </g>
-      </PointerHandle>
+      {/* </PointerHandle> */}
       </>
       :
       null 
@@ -310,11 +312,11 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           <circle r={maxHeight/4} cx={0} cy={maxHeight} transform={cutHandleTransform}/>
         </g>
       </PointerHandle> 
-      
+      <line stroke={'green'} x1={0} x2={0} y1={0} y2={maxHeight} transform={cutHandleLineTransform}/>
     </> : null}
 
   </svg>
-  </PointerHandle>
+  {/* </PointerHandle> */}
 
   {/* {pointerState === 'resize-change' ? <div style={{left: rOffset-bOffset, width: bDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
   {pointerState === 'move-change' ? <div style={{left: rOffset, width: rDuration}} className='AudioRegion AudioRegionGhostMove'></div> : null}    */}

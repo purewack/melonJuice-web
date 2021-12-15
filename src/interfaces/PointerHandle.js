@@ -17,13 +17,13 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
       prevStats.current.prev_dy = prevStats.current.dy
 
       let dx = x - prevStats.current.px; 
-      console.log(dx)
-      console.log(bounds)
+      // console.log(dx)
+      // console.log(bounds)
       if(bounds?.maxDX !== null && dx >= bounds?.maxDX) dx = bounds.maxDX
       else if(bounds?.minDX !== null && dx <= bounds?.minDX) dx = bounds.minDX
       prevStats.current.dx = dx
-      console.log(dx)
-      console.log('---')
+      // console.log(dx)
+      // console.log('---')
       //const tx = prevStats.current.ix + prevStats.current.dx;
 
       let dy = y - prevStats.current.py;
