@@ -1,7 +1,7 @@
 import '../css/AudioRegion.css';
 import {useState,useEffect,useRef,useCallback} from 'react'
 import PointerHandle  from '../interfaces/PointerHandle';
-import { readOnly } from 'tone/build/esm/core/util/Interface';
+import Melon from '../gfx/Melon'
 //import{useRenders} from '../Util'
 
     /*      
@@ -83,7 +83,6 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     let dxx = snapCalc(dx)-(right - snapCalc(right))
     const max = (bDuration-bOffset)-rDuration
     if(dx === max) dxx = max 
-    console.log({dxx,rDuration,crdur:snapCalc(rDuration)})
     setRRDuration(dxx)
   }
   const onEndDurationHandler = ({dx})=>{
@@ -107,7 +106,6 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     if(dxx <= -bOffset) dxx = -bOffset
     setRROffset(dxx)
     setRRDuration(-dxx)
-    console.log({dxx, dddd:0})
     setRRTransform(`translateX(${rOffset + dxx}px)`)
   }
   const onEndOffsetHandler = ({dx})=>{
@@ -217,7 +215,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     setRRTransform(`translateX(${rOffset}px)`)
     setPointerState('')
     resetCutPos()
-  },[region])
+  },[region,editorStats])
   
   const styleRegion = {
     position:'absolute',
@@ -244,10 +242,19 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}
     >
     
+    
     <defs>
       <clipPath id={`svgframe-${region.regionId}`}>
         <rect width={rww} height={maxHeight} rx="10" ry="10"></rect>
       </clipPath>
+
+      <symbol id="melonhandle" viewBox='0 0 100 100'>
+        <circle cx="50" cy="50" r="45" stroke-width="10" stroke="#007a00" fill="#c24c4c"></circle>
+        <ellipse transform="rotate(120 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
+        <ellipse transform="rotate(240 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
+        <ellipse transform="translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
+      </symbol>
+
     </defs>
 
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
@@ -262,14 +269,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           maxDX:bDuration-bOffset,
         }}  
         onStart={onStartResizeHandler} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
-          <circle r={maxHeight/4} cy={maxHeight/2}></circle> 
+        <use href="#melonhandle" x={-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-rDuration, 
           maxDX:(bDuration-bOffset)-rDuration,
         }} 
         onStart={onStartResizeHandler} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
-          <circle r={maxHeight/4} cx={rww} cy={maxHeight/2}></circle>
+        <use href="#melonhandle" x={rww-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle> 
       </>
       :
@@ -281,17 +288,15 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           minDX:-rFadeIn,
           maxDX:(rDuration-rFadeOut)-rFadeIn,
         }}
-        onStart={()=>{console.log('fade start')}}
         onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
-          <circle r={maxHeight/4} cx={rFadeIn+rrFadeIn} cy={-15}></circle>
+        <use href="#melonhandle" x={rFadeIn+rrFadeIn-maxHeight/4} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-(rDuration-rFadeOut)+rFadeIn,
           maxDX:rFadeOut,
         }} 
-        onStart={()=>{console.log('fade out start')}}
         onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
-          <circle r={maxHeight/4} cx={rww - (rFadeOut+rrFadeOut)} cy={-15}></circle>
+        <use href="#melonhandle" x={rww - (rFadeOut+rrFadeOut + (maxHeight/4))} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle>
       </>
       :
@@ -299,14 +304,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     }
 
     {selected && isCutting ? <> 
+      <line stroke-width={2} stroke={'green'} x1={0} x2={0} y1={0} y2={maxHeight} transform={cutHandleLineTransform}></line>
       <PointerHandle bounds={{
         minDX:-cutPos,
         maxDX:rDuration-cutPos,
       }}        
       onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
-          <circle r={maxHeight/4} cx={0} cy={maxHeight} transform={cutHandleTransform}></circle>
+        <use href="#melonhandle" transform={cutHandleTransform} x={-maxHeight/4} y={maxHeight*3/4} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle> 
-      <line stroke={'green'} x1={0} x2={0} y1={0} y2={maxHeight} transform={cutHandleLineTransform}></line>
     </> : null}
 
   </svg>
