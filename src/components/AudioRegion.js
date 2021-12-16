@@ -246,14 +246,20 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       <clipPath id={`svgframe-${region.regionId}`}>
         <rect width={rww} height={maxHeight} rx="10" ry="10"></rect>
       </clipPath>
+      <clipPath id={`fadeinclip`}>
+        <rect x={0} y={0} width={maxHeight/4} height={maxHeight/2}></rect>
+      </clipPath>
+      <clipPath id={`fadeoutclip`}>
+        <rect x={maxHeight/4} y={0} width={maxHeight/4} height={maxHeight/2}></rect>
+      </clipPath>
     </defs>
 
 
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
       <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
-      <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} stroke="black" fill={isFading && selected ? 'white' : 'none'}></polygon>
-      <polygon points={`${rww},0 ${rww},${maxHeight} ${rww-(rFadeOut+rrFadeOut)},0`} stroke="black" fill={isFading && selected ? 'yellow' : 'none'}></polygon>
-      <rect className="AudioRegionFrame" width={rww} height={maxHeight} rx={10} ry={10}></rect>
+      <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/3} ${rFadeIn+rrFadeIn},0 L 0,0 L 0,${maxHeight}`} />
+      <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},0 Q ${rww},${maxHeight/3} ${rww},${maxHeight} L ${rww},0 L ${rww-(rFadeOut+rrFadeOut)},0`} />
+      <rect className="FrameSVG" width={rww} height={maxHeight} rx={10} ry={10}></rect>
     </g>
     
     { selected && isGrabbing ? <>
@@ -262,14 +268,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           maxDX:bDuration-bOffset,
         }}  
         onStart={onStartResizeHandler} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
-        <use href="#melonhandle" x={-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
+        <use className="HandleShadow" href="#melonhandle" x={-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-rDuration, 
           maxDX:(bDuration-bOffset)-rDuration,
         }} 
         onStart={onStartResizeHandler} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
-        <use href="#melonhandle" x={rww-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
+        <use className="HandleShadow" href="#melonhandle" x={rww-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle> 
       </>
       :
@@ -282,14 +288,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
           maxDX:(rDuration-rFadeOut)-rFadeIn,
         }}
         onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
-        <use href="#melonhandle" x={rFadeIn+rrFadeIn-maxHeight/4} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
+        <use href="#melonhandle" clipPath='url(#fadeinclip)' x={rFadeIn+rrFadeIn-maxHeight/4} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle>
       <PointerHandle bounds={{
           minDX:-(rDuration-rFadeOut)+rFadeIn,
           maxDX:rFadeOut,
         }} 
         onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
-        <use href="#melonhandle" x={rww - (rFadeOut+rrFadeOut + (maxHeight/4))} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
+        <use href="#melonhandle" clipPath='url(#fadeoutclip)' x={rww - (rFadeOut+rrFadeOut + (maxHeight/4))} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle>
       </>
       :
@@ -297,13 +303,13 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
     }
 
     {selected && isCutting ? <> 
-      <line stroke-width={2} stroke={'green'} x1={0} x2={0} y1={0} y2={maxHeight} transform={cutHandleLineTransform}></line>
+      <line className="HandleShadow" stroke-width={2} stroke={'green'} x1={0} x2={0} y1={0} y2={maxHeight} transform={cutHandleLineTransform}></line>
       <PointerHandle bounds={{
         minDX:-cutPos,
         maxDX:rDuration-cutPos,
       }}        
       onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
-        <use href="#melonhandle" transform={cutHandleTransform} x={-maxHeight/4} y={maxHeight*3/4} height={maxHeight/2} width={maxHeight/2}></use>
+        <use className="HandleShadow" href="#melonhandle" transform={cutHandleTransform} x={-maxHeight/4} y={maxHeight*3/4} height={maxHeight/2} width={maxHeight/2}></use>
       </PointerHandle> 
     </> : null}
 

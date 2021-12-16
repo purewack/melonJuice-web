@@ -224,9 +224,9 @@ export const AudioEngine = {
           
   },
   randomColor(){
-    const cc = `rgb(${Math.floor(Math.random()*255)},\
-      ${Math.floor(Math.random()*255)},\
-      ${Math.floor(Math.random()*255)})`;
+    const cc = `rgb(${Math.floor(Math.random()*65 + 190)},\
+      ${Math.floor(Math.random()*65 + 190)},\
+      ${Math.floor(Math.random()*65 + 190)})`;
     console.log(cc)
     return cc;
   },
