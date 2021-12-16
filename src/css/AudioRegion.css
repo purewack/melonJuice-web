@@ -1,19 +1,15 @@
 
 .AudioRegion{
-    position:absolute;
     display:block;
     z-index: 1;
     touch-action: none;
     box-sizing: border-box;
-    overflow: visible;
-    /* transform-box: fill-box; */
 }
 .AudioRegionFrame{
     fill:none;
     stroke:black;
     stroke-width: 6px;
 }
-
 
 .AudioRegionGhostMove{
     pointer-events: none;
@@ -35,6 +31,7 @@
 }
 .AudioRegionSelected{
     z-index: 5;
+    overflow: visible;
 }
 
 .AudioRegion:hover {

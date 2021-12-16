@@ -232,9 +232,10 @@ function App() {
   // },[editorStats])
 
   return (<>
-    {!begun ? <p>Loading...</p> :
+    {!begun ? <p>Loading...</p> : <>
 
     <div className="Editor"> 
+    
       <div className='ControlField'>
         <p>{songTitle}</p>
 
@@ -435,6 +436,7 @@ function App() {
         </div>
       </div>
   </div>
+  </>
   }
   </>);
 }

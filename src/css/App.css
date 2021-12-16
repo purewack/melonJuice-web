@@ -53,16 +53,3 @@ button{
 .DebugSelection p{
     margin:0;
 }
-
-.AudioRegion:hover .AudioRegionDebugTooltip{
-    display: block;
-}
-.AudioRegionDebugTooltip {
-    position:fixed;
-    border: solid red 1px;
-    background-color: black;
-    color:white;
-    display: none;
-    pointer-events: none;
-    touch-action: none;
-}
