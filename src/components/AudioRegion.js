@@ -1,7 +1,6 @@
 import '../css/AudioRegion.css';
 import {useState,useEffect,useRef,useCallback} from 'react'
 import PointerHandle  from '../interfaces/PointerHandle';
-import Melon from '../gfx/Melon'
 //import{useRenders} from '../Util'
 
     /*      
@@ -247,20 +246,13 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
       <clipPath id={`svgframe-${region.regionId}`}>
         <rect width={rww} height={maxHeight} rx="10" ry="10"></rect>
       </clipPath>
-
-      <symbol id="melonhandle" viewBox='0 0 100 100'>
-        <circle cx="50" cy="50" r="45" stroke-width="10" stroke="#007a00" fill="#c24c4c"></circle>
-        <ellipse transform="rotate(120 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
-        <ellipse transform="rotate(240 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
-        <ellipse transform="translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
-      </symbol>
-
     </defs>
 
+
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
-      <rect fill="green" width={rww} height={maxHeight}></rect>
-      <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} fill="white"></polygon>
-      <polygon points={`${rww},0 ${rww},${maxHeight} ${rww-(rFadeOut+rrFadeOut)},0`} fill="yellow"></polygon>
+      <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
+      <polygon points={`0,0 0,${maxHeight} ${rFadeIn+rrFadeIn},0`} stroke="black" fill={isFading && selected ? 'white' : 'none'}></polygon>
+      <polygon points={`${rww},0 ${rww},${maxHeight} ${rww-(rFadeOut+rrFadeOut)},0`} stroke="black" fill={isFading && selected ? 'yellow' : 'none'}></polygon>
       <rect className="AudioRegionFrame" width={rww} height={maxHeight} rx={10} ry={10}></rect>
     </g>
     
@@ -318,8 +310,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   </svg>
   </PointerHandle>
 
-  {/* {pointerState === 'resize-change' ? <div style={{left: rOffset-bOffset, width: bDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
-  {pointerState === 'move-change' ? <div style={{left: rOffset, width: rDuration}} className='AudioRegion AudioRegionGhostMove'></div> : null}    */}
+  {pointerState === 'resize-change' ? <div style={{position:'absolute',left: rOffset-bOffset, width: bDuration, height: maxHeight}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
+  {pointerState === 'move-change' ? <div style={{position:'absolute',left: rOffset, width: rDuration, height:maxHeight}} className='AudioRegion AudioRegionGhostMove'></div> : null}   
 
   </>
   )

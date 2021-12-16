@@ -148,6 +148,7 @@ import AudioRegion from './components/AudioRegion';
 import { tracksReducer } from './reducers/TracksReducer'
 import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
+import SVGElements from './gfx/SVGElements';
 
 function App() {
 
@@ -233,6 +234,8 @@ function App() {
 
   return (<>
     {!begun ? <p>Loading...</p> : <>
+
+    <SVGElements />
 
     <div className="Editor"> 
     
@@ -352,7 +355,7 @@ function App() {
                 if(armedId === t.trackId) setArmedId(null)
                 else setArmedId(t.trackId)
               }
-            } height={editorStats.trackHeight}/>
+            } height={editorStats.trackHeight+5}/>
           })}
         </ToolField>
 
@@ -373,7 +376,7 @@ function App() {
                     onSelect={(r)=>{
                       setSelectedRegion(r)
                     }}
-                    trackInfo={{idx:i, max:tt.length}}
+                    trackInfo={{idx:i, max:tt.length, color:track.color}}
                     tracksDispatch={tracksDispatch}
                     editorStats={editorStats}
                 />
@@ -382,7 +385,7 @@ function App() {
           })}
         </AudioField>
       </div>
-
+      
       <p>Debug Map</p>
         
       {selectedRegion ? 

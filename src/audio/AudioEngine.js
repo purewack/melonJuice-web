@@ -223,6 +223,13 @@ export const AudioEngine = {
     this.tonejs.Transport.start('+0.1')
           
   },
+  randomColor(){
+    const cc = `rgb(${Math.floor(Math.random()*255)},\
+      ${Math.floor(Math.random()*255)},\
+      ${Math.floor(Math.random()*255)})`;
+    console.log(cc)
+    return cc;
+  },
   
   newTrack(){
     const t = {
@@ -230,6 +237,7 @@ export const AudioEngine = {
         volume: 1.0,
         enable: 1.0,
         regions: [],
+        color: this.randomColor(),
         // player: new this.tonejs.Player(),
         // envelope: new this.tonejs.AmplitudeEnvelope({
         //   attack:0,
