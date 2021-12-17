@@ -88,6 +88,7 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
       if(touch){  
         document.addEventListener('touchmove', touchmove, { passive: false });
         document.addEventListener('touchend', touchend, { passive: false });
+        document.documentElement.style.overflow = 'hidden';
       }
       else{
         window.addEventListener("mousemove", pointermove);
@@ -102,6 +103,7 @@ const PointerHandle = ({ disable, onStart, onEnd, onChange, shouldSnapToFirstDir
       if(touch){  
         document.removeEventListener('touchmove', touchmove, { passive: false });
         document.removeEventListener('touchend', touchend, { passive: false });
+        document.documentElement.style.overflow = 'auto';
       }
       else{
         window.removeEventListener("mousemove", pointermove);
