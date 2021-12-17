@@ -58,7 +58,7 @@
 //     setRecording(false)
 //   }
 
-//import * as Tone from 'tone'
+import * as Tone from 'tone'
 import newid from 'uniqid';
 
 
@@ -92,16 +92,8 @@ export const AudioEngine = {
     
   init() {
     
-    //let ac = this.actx  = Tone.getContext().rawContext._nativeContext
-    let ac
-    console.log(ac)
-        console.log(new AudioContext())
-    // ac.name = 'con'
-    //   console.log(ac)
-    //   console.log(Tone.context)
-    // Tone.setContext(ac)
-    //   console.log(Tone.context)
-    //this.tonejs = Tone;
+    let ac = this.actx  = Tone.getContext().rawContext._nativeContext
+    this.tonejs = Tone;
     this.player = new this.tonejs.Player()
     this.player.toDestination()
 
@@ -118,9 +110,7 @@ export const AudioEngine = {
           let micStream = ac.createMediaStreamSource(stream);
           await this.tonejs.start()
           await ac.audioWorklet.addModule('MicWorkletModule.js')
-          
-          this.addTrack()
-
+         
           let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
           micStream.connect(micNode)
     		  micNode.connect(ac.destination)
@@ -227,7 +217,7 @@ export const AudioEngine = {
     const cc = `rgb(${Math.floor(Math.random()*65 + 190)},\
       ${Math.floor(Math.random()*65 + 190)},\
       ${Math.floor(Math.random()*65 + 190)})`;
-    console.log(cc)
+//    console.log(cc)
     return cc;
   },
   
@@ -252,7 +242,7 @@ export const AudioEngine = {
   },
 
   newRegion(bufferId, offset, duration){
-    this.bufferPool = [...this.bufferPool, {bufferId,duration}]
+    //this.bufferPool = [...this.bufferPool, {bufferId,duration}]
 
     return {
       regionId: newid(),

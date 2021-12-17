@@ -21,7 +21,7 @@ import PointerHandle  from '../interfaces/PointerHandle';
                        │                            │
     */
 
-const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatch, editorStats})=>{
+const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo, tracksDispatch, editorStats})=>{
   const rOffset = (editorStats.barLength*region.rOffset)
   const rDuration = (editorStats.barLength*region.rDuration)
   const bOffset = (editorStats.barLength*region.bOffset)
@@ -226,7 +226,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   } 
 
   const rww = rDuration + rrDuration;
- 
+
   return(<>
   <PointerHandle disable={!(selected && isGrabbing)} 
     bounds={{
@@ -257,6 +257,9 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
 
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
       <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
+      <svg viewBox={`${100*((bOffset+rrOffset)/bDuration)} 0 ${100*(rww/bDuration)} 100`} preserveAspectRatio='none' width={rww} height={maxHeight}>
+        <path fill="white" d={waveformPath}/>
+      </svg>
       <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/3} ${rFadeIn+rrFadeIn},0 L 0,0 L 0,${maxHeight}`} />
       <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},0 Q ${rww},${maxHeight/3} ${rww},${maxHeight} L ${rww},0 L ${rww-(rFadeOut+rrFadeOut)},0`} />
       <rect className="FrameSVG" width={rww} height={maxHeight} rx={10} ry={10}></rect>

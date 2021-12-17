@@ -1,6 +1,6 @@
 import React from 'react'
 
-const SVGElements = ({width, height})=>{
+const SVGElements = ()=>{
     return (
         
     <svg xmlns="http://www.w3.org/2000/svg" style={{display:'none'}}>
