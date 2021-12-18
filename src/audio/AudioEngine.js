@@ -92,56 +92,56 @@ export const AudioEngine = {
     
   init() {
     
-    let ac = this.actx  = Tone.getContext().rawContext._nativeContext
+    this.actx  = Tone.getContext().rawContext._nativeContext
     this.tonejs = Tone;
     this.player = new this.tonejs.Player()
     this.player.toDestination()
 
-    navigator.mediaDevices.getUserMedia({audio:{
-  		latency: 0.0,
-  		echoCancellation: false,
-  		mozNoiseSuppression: false,
-  		mozAutoGainControl: false
-  	},video:false}).then(stream => {
-        console.log('permission granted')
+    // navigator.mediaDevices.getUserMedia({audio:{
+  	// 	latency: 0.0,
+  	// 	echoCancellation: false,
+  	// 	mozNoiseSuppression: false,
+  	// 	mozAutoGainControl: false
+  	// },video:false}).then(stream => {
+    //     console.log('permission granted')
         
-        const startWorklet = async ()=>{
-          console.log('setup mic-processor worklet')
-          let micStream = ac.createMediaStreamSource(stream);
-          await this.tonejs.start()
-          await ac.audioWorklet.addModule('MicWorkletModule.js')
+    //     const startWorklet = async ()=>{
+    //       console.log('setup mic-processor worklet')
+    //       let micStream = ac.createMediaStreamSource(stream);
+    //       await this.tonejs.start()
+    //       await ac.audioWorklet.addModule('MicWorkletModule.js')
          
-          let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
-          micStream.connect(micNode)
-    		  micNode.connect(ac.destination)
+    //       let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
+    //       micStream.connect(micNode)
+    // 		  micNode.connect(ac.destination)
           
-          micNode.port.onmessage = (e)=>{
-            if(e.data.eventType === 'onchunk'){
-              let len = (e.data.audioChunk.length + this.lastRecording.length)
-              let bufnew = new Float32Array(len)
-              bufnew.set(this.lastRecording)
-              bufnew.set(e.data.audioChunk, this.lastRecording.length)
-              this.lastRecording = bufnew
-              //console.log(len)
-            }
-            else if(e.data.eventType === 'begin'){
-      				this.lastRecordingChunks = []
-      			}
-            else if(e.data.eventType === 'end'){
-              //console.log(this.lastRecording)
-      				const buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
-              buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
-              this.lastBufferId = newid()
-              this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
+    //       micNode.port.onmessage = (e)=>{
+    //         if(e.data.eventType === 'onchunk'){
+    //           let len = (e.data.audioChunk.length + this.lastRecording.length)
+    //           let bufnew = new Float32Array(len)
+    //           bufnew.set(this.lastRecording)
+    //           bufnew.set(e.data.audioChunk, this.lastRecording.length)
+    //           this.lastRecording = bufnew
+    //           //console.log(len)
+    //         }
+    //         else if(e.data.eventType === 'begin'){
+    //   				this.lastRecordingChunks = []
+    //   			}
+    //         else if(e.data.eventType === 'end'){
+    //           //console.log(this.lastRecording)
+    //   				const buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
+    //           buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
+    //           this.lastBufferId = newid()
+    //           this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
               
-              let recordStartTime = 0 //get actual position of transport
-              this.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
-            }
-          }
-          this.micNode = micNode
-        }
-        startWorklet()
-    })
+    //           let recordStartTime = 0 //get actual position of transport
+    //           this.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
+    //         }
+    //       }
+    //       this.micNode = micNode
+    //     }
+    //     startWorklet()
+    // })
     
     return true;
   },
