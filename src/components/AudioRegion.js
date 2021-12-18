@@ -1,5 +1,5 @@
 import '../css/AudioRegion.css';
-import {useState,useEffect,useRef,useCallback} from 'react'
+import {useState,useEffect,useRef} from 'react'
 import PointerHandle  from '../interfaces/PointerHandle';
 //import{useRenders} from '../Util'
 
@@ -214,6 +214,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     setRRTransform(`translateX(${rOffset}px)`)
     setPointerState('')
     resetCutPos()
+  // eslint-disable-next-line
   },[region,editorStats])
   
   const styleRegion = {
