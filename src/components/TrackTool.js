@@ -1,4 +1,5 @@
 import React from 'react'
+import '../css/TrackTool.css'
 
 export default function TrackTool({id, armedId, onArm, height}) {
     return (

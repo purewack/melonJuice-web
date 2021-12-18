@@ -1,0 +1,25 @@
+.TrackTool{
+    z-index: 9;
+    background:yellow;
+    border:solid black 1px;
+    display:inline-block;
+    position: sticky;
+    left:0;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.TrackToolHelper{
+    display:none;
+    z-index: 10;
+    background:blue;
+    border:solid black 1px;
+    position: absolute;
+    left: 100%;
+    flex-direction: row;
+    overflow: hidden;
+}
+.TrackTool:hover .TrackToolHelper{
+    display:flex;
+}

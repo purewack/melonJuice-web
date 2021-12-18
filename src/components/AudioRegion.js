@@ -1,230 +1,330 @@
-import './components.css';
+import '../css/AudioRegion.css';
 import {useState,useEffect,useRef} from 'react'
+import PointerHandle  from '../interfaces/PointerHandle';
+//import{useRenders} from '../Util'
 
-const AudioRegion = ({region, prevRegion, nextRegion, trackInfo, tracksDispatch, editorStats})=>{
+    /*      
+                               │                    │
+                               ├──────rDur──────────┤
+        │                      │                    │
+        ├─────────roff─────────┤
+        │                      │
+        │              ┌-------┼────────────────────┐
+        │              │       │                    │
+        │              │       │                    │
+        │              └-------┼────────────────────┘
+                               │
+                       │       │                    │
+                       │boff───┘                    │
+                       │                            │
+                       ├─bdur───────────────────────┤
+                       │                            │
+    */
 
-  const [rOffset, setrOffset] = useState()
-  const [rDuration, setRDuration] = useState()
-  const [rOffsetOld, setrOffsetOld] = useState()
-  const [rDurationOld, setRDurationOld] = useState()
-  const [rBOffset, setRBOffset] = useState()
-  const [rBDuration, setRBDuration] = useState()
-  const [fadeIn, setFadeIn] = useState(0)
-  const [fadeOut, setFadeOut] = useState(0)
-  const [handleHitbox, setHandleHitbox] = useState(null)
-  const [maxHeight, setMaxHeight] = useState(0)
-  const [dragVOffset, setDragVOffset] = useState(0)
-  const [cutPos , setCutPos] = useState(null)
-  const [isHovering, setIsHovering] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-  const regionStatsPrev = useRef()
-  const resizeHandleArea = 10;
-  const cutTarget = useRef()
-
-
-  useEffect(()=>{
-    setDragVOffset(0)
-    setrOffset(editorStats.barLength*region.rOffset)
-    setRDuration(editorStats.barLength*region.rDuration)
-    setRBOffset(editorStats.barLength*region.bOffset)
-    setRBDuration(editorStats.barLength*region.bDuration)
-    setFadeIn(region.rFadeIn*editorStats.barLength)
-    setFadeOut(region.rFadeOut*editorStats.barLength)
-    // setFadeIn(100)
-    // setFadeOut(30)
-    setMaxHeight(editorStats.trackHeight)
-
-    //temp resolve later
-    setIsHovered(false)
-  },[region,editorStats])
+const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo, tracksDispatch, editorStats})=>{
+  const rOffset = (editorStats.barLength*region.rOffset)
+  const rDuration = (editorStats.barLength*region.rDuration)
+  const bOffset = (editorStats.barLength*region.bOffset)
+  const bDuration = (editorStats.barLength*region.bDuration)
+  const rFadeIn = (editorStats.barLength*region.rFadeIn)
+  const rFadeOut = (editorStats.barLength*region.rFadeOut)
+  const maxHeight = (editorStats.trackHeight)
+  const selected = selectedRegion && selectedRegion.regionId === region.regionId
+  const isGrabbing = editorStats.toolMode === 'grab'
+  const isFading = editorStats.toolMode === 'fade'
+  const isCutting = editorStats.toolMode === 'cut'
 
   const snapVCalc = (ll)=>{
     let b = (maxHeight)
     let l = Math.floor(ll/b)*b
     return l;
   }
-
-  const snapCalc = (ll)=>{
-    if(editorStats.snapGrain){
+  const snapCalc = (ll, min, max, cancel)=>{
+    if(editorStats.snapGrain && !cancel){
       let b = (editorStats.barLength/editorStats.snapGrain)
       let l = Math.floor(ll/b)*b
-      return l;
+      if(min !== null && l < min) l = min
+      if(max !== null && l > max) l = max
+     return l;
     }
     return ll
   }
+  const selectHandler = ()=>{
+      resetCutPos()
+    if(selectedRegion)
+    onSelect(null)
+    else{
+      onSelect(region)
+    }
+  } 
+  const [rrDuration, setRRDuration] = useState(0)
+  const [rrOffset, setRROffset] = useState(0)
+  const [rrFadeIn, setRRFadeIn] = useState(0)
+  const [rrFadeOut, setRRFadeOut] = useState(0)
+  const [rrTransform, setRRTransform] = useState(0)
+  const [cutHandleTransform, setCutHandleTransform] = useState(0)
+  const [cutHandleLineTransform, setCutHandleLineTransform] = useState(0)
+  const cutHandleDxx = useRef(0)
+  const [cutPos, setCutPos] = useState(0)
+  const [pointerState, setPointerState] = useState('')
 
-  const isNeighbourClear = (s,e)=>{
-    const p = prevRegion ?  (prevRegion.rOffset+prevRegion.rDuration)*editorStats.barLength : null
-    const n = nextRegion ?  nextRegion.rOffset*editorStats.barLength : null
-    const offsetPrev = p ? s - p : null
-    const offsetNext = n ? n - e : null
-    return (offsetPrev >= 0 && offsetNext >= 0)
+
+  const onStartResizeHandler = ()=>{
+    setPointerState('resize-change')
+  }
+  const onStartMoveChange = ()=>{
+    setPointerState('move-change')
   }
 
-  const cutCommit = (e)=>{
-    const cutPosCommit = (cutPos/editorStats.barLength)
-    tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
+  const onChangeDurationHandler = ({dx})=>{
+    const left = rOffset
+    const right = left+rDuration
+    let dxx = snapCalc(dx)-(right - snapCalc(right))
+    const max = (bDuration-bOffset)-rDuration
+    if(dx === max) dxx = max 
+    setRRDuration(dxx)
   }
-  const cutHover = (e)=>{
-    setCutPos(snapCalc(e.clientX - cutTarget.current.left))
+  const onEndDurationHandler = ({dx})=>{
+    setPointerState('')
+    if(dx === 0) return
+      const left = rOffset
+      const right = left+rDuration
+      let dxx = snapCalc(dx)-(right - snapCalc(right))
+      const max = (bDuration-bOffset)-rDuration
+      if(dx === max) dxx = max 
+      const rd = (rDuration + dxx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, rDuration:rd},
+       jumpRelativeTracks:0,
+      })
   }
 
-  const duringAdjust = (type,pointer)=>{
+  const onChangeOffsetHandler = ({dx})=>{
+    let dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    if(dxx <= -bOffset) dxx = -bOffset
+    setRROffset(dxx)
+    setRRDuration(-dxx)
+    setRRTransform(`translateX(${rOffset + dxx}px)`)
+  }
+  const onEndOffsetHandler = ({dx})=>{
+    setPointerState('')
+    if(dx === 0) return
+      let dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+      if(dxx <= -bOffset) dxx = -bOffset
+      const ro = (rOffset + dxx)/editorStats.barLength
+      const rd = (rDuration - dxx)/editorStats.barLength
+      const bo = (bOffset + dxx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, bOffset:bo, rOffset:ro, rDuration:rd},
+       jumpRelativeTracks:0,
+      })
+  }
 
-    const r = regionStatsPrev.current
-    regionStatsPrev.current.cursorDelta.x = pointer.x - regionStatsPrev.current.cursorInitial.x
-    regionStatsPrev.current.cursorDelta.y = pointer.y - regionStatsPrev.current.cursorInitial.y
-    const deltax = regionStatsPrev.current.cursorDelta.x
-    const deltay = regionStatsPrev.current.cursorDelta.y
-    // const delta = (type === 'touch' ? (pointer-regionStatsPrev.current.cursorInitial) : regionStatsPrev.current.cursorDelta ) 
+  const onChangeGrabHandler = ({dx, dy})=>{
+    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    setRRTransform(`translateX(${rOffset + dxx}px) translateY(${snapVCalc(dy + editorStats.trackHeight/2)}px)`)
+  }
+  const onEndGrabHandler = ({dx, dy})=>{
+    setPointerState('')
+    if(dx === 0) return
 
-    switch (r.target) {
-      case 'EndHandle':{
-          const d = snapCalc(r.right + deltax) - r.left
-          const max = (rBDuration-rBOffset)
-          if(d <= max && isNeighbourClear(r.left,d+r.left)){
-            setRDuration(d)
-            regionStatsPrev.current.rDuration = d
-          }
-        }
-        break;
-      
-      case 'StartHandle':{
-          const d = snapCalc(r.left + deltax)
-          const o = r.rrbo+(d-r.left)
+    const jumps = (snapVCalc(dy + editorStats.trackHeight/2)/editorStats.trackHeight)
+    const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    const ro = (rOffset + dxx)/editorStats.barLength
+      tracksDispatch({
+       type:'update_region',
+       updatedRegion: {...region, rOffset:ro},
+       jumpRelativeTracks:jumps,
+      })
+  }
 
-          if( d >= 0 && o >= 0 && d < r.right-resizeHandleArea && isNeighbourClear(d,r.right)){
-            regionStatsPrev.current.rbo = o
-            setRBOffset(o)
-            setrOffset(d)
-            setRDuration(r.right-d)
-            regionStatsPrev.current.rBOffset = o
-            regionStatsPrev.current.rOffset = d
-            regionStatsPrev.current.rDuration = r.right-d
-          }
-        }
-        break;
+  const resetCutPos = ()=>{
+    setCutPos(rDuration/2)
+    setCutHandleTransform(`translate(${rDuration/2},0)`)
+    setCutHandleLineTransform(`translate(${rDuration/2},0)`)
+  }
+  const onChangeCutHandler = ({dx, dy, prev_dy})=>{
+    if(dy+15 < -editorStats.trackHeight) return
 
-      default:
-        const o = snapCalc(r.left + deltax)
-        // if(o >= 0 && isNeighbourClear(o,o+rDuration)) {
-        if(o >= 0) {
-          setrOffset(o)
-          regionStatsPrev.current.rOffset = o
-        }
+    const max = rDuration-cutPos;
+    let dxx = snapCalc(rOffset + cutPos + dx) - rOffset//snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    if(dxx < 0) dxx = 0
+    else if(dx === max) dxx = rDuration
 
-        const voff = snapVCalc(deltay)
-        const tidx = (dragVOffset+voff) / editorStats.trackHeight
-        
-        if(tidx + trackInfo.idx >= 0 &&  tidx + trackInfo.idx <= trackInfo.max-1)
-        setDragVOffset(voff)
-        regionStatsPrev.current.dragVOffset = voff
-      break;
+    const cutBonudary = -20
+    if(dy > cutBonudary) cutHandleDxx.current = dxx
+    const th = `translate(${cutHandleDxx.current}, ${dy <= cutBonudary ? dy : 0})`
+    const thl = `translate(${cutHandleDxx.current}, 0)`
+    setCutHandleTransform(th)
+    setCutHandleLineTransform(thl)
+
+    if(editorStats.trackHeight+dy <= 0 && editorStats.trackHeight+prev_dy > 0) {
+      if(dxx === 0 || dxx === rDuration) return
+      const cp = dxx
+      const cutPosCommit = (cp/editorStats.barLength)
+      onSelect(null)
+      tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
     }
   }
-
-  const mouseup = (e)=>{e.preventDefault();  endAdjust('mouse')}
-  const mousemove = (e)=>{e.preventDefault(); duringAdjust('mouse',{x:e.clientX, y:e.clientY})}
-  const touchmove = (e)=>{e.preventDefault();  duringAdjust('touch',{x:e.touches[0].clientX, y:e.touches[0].clientY})}
-  const touchup = (e)=>{endAdjust('touch')}
-  
-  const startAdjust = (type,target,cursorInitial)=>{  
-    regionStatsPrev.current = {
-      target, 
-      left: rOffset,
-      width: rDuration, 
-      right:rOffset+rDuration, 
-      rbo:rBOffset,
-      rbd:rBDuration,
-      rrbo:rBOffset,
-      rOffset:rOffset,
-      rDuration:rDuration,
-      rBOffset:rBOffset,
-      dragVOffset:0,
-      cursorDelta:{x:0,y:0},
-      cursorInitial,
-    }
+  const onEndCutHandler = ({dx,dy}) => {
+    const max = rDuration-cutPos;
+    let dxx = snapCalc(rOffset + cutPos + dx) - rOffset//snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    if(dxx < 0) dxx = 0
+    else if(dx === max) dxx = rDuration
     
-    setrOffsetOld(rOffset)
-    setRDurationOld(rDuration)
-    setHandleHitbox(target)
-
-    if(type === 'mouse'){
-      window.addEventListener('mouseup',mouseup)
-      window.addEventListener('mousemove',mousemove)
-    }
-    else{
-      document.addEventListener('touchmove', touchmove, { passive: false });
-      document.addEventListener('touchend', touchup, { passive: false });
-    }
+    setCutPos(dxx)
+    const th = `translate(${dxx}, 0)`
+    const thl = th
+    setCutHandleTransform(th)
+    setCutHandleLineTransform(thl)
   }
 
-  const endAdjust = (type)=>{
-    if(type === 'mouse'){
-      window.removeEventListener('mouseup',mouseup)
-      window.removeEventListener('mousemove',mousemove)
-    }
-    else{
-      document.removeEventListener('touchmove', touchmove, { passive: false })
-      document.removeEventListener('touchend', touchup, { passive: false });
-    }
-    setHandleHitbox(null)
-    if(regionStatsPrev.current.cursorDelta === 0) return
-    const s = regionStatsPrev.current.rOffset/editorStats.barLength;
-    const d = regionStatsPrev.current.rDuration/editorStats.barLength;
-    const o = regionStatsPrev.current.rBOffset/editorStats.barLength;
-    const newRegion = {...region, rOffset:s, rDuration:d, bOffset:o}
-    let newTrack = null
-    if(regionStatsPrev.current.dragVOffset) newTrack = Math.floor(regionStatsPrev.current.dragVOffset / editorStats.trackHeight)
-    tracksDispatch({type:'update_region', updatedRegion:newRegion, jumpRelativeTracks:newTrack})
-  }  
+ 
+  const onChangeFadeInHandler = ({dx})=>{
+    setRRFadeIn(dx)
+  }
+  const onEndFadeInHandler = ({dx})=>{
+    const rfi = (rFadeIn+dx)/editorStats.barLength
+    tracksDispatch({
+      type:'update_region',
+      updatedRegion: {...region, rFadeIn:rfi},
+      jumpRelativeTracks:0,
+    })
+  }
 
-  // const cancelEdit = (e)=>{
-  //   mouseUp(null)
-  //   setrOffset(rOffsetOld)
-  //   setRDuration(rDurationOld)
-  //   console.log('cancel')
-  // }
+  const onChangeFadeOutHandler = ({dx})=>{
+    setRRFadeOut(-dx)
+  }
+  const onEndFadeOutHandler = ({dx})=>{
+    const rfo = (rFadeOut-dx)/editorStats.barLength
+    tracksDispatch({
+      type:'update_region',
+      updatedRegion: {...region, rFadeOut:rfo},
+      jumpRelativeTracks:0,
+    })
+  }
+
+  useEffect(()=>{
+    setRRDuration(0)
+    setRROffset(0)
+    setRRFadeIn(0)
+    setRRFadeOut(0)
+    setRRTransform(`translateX(${rOffset}px)`)
+    setPointerState('')
+    resetCutPos()
+  // eslint-disable-next-line
+  },[region,editorStats])
+  
+  const styleRegion = {
+    position:'absolute',
+    width:rDuration,
+    height:maxHeight,
+    left: 0,
+    transform: rrTransform,
+    overflow:'visible',
+  } 
+
+  const rww = rDuration + rrDuration;
 
   return(<>
-  <div
-    style={{height:'100%', width: rDuration, left: rOffset, top:dragVOffset}}
-    className={
-      editorStats.toolMode === 'cut' ? 'AudioRegion AudioRegionCut' : 
-      (handleHitbox || isHovered ? 'AudioRegion AudioRegionDrag' : 'AudioRegion')
-    } 
-    onMouseDown={editorStats.toolMode === 'grab' ? (e)=>{startAdjust('mouse', e.target.className, {x:e.clientX,y:e.clientY})} : cutCommit}
-    onMouseMove={editorStats.toolMode === 'cut' ? cutHover : null}
-    onMouseEnter={editorStats.toolMode === 'cut' ? (e)=>{cutTarget.current = e.target.getBoundingClientRect(); setCutPos(null)} : (e)=>{setIsHovering(true)}}
-    onMouseLeave={editorStats.toolMode === 'cut' ? (e)=>{setCutPos(null)}  : (e)=>{setIsHovering(false)}}
-    // onTouchStart={(e=>{startAdjust( 'touch',e.target.className,{ x:e.touches[0].clientX, y:touches[0].clientY } )})}
+  <PointerHandle disable={!(selected && isGrabbing)} 
+    bounds={{
+      minDX:-rOffset,
+      minDY:-(trackInfo.idx * editorStats.trackHeight),
+      maxDY:(trackInfo.max-1-trackInfo.idx)*editorStats.trackHeight,
+    }} 
+    onStart={onStartMoveChange} onChange={onChangeGrabHandler} onEnd={onEndGrabHandler}>
+  <svg xmlns="http://www.w3.org/2000/svg"
+    style={styleRegion} 
+    onClick={!selected ? selectHandler : null} 
+    className={selected ? 'AudioRegion AudioRegionSelected' : 'AudioRegion'}
     >
-    {rDuration ? 
-      <svg style={{pointerEvents:"none"}} width={rDuration} height={maxHeight}>
-        <line x1={0} x2={rDuration-1} y1={maxHeight/2} y2={maxHeight/2} stroke="white"></line>
-        <polygon points={`0,0 0,${maxHeight} ${fadeIn},0`} fill="white"></polygon>
-        <polygon points={`${rDuration},0 ${rDuration},${maxHeight} ${rDuration - (fadeOut)},0`} fill="white"></polygon>
-      </svg>
-    : null}
     
-    {editorStats.toolMode === 'grab' && isHovering && <span className='StartHandle' style={{width:resizeHandleArea}}>|</span>}
-      {/* <span style={{pointerEvents:'none'}}> 
-        {`${prevRegion && prevRegion.regionId.slice(-2)} < ${region.regionId.slice(-2)} > ${nextRegion && nextRegion.regionId.slice(-2)}`} 
-      </span> */}
-    {editorStats.toolMode === 'grab' && isHovering && <span className='EndHandle' style={{width:resizeHandleArea}}>|</span> }  
     
-    <p className='AudioRegionDebugTooltip'>{region.regionId}</p>
-  </div>
+    <defs>
+      <clipPath id={`svgframe-${region.regionId}`}>
+        <rect width={rww} height={maxHeight} rx="10" ry="10"></rect>
+      </clipPath>
+      <clipPath id={`fadeinclip`}>
+        <rect x={0} y={0} width={maxHeight/4} height={maxHeight/2}></rect>
+      </clipPath>
+      <clipPath id={`fadeoutclip`}>
+        <rect x={maxHeight/4} y={0} width={maxHeight/4} height={maxHeight/2}></rect>
+      </clipPath>
+    </defs>
 
-  {
-    (editorStats.toolMode === 'cut' && cutPos) ? <div style={{left:rOffset+cutPos}} className='AudioRegionCutIndicator'></div> :
+
+    <g clipPath={`url(#svgframe-${region.regionId})`}> 
+      <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
+      <svg viewBox={`${100*((bOffset+rrOffset)/bDuration)} 0 ${100*(rww/bDuration)} 100`} preserveAspectRatio='none' width={rww} height={maxHeight}>
+        <path fill="white" d={waveformPath}/>
+      </svg>
+      <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/3} ${rFadeIn+rrFadeIn},0 L 0,0 L 0,${maxHeight}`} />
+      <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},0 Q ${rww},${maxHeight/3} ${rww},${maxHeight} L ${rww},0 L ${rww-(rFadeOut+rrFadeOut)},0`} />
+      <rect className="FrameSVG" width={rww} height={maxHeight} rx={10} ry={10}></rect>
+    </g>
     
-    (handleHitbox === 'StartHandle' || handleHitbox === 'EndHandle') 
-    ? <div style={{left: rOffsetOld-regionStatsPrev.current.rrbo, width: rBDuration}} className='AudioRegion AudioRegionGhostBuffer'></div> 
-    : handleHitbox ? <div style={{width: rDurationOld, left: rOffsetOld}} className='AudioRegion AudioRegionGhostMove'></div> : null
-     
-  }
-  </>)
+    { selected && isGrabbing ? <>
+      <PointerHandle bounds={{
+          minDX:-bOffset, 
+          maxDX:bDuration-bOffset,
+        }}  
+        onStart={onStartResizeHandler} onChange={onChangeOffsetHandler} onEnd={onEndOffsetHandler}>
+        <use className="HandleShadow" href="#melonhandle" x={-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
+      </PointerHandle>
+      <PointerHandle bounds={{
+          minDX:-rDuration, 
+          maxDX:(bDuration-bOffset)-rDuration,
+        }} 
+        onStart={onStartResizeHandler} onChange={onChangeDurationHandler} onEnd={onEndDurationHandler}>
+        <use className="HandleShadow" href="#melonhandle" x={rww-maxHeight/4} y={maxHeight/4} height={maxHeight/2} width={maxHeight/2}></use>
+      </PointerHandle> 
+      </>
+      :
+      null 
+    }
+
+    { selected && isFading ? <>
+      <PointerHandle bounds={{
+          minDX:-rFadeIn,
+          maxDX:(rDuration-rFadeOut)-rFadeIn,
+        }}
+        onChange={onChangeFadeInHandler} onEnd={onEndFadeInHandler}>
+        <use href="#melonhandle" clipPath='url(#fadeinclip)' x={rFadeIn+rrFadeIn-maxHeight/4} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
+      </PointerHandle>
+      <PointerHandle bounds={{
+          minDX:-(rDuration-rFadeOut)+rFadeIn,
+          maxDX:rFadeOut,
+        }} 
+        onChange={onChangeFadeOutHandler} onEnd={onEndFadeOutHandler}>
+        <use href="#melonhandle" clipPath='url(#fadeoutclip)' x={rww - (rFadeOut+rrFadeOut + (maxHeight/4))} y={-maxHeight/2} height={maxHeight/2} width={maxHeight/2}></use>
+      </PointerHandle>
+      </>
+      :
+      null 
+    }
+
+    {selected && isCutting ? <> 
+      <line className="HandleShadow" stroke-width={2} stroke={'green'} x1={0} x2={0} y1={0} y2={maxHeight} transform={cutHandleLineTransform}></line>
+      <PointerHandle bounds={{
+        minDX:-cutPos,
+        maxDX:rDuration-cutPos,
+      }}        
+      onChange={onChangeCutHandler} onEnd={onEndCutHandler}>
+        <use className="HandleShadow" href="#melonhandle" transform={cutHandleTransform} x={-maxHeight/4} y={maxHeight*3/4} height={maxHeight/2} width={maxHeight/2}></use>
+      </PointerHandle> 
+    </> : null}
+
+  </svg>
+  </PointerHandle>
+
+  {pointerState === 'resize-change' ? <div style={{position:'absolute',left: rOffset-bOffset, width: bDuration, height: maxHeight}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
+  {pointerState === 'move-change' ? <div style={{position:'absolute',left: rOffset, width: rDuration, height:maxHeight}} className='AudioRegion AudioRegionGhostMove'></div> : null}   
+
+  </>
+  )
 }
 
 export default AudioRegion

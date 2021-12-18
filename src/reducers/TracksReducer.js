@@ -3,12 +3,17 @@ import { contactType } from '../Util';
 import newid from 'uniqid';
 
 export function tracksReducer(state,action){
-  const publishHistory = (newMove)=>{
+  const publishHistory = (newMove, changes)=>{
+    const ch = newMove.map((t,i) => {
+      return changes.some(v => i===v) 
+    })
+    
     if(state.historyPointer !== state.history.length-1){
       return {
         historyPointer: state.historyPointer+1,
         history:  [...state.history.slice(0,state.historyPointer+1), newMove],
         current: newMove,
+        changes: ch,
       }
     }
 
@@ -16,6 +21,7 @@ export function tracksReducer(state,action){
       historyPointer: state.historyPointer+1,
       history:  [...state.history, newMove],
       current: newMove,
+      changes: ch,
     }
   }
 
@@ -86,16 +92,20 @@ export function tracksReducer(state,action){
 
   switch(action.type){
     case 'new':
-      return {current: [AudioEngine.newTrack()], history: [[]], historyPointer:0}
+      return {current: [AudioEngine.newTrack()], history: [[]], historyPointer:0, changes:[true] }
 
     case 'load':
-      return {current: [...action.tracks], history: [[...action.tracks]], historyPointer:0}
+      return {current: [...action.tracks], history: [[...action.tracks]], historyPointer:0, changes:action.tracks.map(t => {return true}) }
 
     case 'record_region':{
+        let destTrackIdx
         let track
-        const newMove = state.current.map(t => {
+        const newMove = state.current.map((t,i) => {
           const tt = {...t, regions:[...t.regions.map(r => {return {...r}})]}
-          if(action.trackId === t.trackId) track = tt
+          if(action.trackId === t.trackId) {
+            track = tt
+            destTrackIdx = i
+          }
           return tt
         })
 
@@ -103,7 +113,7 @@ export function tracksReducer(state,action){
 
         track.regions = AudioEngine.pushRegion(track.regions, action.region)
 
-        return publishHistory(newMove)
+        return publishHistory(newMove, [destTrackIdx])
       }
 
     case 'update_region':{
@@ -112,6 +122,7 @@ export function tracksReducer(state,action){
       let sourceTrack = null
       let destTrackIdx = null
       let sourceTrackIdx = null
+      console.log(u)
 
       const newMove = state.current.map((t,i) => {
         let jidx = (action.jumpRelativeTracks ? action.jumpRelativeTracks : 0)
@@ -128,7 +139,10 @@ export function tracksReducer(state,action){
         })
 
         //make deep copy
+        if(i === destTrackIdx)
         return {...t, regions:[...t.regions.map(r => {return {...r}})]}
+        else
+        return t
       })
 
       destTrack = newMove[destTrackIdx]
@@ -146,7 +160,7 @@ export function tracksReducer(state,action){
         destTrack.regions = AudioEngine.updateRegion(destTrack.regions, u)
       }
 
-      return publishHistory(newMove)
+      return publishHistory(newMove, [sourceTrackIdx, destTrackIdx])
     }
     
     case 'cut_region':{
@@ -154,7 +168,8 @@ export function tracksReducer(state,action){
         return {...t, regions:[...t.regions]}
       })
 
-      const newMove = currentCopy.map(t => {
+      let destTrackIdx
+      const newMove = currentCopy.map((t,i) => {
         let outputTrack = t
         t.regions.forEach(r => {
           if(r.regionId === action.regionToCut.regionId){
@@ -167,13 +182,16 @@ export function tracksReducer(state,action){
             r2.rOffset += action.regionCutLength
             r1.regionId = newid()
             r2.regionId = newid()
+            r1.rFadeOut = 0
+            r2.rFadeIn = 0
             outputTrack.regions = AudioEngine.setRegions([...trackNewRegions,r1,r2])
+            destTrackIdx = i
           }
         }) 
         return outputTrack
       })
 
-      return publishHistory(newMove)
+      return publishHistory(newMove, [destTrackIdx])
     }
 
     case 'undo':
@@ -182,6 +200,7 @@ export function tracksReducer(state,action){
           ...state,
           current: state.history[state.historyPointer-1],
           historyPointer: state.historyPointer-1,
+          changes: state.current.map(t=>true)
         }
       }
       break;
@@ -191,12 +210,16 @@ export function tracksReducer(state,action){
           ...state,
           current: state.history[state.historyPointer+1],
           historyPointer: state.historyPointer+1,
+          changes: state.current.map(t=>true)
         }
       }
       break;
       
     default:
-      return state;
+      return {
+        ...state,
+        changes: state.current.map(t=>false)
+      };
   }
 }
 

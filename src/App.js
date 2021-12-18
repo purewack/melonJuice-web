@@ -135,7 +135,9 @@
 //   // }</>
 
 
-import './App.css';
+import './css/App.css';
+import './css/Fields.css'
+import './css/Time.css'
 import { useState, useEffect, useReducer, useRef} from 'react';
 
 import newid from 'uniqid';
@@ -146,6 +148,8 @@ import AudioRegion from './components/AudioRegion';
 import { tracksReducer } from './reducers/TracksReducer'
 import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
+import SVGElements from './gfx/SVGElements';
+import {generateSVGPathFromAudioBuffer} from './Util'
 
 function App() {
 
@@ -157,6 +161,7 @@ function App() {
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
   const [armedId, setArmedId] = useState(null)
+  const [selectedRegion, setSelectedRegion] = useState(null)
 
   const [buffers, setBuffers] = useState([])
   const [recStart, setRecStart] = useState(0)
@@ -171,31 +176,71 @@ function App() {
 
   useEffect(() => {
     if(!begun) {
-      let ttt = [
-        AudioEngine.newTrack(),
-        AudioEngine.newTrack(),
-        AudioEngine.newTrack(),
-      ]
+      AudioEngine.init()
 
-      ttt[0].regions = AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),10,1),
-        AudioEngine.newRegion(newid(),0,2),
-        AudioEngine.newRegion(newid(),3,4),
-        AudioEngine.newRegion(newid(),15,20),
-      ])
+      const testId = newid()
+      const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_1MG.mp3'
+      const testBuffer = {
+        id: testId,
+        bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
+        svgWaveformPath: null,
+      }
+      let testRegion = AudioEngine.newRegion(testId,0,0)
+      
+      const doneLoad = (buf) => {
+        const bpm = 110
+        const bps = bpm/60
+        const beatDurSec = 1/bps
+        const barDurSec = 4*beatDurSec
+        console.log({bpm,bps,beatDurSec,barDurSec})
+        console.log(buf)
+        testRegion.bDuration = buf._buffer.duration / barDurSec
+        testRegion.rDuration = testRegion.bDuration
+        testBuffer.svgWaveformPath = generateSVGPathFromAudioBuffer(buf)
+        AudioEngine.bufferPool.push(testBuffer)
+        console.log(testBuffer)
+        console.log(testRegion)
+        console.log(AudioEngine.bufferPool)
 
-      ttt[1].regions =  AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),0,2),
-        AudioEngine.newRegion(newid(),5,5),
-      ])
+        
+        let ttt = [
+          AudioEngine.newTrack(),
+          AudioEngine.newTrack(),
+          AudioEngine.newTrack(),
+        ]
 
-      ttt[2].regions =  AudioEngine.setRegions([
-        AudioEngine.newRegion(newid(),1,10),
-      ])
+        ttt[0].regions = AudioEngine.setRegions([
+          testRegion,
+          // AudioEngine.newRegion(newid(),10,1),
+          // AudioEngine.newRegion(newid(),0,2),
+          // AudioEngine.newRegion(newid(),3,4),
+          AudioEngine.newRegion(newid(),15,20),
+        ])
 
-      tracksDispatch({type:'load', tracks:ttt})
-      setSongTitle('test_init_regions')
-      setBegun(true)
+        ttt[1].regions =  AudioEngine.setRegions([
+          AudioEngine.newRegion(newid(),0,2),
+          AudioEngine.newRegion(newid(),5,5),
+        ])
+
+        ttt[2].regions =  AudioEngine.setRegions([
+          AudioEngine.newRegion(newid(),1,10),
+        ])
+
+        tracksDispatch({type:'load', tracks:ttt})
+        setSongTitle('test_init_regions')
+        setBegun(true)
+      }
+      testBuffer.bufferData.onload = doneLoad;
+
+
+      
+      // let ttt = [
+      //   AudioEngine.newTrack(),
+      // ]
+      // ttt[0].regions = AudioEngine.setRegions([
+      //   AudioEngine.newRegion(testBuffer.id,0,4)
+      // ])
+
     }
     
   }, [begun])
@@ -222,14 +267,19 @@ function App() {
     redoButtonRef.current.disabled = (tracks.historyPointer === tracks.history.length-1)
   },[tracks,begun])
 
-  useEffect(()=>{ 
-    console.log(editorStats.toolMode)
-  },[editorStats])
+  // useEffect(()=>{ 
+  //   console.log(editorStats.toolMode)
+  //   if(tracks)
+  //   tracks.changes = tracks.changes.map(t => {return true})
+  // },[editorStats])
 
   return (<>
-    {!begun ? <p>Loading...</p> :
+    {!begun ? <p>Loading...</p> : <>
+
+    <SVGElements />
 
     <div className="Editor"> 
+    
       <div className='ControlField'>
         <p>{songTitle}</p>
 
@@ -284,9 +334,9 @@ function App() {
                   toolMode: e.target.value,
                 })
               }}/>
-            🖐 Grab
+            🖐
           </label>
-          {/* <label>
+          <label>
             <input type="radio" value="fade" 
               checked={(editorStats.toolMode === 'fade')} 
               onChange={e=>{
@@ -295,8 +345,8 @@ function App() {
                   toolMode: e.target.value,
                 })
               }}/>
-            🌗 Fade
-          </label> */}
+            🌗
+          </label>
           <label>
             <input type="radio" value="cut" 
               checked={(editorStats.toolMode === 'cut')} 
@@ -306,7 +356,7 @@ function App() {
                   toolMode: e.target.value,
                 })
               }}/>
-            ✂️ Split
+            ✂️
           </label>
         </form>
 
@@ -346,25 +396,34 @@ function App() {
                 if(armedId === t.trackId) setArmedId(null)
                 else setArmedId(t.trackId)
               }
-            } height={editorStats.trackHeight}/>
+            } height={editorStats.trackHeight+5}/>
           })}
         </ToolField>
 
         <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
           {tracks.current.map((track,i,tt) => { 
             return <AudioTrack 
+              hadChanges={tracks.changes[i]}
               key={track.trackId} 
               id={track.trackId} 
               armedId={armedId}
               editorStats={editorStats}
             >
-              {track.regions.map((r,j,a) => {
-                return <AudioRegion 
+              {track.regions.map( r => {
+                let path
+                AudioEngine.bufferPool.forEach(b =>{
+                  if(b.id === r.bufferId) path = b.svgWaveformPath
+                })
+
+                return <AudioRegion
                     key={r.regionId} 
-                    region={r} 
-                    prevRegion={j>0 ? a[j-1] : null}
-                    nextRegion={j<a.length-1 ? a[j+1] : null}
-                    trackInfo={{idx:i, max:tt.length}}
+                    region={r}
+                    selectedRegion={selectedRegion}
+                    onSelect={(r)=>{
+                      setSelectedRegion(r)
+                    }}
+                    waveformPath={path}
+                    trackInfo={{idx:i, max:tt.length, color:track.color}}
                     tracksDispatch={tracksDispatch}
                     editorStats={editorStats}
                 />
@@ -373,8 +432,30 @@ function App() {
           })}
         </AudioField>
       </div>
-
+      
       <p>Debug Map</p>
+        
+      {selectedRegion ? 
+      tracks.current.map(t => {
+          return t.regions.map(r => {
+            if(r.regionId === selectedRegion.regionId){
+              return <div className='DebugSelection'>
+                <p>regionId:{r.regionId}</p>
+                <p>bufferId:{r.bufferId}</p>
+                <p>bOffset:{r.bOffset}</p>
+                <p>bDuration:{r.bDuration}</p>
+                <p>rOffset:{r.rOffset}</p>
+                <p>rDuration:{r.rDuration}</p>
+                <p>rFadeIn:{r.rFadeIn}</p>
+                <p>rFadeOut:{r.rFadeOut}</p>
+              </div> 
+            }
+            else 
+            return null
+          })
+        })
+      : null}
+
       <div className="DebugMap">
         <div>
           <p>Buffers</p>
@@ -405,6 +486,7 @@ function App() {
         </div>
       </div>
   </div>
+  </>
   }
   </>);
 }

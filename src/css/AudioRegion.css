@@ -1,0 +1,54 @@
+:root{
+    --col-sel:green;
+}
+.AudioRegion{
+    display:inline-block;
+    z-index: 1;
+    touch-action: none;
+    box-sizing: border-box;
+}
+.AudioRegion .FrameSVG{
+    fill:none;
+    stroke:black;
+    stroke-width: 3px;
+}
+.AudioRegion .FadeSVG{
+    stroke:black;
+    stroke-width: 1px;
+    fill: #ffffffaa;
+}
+
+.AudioRegionGhostMove{
+    pointer-events: none;
+    z-index: 2;
+    background:rgba(255, 58, 245, 0.178);
+    border-color: var(--col-sel);
+    border-width:2px;  
+    border-radius: 10px;
+    border-style:dashed;
+}
+.AudioRegionGhostBuffer{
+    pointer-events: none;
+    z-index: 2;
+    background:rgba(83, 184, 0, 0.5);
+    border-style:dashed;
+    border-color: var(--col-sel);
+    border-width: 2px;
+    border-radius: 10px;
+}
+.AudioRegion.AudioRegionSelected{
+    z-index: 8;
+    /* filter:drop-shadow(0px 0px 10px black); */
+}
+
+.AudioRegionSelected g .FrameSVG,
+.AudioRegionSelected g .FadeSVG{
+    stroke: var(--col-sel);
+}
+.AudioRegion:hover {
+    cursor: pointer;
+}
+
+.AudioRegion .HandleShadow{
+    /* filter:drop-shadow(0 0 5px black) */
+}
