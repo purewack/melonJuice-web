@@ -155,7 +155,7 @@ function App() {
 
   const [begun, setBegun] = useState(false)
   const [songMeasures, setSongMeasures] = useState(16)
-  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:50, trackHeight:60, toolMode:'grab'})
+  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:150, trackHeight:100, toolMode:'grab'})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   const undoButtonRef = useRef()
@@ -183,7 +183,7 @@ function App() {
       const testBuffer = {
         id: testId,
         bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
-        svgWaveformPath: null,
+        //svgWaveformPath: null,
       }
       let testRegion = AudioEngine.newRegion(testId,0,0)
       
@@ -196,11 +196,11 @@ function App() {
         console.log(buf)
         testRegion.bDuration = buf._buffer.duration / barDurSec
         testRegion.rDuration = testRegion.bDuration
-        testBuffer.svgWaveformPath = generateSVGPathFromAudioBuffer(buf)
+        //testBuffer.svgWaveformPath = generateSVGPathFromAudioBuffer(buf)
         AudioEngine.bufferPool.push(testBuffer)
-        console.log(testBuffer)
-        console.log(testRegion)
-        console.log(AudioEngine.bufferPool)
+        //console.log(testBuffer)
+        //console.log(testRegion)
+        //console.log(AudioEngine.bufferPool)
 
         
         let ttt = [
@@ -276,7 +276,7 @@ function App() {
   return (<>
     {!begun ? <p>Loading...</p> : <>
 
-    <SVGElements />
+    <SVGElements buffers={AudioEngine.bufferPool}/>
 
     <div className="Editor"> 
     
@@ -396,7 +396,7 @@ function App() {
                 if(armedId === t.trackId) setArmedId(null)
                 else setArmedId(t.trackId)
               }
-            } height={editorStats.trackHeight+5}/>
+            } height={editorStats.trackHeight}/>
           })}
         </ToolField>
 

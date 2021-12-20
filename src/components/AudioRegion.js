@@ -227,6 +227,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
   } 
 
   const rww = rDuration + rrDuration;
+  const vh = maxHeight*0.9;
+  const vy = maxHeight*0.05;
 
   return(<>
   <PointerHandle disable={!(selected && isGrabbing)} 
@@ -245,7 +247,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     
     <defs>
       <clipPath id={`svgframe-${region.regionId}`}>
-        <rect width={rww} height={maxHeight} rx="10" ry="10"></rect>
+        <rect y={vy} width={rww} height={vh} rx="10" ry="10"></rect>
       </clipPath>
       <clipPath id={`fadeinclip`}>
         <rect x={0} y={0} width={maxHeight/4} height={maxHeight/2}></rect>
@@ -258,12 +260,10 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
 
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
       <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
-      <svg viewBox={`${100*((bOffset+rrOffset)/bDuration)} 0 ${100*(rww/bDuration)} 100`} preserveAspectRatio='none' width={rww} height={maxHeight}>
-        <path fill="white" d={waveformPath}/>
-      </svg>
+      <use fill='white' href={`#waveform-${region.bufferId}`} y={0} x={-rrOffset-bOffset} width={bDuration} height={maxHeight}/>
       <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/3} ${rFadeIn+rrFadeIn},0 L 0,0 L 0,${maxHeight}`} />
       <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},0 Q ${rww},${maxHeight/3} ${rww},${maxHeight} L ${rww},0 L ${rww-(rFadeOut+rrFadeOut)},0`} />
-      <rect className="FrameSVG" width={rww} height={maxHeight} rx={10} ry={10}></rect>
+      <rect className="FrameSVG" y={vy} width={rww} height={vh} rx={10} ry={10}></rect>
     </g>
     
     { selected && isGrabbing ? <>
@@ -320,8 +320,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
   </svg>
   </PointerHandle>
 
-  {pointerState === 'resize-change' ? <div style={{position:'absolute',left: rOffset-bOffset, width: bDuration, height: maxHeight}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
-  {pointerState === 'move-change' ? <div style={{position:'absolute',left: rOffset, width: rDuration, height:maxHeight}} className='AudioRegion AudioRegionGhostMove'></div> : null}   
+  {pointerState === 'resize-change' ? <div style={{position:'absolute',top:vy, left: rOffset-bOffset, width: bDuration, height: vh}} className='AudioRegion AudioRegionGhostBuffer'></div> : null}   
+  {pointerState === 'move-change' ? <div style={{position:'absolute',top:vy, left: rOffset, width: rDuration, height:vh}} className='AudioRegion AudioRegionGhostMove'></div> : null}   
 
   </>
   )

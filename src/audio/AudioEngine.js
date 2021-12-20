@@ -60,7 +60,7 @@
 
 import * as Tone from 'tone'
 import newid from 'uniqid';
-
+import { randomColor } from '../Util';
 
 const calculateRegionRelations = (regions) => {
   let sorted = regions.slice().sort((a,b)=>{
@@ -213,13 +213,6 @@ export const AudioEngine = {
     this.tonejs.Transport.start('+0.1')
           
   },
-  randomColor(){
-    const cc = `rgb(${Math.floor(Math.random()*65 + 190)},\
-      ${Math.floor(Math.random()*65 + 190)},\
-      ${Math.floor(Math.random()*65 + 190)})`;
-//    console.log(cc)
-    return cc;
-  },
   
   newTrack(){
     const t = {
@@ -227,7 +220,7 @@ export const AudioEngine = {
         volume: 1.0,
         enable: 1.0,
         regions: [],
-        color: this.randomColor(),
+        color: randomColor(),
         // player: new this.tonejs.Player(),
         // envelope: new this.tonejs.AmplitudeEnvelope({
         //   attack:0,
