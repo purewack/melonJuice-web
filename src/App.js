@@ -180,6 +180,7 @@ function App() {
 
       const testId = newid()
       const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_1MG.mp3'
+      //const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'            
       const testBuffer = {
         id: testId,
         bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
@@ -365,9 +366,28 @@ function App() {
         <form onSubmit={e=>{
           e.preventDefault()
           if(armedId && (recEnd > recStart)){
-            const rr = AudioEngine.newRegion(newid(),Number(recStart),recEnd-recStart)
-            console.log(rr)
-            tracksDispatch({type:'record_region', trackId:armedId, region:rr})
+            const testId = newid()
+            const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'
+            const testBuffer = {
+              id: testId,
+              bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
+            }
+            let testRegion = AudioEngine.newRegion(testId,Number(recStart),recEnd-recStart)
+            
+            const doneLoad = (buf) => {
+              const bpm = 110
+              const bps = bpm/60
+              const beatDurSec = 1/bps
+              const barDurSec = 4*beatDurSec
+              console.log({bpm,bps,beatDurSec,barDurSec})
+              console.log(buf)
+              testRegion.bDuration = buf._buffer.duration / barDurSec
+              AudioEngine.bufferPool.push(testBuffer)
+              console.log(AudioEngine.bufferPool)
+
+              tracksDispatch({type:'record_region', trackId:armedId, region:testRegion})
+            }
+            testBuffer.bufferData.onload = doneLoad
           }
         }}>
           <label>

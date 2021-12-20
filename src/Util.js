@@ -46,7 +46,7 @@ export const generateSVGPathFromAudioBuffer = (tonebuffer) =>{
     if(!tonebuffer) return ''
 
     const samples = tonebuffer.getChannelData(0)
-    const step = 4096*2 //16384
+    const step = 4096*1 //16384
     let acc = 0
     let points = []
     let string = 'M 0,50 '

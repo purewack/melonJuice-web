@@ -4,15 +4,15 @@ import { generateSVGPathFromAudioBuffer } from '../Util'
 const SVGElements = ({buffers})=>{
   const [waves,setWaves] = useState([])
 
-  useEffect(()=>{
-    if(buffers.length !== waves.length){
-      const bb = buffers[buffers.length-1]
-      setWaves([
-        ...waves,
-        {id:bb.id, path:generateSVGPathFromAudioBuffer(bb.bufferData)}
-      ])
-    }
-  },[buffers])
+  if(buffers.length !== waves.length){
+    console.log('new buffers')
+    console.log({buffers,waves})
+    const bb = buffers[buffers.length-1]
+    setWaves([
+      ...waves,
+      {id:bb.id, path:generateSVGPathFromAudioBuffer(bb.bufferData)}
+    ])
+  }
 
   useEffect(()=>{
     console.log(waves)
@@ -39,4 +39,4 @@ const SVGElements = ({buffers})=>{
   </svg>
   )
 }
-export default memo(SVGElements)
+export default SVGElements
