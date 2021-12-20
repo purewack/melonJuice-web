@@ -149,7 +149,6 @@ import { tracksReducer } from './reducers/TracksReducer'
 import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
 import SVGElements from './gfx/SVGElements';
-import {generateSVGPathFromAudioBuffer} from './Util'
 
 function App() {
 

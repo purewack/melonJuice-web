@@ -1,10 +1,10 @@
-import {memo, useEffect, useState} from 'react'
+import { useEffect, useState} from 'react'
 import { generateSVGPathFromAudioBuffer } from '../Util'
 
 const SVGElements = ({buffers})=>{
   const [waves,setWaves] = useState([])
 
-  if(buffers.length !== waves.length){
+  if(buffers && buffers.length !== waves.length){
     console.log('new buffers')
     console.log({buffers,waves})
     const bb = buffers[buffers.length-1]
@@ -31,7 +31,7 @@ const SVGElements = ({buffers})=>{
       {waves.map(w => {
         return (
           <symbol id={`waveform-${w.id}`} viewBox='0 0 100 100' preserveAspectRatio='none'>
-            <path d={w.path}/>
+            <path d={w.path} />
           </symbol>
         )
       })}

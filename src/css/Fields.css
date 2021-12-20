@@ -21,7 +21,7 @@
     width: 100px;
     position: sticky;
     left:0;
-    z-index: 8;
+    z-index: 9;
 }
 .AudioField{
     position: relative;
