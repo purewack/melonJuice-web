@@ -1,4 +1,4 @@
-import { useEffect, useState} from 'react'
+import { memo, useState, useContext } from 'react'
 import { generateSVGPathFromAudioBuffer } from '../Util'
 
 const SVGElements = ({buffers})=>{
@@ -14,29 +14,26 @@ const SVGElements = ({buffers})=>{
     ])
   }
 
-  useEffect(()=>{
-    console.log(waves)
-  },[waves])
-
   return (
-  <svg xmlns="http://www.w3.org/2000/svg" style={{display:'none'}}>
-    <defs>
-      <symbol id="melonhandle" viewBox='0 0 100 100'>
-        <circle cx="50" cy="50" r="45" strokeWidth="10" stroke="#007a00" fill="#c24c4c"></circle>
-        <ellipse transform="rotate(120 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
-        <ellipse transform="rotate(240 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
-        <ellipse transform="translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
-      </symbol>
-
-      {waves.map(w => {
-        return (
-          <symbol id={`waveform-${w.id}`} viewBox='0 0 100 100' preserveAspectRatio='none'>
-            <path d={w.path} />
-          </symbol>
-        )
-      })}
-    </defs>
-  </svg>
-  )
+    <svg xmlns="http://www.w3.org/2000/svg" style={{display:'none'}}>
+      <defs>
+        <symbol id="melonhandle" viewBox='0 0 100 100'>
+          <circle cx="50" cy="50" r="45" strokeWidth="10" stroke="#007a00" fill="#c24c4c"></circle>
+          <ellipse transform="rotate(120 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
+          <ellipse transform="rotate(240 50 50) translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
+          <ellipse transform="translate(15 0)" cx="50" cy="50" rx="10" ry="4" ></ellipse> 
+        </symbol>
+  
+        {waves.map(w => {
+          return (
+            <symbol id={`waveform-${w.id}`} viewBox='0 0 100 100' preserveAspectRatio='none'>
+              <path d={w.path} />
+            </symbol>
+          )
+        })}
+      </defs>
+    </svg>
+    )
+  
 }
 export default SVGElements
