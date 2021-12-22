@@ -155,7 +155,7 @@ import encodeWAV from 'audiobuffer-to-wav'
 
 function App() {
 
-  const [begun, setBegun] = useState(false)
+  const [screen, setScreen] = useState(false)
   const [songMeasures, setSongMeasures] = useState(16)
   const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:150, trackHeight:100, toolMode:'grab'})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
@@ -179,66 +179,69 @@ function App() {
 
 
   useEffect(() => {
-    if(!begun) {
-      AudioEngine.init()
+    if(!screen) {
+      AudioEngine.init().then(()=>{  
+        console.log('new')
+        tracksDispatch({type:'new'})
+        setSongTitle('Unnamed')
+        setScreen('audio-device-selection')
+      })
 
-      const testId = newid()
-      const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_1MG.mp3'
-      //const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'            
-      const testBuffer = {
-        id: testId,
-        bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
-        online: true,
-        //svgWaveformPath: null,
-      }
-      let testRegion = AudioEngine.newRegion(testId,0,0)
+      // const testId = newid()
+      // const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_1MG.mp3'
+      // //const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'            
+      // const testBuffer = {
+      //   id: testId,
+      //   bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
+      //   online: true,
+      //   //svgWaveformPath: null,
+      // }
+      // let testRegion = AudioEngine.newRegion(testId,0,0)
       
-      const doneLoad = (buf) => {
-        const bps = bpm/60
-        const beatDurSec = 1/bps
-        const barDurSec = 4*beatDurSec
-        console.log({bpm,bps,beatDurSec,barDurSec})
-        console.log(buf)
-        testRegion.bDuration = buf._buffer.duration / barDurSec
-        testRegion.rDuration = testRegion.bDuration
-        //testBuffer.svgWaveformPath = generateSVGPathFromAudioBuffer(buf)
-        AudioEngine.bufferPool.push(testBuffer)
-        //console.log(testBuffer)
-        //console.log(testRegion)
-        //console.log(AudioEngine.bufferPool)
+      // const doneLoad = (buf) => {
+      //   const bps = bpm/60
+      //   const beatDurSec = 1/bps
+      //   const barDurSec = 4*beatDurSec
+      //   console.log({bpm,bps,beatDurSec,barDurSec})
+      //   console.log(buf)
+      //   testRegion.bDuration = buf._buffer.duration / barDurSec
+      //   testRegion.rDuration = testRegion.bDuration
+      //   //testBuffer.svgWaveformPath = generateSVGPathFromAudioBuffer(buf)
+      //   AudioEngine.bufferPool.push(testBuffer)
+      //   //console.log(testBuffer)
+      //   //console.log(testRegion)
+      //   //console.log(AudioEngine.bufferPool)
 
         
-        let ttt = [
-          AudioEngine.newTrack(),
-          AudioEngine.newTrack(),
-          AudioEngine.newTrack(),
-        ]
+      //   let ttt = [
+      //     AudioEngine.newTrack(),
+      //     AudioEngine.newTrack(),
+      //     AudioEngine.newTrack(),
+      //   ]
 
-        ttt[0].regions = AudioEngine.setRegions([
-          testRegion,
-          // AudioEngine.newRegion(newid(),10,1),
-          // AudioEngine.newRegion(newid(),0,2),
-          // AudioEngine.newRegion(newid(),3,4),
-          AudioEngine.newRegion(newid(),15,20),
-        ])
+      //   ttt[0].regions = AudioEngine.setRegions([
+      //     testRegion,
+      //     // AudioEngine.newRegion(newid(),10,1),
+      //     // AudioEngine.newRegion(newid(),0,2),
+      //     // AudioEngine.newRegion(newid(),3,4),
+      //     AudioEngine.newRegion(newid(),15,20),
+      //   ])
 
-        ttt[1].regions =  AudioEngine.setRegions([
-          AudioEngine.newRegion(newid(),0,2),
-          AudioEngine.newRegion(newid(),5,5),
-        ])
+      //   ttt[1].regions =  AudioEngine.setRegions([
+      //     AudioEngine.newRegion(newid(),0,2),
+      //     AudioEngine.newRegion(newid(),5,5),
+      //   ])
 
-        ttt[2].regions =  AudioEngine.setRegions([
-          AudioEngine.newRegion(newid(),1,10),
-        ])
+      //   ttt[2].regions =  AudioEngine.setRegions([
+      //     AudioEngine.newRegion(newid(),1,10),
+      //   ])
 
-        tracksDispatch({type:'load', tracks:ttt})
-        setSongTitle('test_init_regions')
-        setBegun(true)
-      }
-      testBuffer.bufferData.onload = doneLoad;
+      //   tracksDispatch({type:'load', tracks:ttt})
+      //   setSongTitle('test_init_regions')
+      //   setBegun(true)
+      // }
+      // testBuffer.bufferData.onload = doneLoad;
 
-
-      
       // let ttt = [
       //   AudioEngine.newTrack(),
       // ]
@@ -248,10 +251,10 @@ function App() {
 
     }
     
-  }, [begun])
+  }, [screen])
 
   useEffect(()=>{
-    if(!begun) return
+    if(!screen) return
     console.log('song changed')
     console.log(tracks)
     //setEditorStats({...editorStats,lastMoveLegal:tracks.lastMoveLegal})
@@ -270,7 +273,7 @@ function App() {
 
     undoButtonRef.current.disabled = (tracks.historyPointer < 1)
     redoButtonRef.current.disabled = (tracks.historyPointer === tracks.history.length-1)
-  },[tracks,begun])
+  },[tracks,screen])
 
   // useEffect(()=>{ 
   //   console.log(editorStats.toolMode)
@@ -280,7 +283,7 @@ function App() {
 
 
   return (<>
-    {!begun ? <p>Loading...</p> : <>
+    {!screen ? <p>Loading...</p> : <>
 
     <SVGElements buffers={AudioEngine.bufferPool}/>
 

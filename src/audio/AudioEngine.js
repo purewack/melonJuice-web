@@ -97,6 +97,13 @@ export const AudioEngine = {
     this.player = new this.tonejs.Player()
     this.player.toDestination()
 
+    return new Promise((resolve, reject) => {
+      navigator.mediaDevices.enumerateDevices().then((devices)=>{
+        resolve(devices)
+      }).catch(()=>{
+        reject()
+      })
+    })
     // navigator.mediaDevices.getUserMedia({audio:{
   	// 	latency: 0.0,
   	// 	echoCancellation: false,
@@ -244,8 +251,8 @@ export const AudioEngine = {
       bDuration:duration,
       rOffset:offset,
       rDuration:duration,
-      rFadeIn: 0.5,
-      rFadeOut: 1.0,
+      rFadeIn: 0.0,
+      rFadeOut: 0.0,
       rPlayrate:1.0,
       rLoop:0,
     }
