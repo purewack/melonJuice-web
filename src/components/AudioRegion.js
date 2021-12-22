@@ -83,21 +83,33 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     const max = (bDuration-bOffset)-rDuration
     if(dx === max) dxx = max 
     setRRDuration(dxx)
+
+    const rwo = (rww+dxx)-(rFadeOut)
+    const delta = rFadeIn - rwo
+    if(delta > 0) setRRFadeIn(-delta)
+    if(rFadeOut > (rww+dxx)) setRRFadeOut((rww+dxx)-(rFadeOut)) 
   }
   const onEndDurationHandler = ({dx})=>{
     setPointerState('')
     if(dx === 0) return
-      const left = rOffset
-      const right = left+rDuration
-      let dxx = snapCalc(dx)-(right - snapCalc(right))
-      const max = (bDuration-bOffset)-rDuration
-      if(dx === max) dxx = max 
-      const rd = (rDuration + dxx)/editorStats.barLength
-      tracksDispatch({
-       type:'update_region',
-       updatedRegion: {...region, rDuration:rd},
-       jumpRelativeTracks:0,
-      })
+
+    const left = rOffset
+    const right = left+rDuration
+    let dxx = snapCalc(dx)-(right - snapCalc(right))
+    const max = (bDuration-bOffset)-rDuration
+    if(dx === max) dxx = max 
+    const rd = (rDuration + dxx)/editorStats.barLength
+
+    const rwo = (rww+dxx)-(rFadeOut)
+    const delta = rFadeIn - rwo
+    const fi = delta > 0 ? (rFadeIn-delta) / editorStats.barLength : region.rFadeIn
+    const fo = rFadeOut>(rww+dxx) ? (rww+dxx) / editorStats.barLength : region.rFadeOut
+ 
+    tracksDispatch({
+      type:'update_region',
+      updatedRegion: {...region, rDuration:rd, rFadeIn:Math.max(fi,0), rFadeOut:Math.max(fo,0)},
+      jumpRelativeTracks:0,
+    })
   }
 
   const onChangeOffsetHandler = ({dx})=>{
@@ -106,20 +118,33 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     setRROffset(dxx)
     setRRDuration(-dxx)
     setRRTransform(`translateX(${rOffset + dxx}px)`)
+    
+    const rwo = (rww-dxx)-(rFadeOut)
+    const delta = rFadeIn - rwo
+    if(delta > 0) setRRFadeOut(-delta)
+    if(rFadeIn > (rww-dxx)) setRRFadeIn((rww-dxx)-(rFadeIn))
+    
   }
   const onEndOffsetHandler = ({dx})=>{
     setPointerState('')
     if(dx === 0) return
-      let dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
-      if(dxx <= -bOffset) dxx = -bOffset
-      const ro = (rOffset + dxx)/editorStats.barLength
-      const rd = (rDuration - dxx)/editorStats.barLength
-      const bo = (bOffset + dxx)/editorStats.barLength
-      tracksDispatch({
-       type:'update_region',
-       updatedRegion: {...region, bOffset:bo, rOffset:ro, rDuration:rd},
-       jumpRelativeTracks:0,
-      })
+
+    let dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
+    if(dxx <= -bOffset) dxx = -bOffset
+    const ro = (rOffset + dxx)/editorStats.barLength
+    const rd = (rDuration - dxx)/editorStats.barLength
+    const bo = (bOffset + dxx)/editorStats.barLength
+    
+    const rwo = (rww-dxx)-(rFadeOut)
+    const delta = rFadeIn - rwo
+    const fo = delta > 0 ? (rFadeOut-delta) / editorStats.barLength : region.rFadeOut
+    const fi = rFadeIn>(rww-dxx) ? (rww-dxx) / editorStats.barLength : region.rFadeIn
+
+    tracksDispatch({
+      type:'update_region',
+      updatedRegion: {...region, bOffset:bo, rOffset:ro, rDuration:rd, rFadeIn:Math.max(fi,0), rFadeOut:Math.max(fo,0)},
+      jumpRelativeTracks:0,
+    })
   }
 
   const onChangeGrabHandler = ({dx, dy})=>{
@@ -230,6 +255,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
   const vh = maxHeight*0.9;
   const vy = maxHeight*0.05;
 
+  
   return(<>
   <PointerHandle disable={!(selected && isGrabbing)} 
     bounds={{
@@ -261,8 +287,8 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
       <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
       <use fill='white' href={`#waveform-${region.bufferId}`} y={0} x={-rrOffset-bOffset} width={bDuration} height={maxHeight}/>
-      <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/3} ${rFadeIn+rrFadeIn},0 L 0,0 L 0,${maxHeight}`} />
-      <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},0 Q ${rww},${maxHeight/3} ${rww},${maxHeight} L ${rww},0 L ${rww-(rFadeOut+rrFadeOut)},0`} />
+      <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/4} ${rFadeIn+rrFadeIn},${vy} L 0,${vy} L 0,${maxHeight}`} />
+      <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},${vy} Q ${rww},${maxHeight/4} ${rww},${maxHeight} L ${rww},${vy} L ${rww-(rFadeOut+rrFadeOut)},${vy}`} />
       <rect className="FrameSVG" y={vy} width={rww} height={vh} rx={10} ry={10}></rect>
     </g>
     
