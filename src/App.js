@@ -149,6 +149,9 @@ import { tracksReducer } from './reducers/TracksReducer'
 import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
 import SVGElements from './gfx/SVGElements';
+import JSZip from 'jszip';
+import download from 'downloadjs';
+import encodeWAV from 'audiobuffer-to-wav'
 
 function App() {
 
@@ -157,6 +160,8 @@ function App() {
   const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:150, trackHeight:100, toolMode:'grab'})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
+  const [bpm, setBpm] = useState(110)
+  const [clickState, setClickState] = useState(false)
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
   const [armedId, setArmedId] = useState(null)
@@ -183,12 +188,12 @@ function App() {
       const testBuffer = {
         id: testId,
         bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
+        online: true,
         //svgWaveformPath: null,
       }
       let testRegion = AudioEngine.newRegion(testId,0,0)
       
       const doneLoad = (buf) => {
-        const bpm = 110
         const bps = bpm/60
         const beatDurSec = 1/bps
         const barDurSec = 4*beatDurSec
@@ -273,10 +278,40 @@ function App() {
   //   tracks.changes = tracks.changes.map(t => {return true})
   // },[editorStats])
 
+
   return (<>
     {!begun ? <p>Loading...</p> : <>
 
     <SVGElements buffers={AudioEngine.bufferPool}/>
+
+      <button onClick={()=>{
+        const project = {
+          version: 0.1, 
+          title:'test', 
+          metroBpm: bpm,
+          metroActive: clickState,
+          sources: AudioEngine.bufferPool.map(b => {
+            return b.id
+          }),
+          tracks: tracks.current}
+        const manifest = JSON.stringify(project)
+        let pzip = JSZip()
+        let sources = pzip.folder('sources')
+
+        AudioEngine.bufferPool.forEach(b => {
+          const ab = encodeWAV(b.bufferData._buffer)
+          sources.file(`buffer_${b.id}.wav`,ab)
+        })
+
+        pzip.file('project_title.ml',manifest)
+        pzip.generateAsync({type:'blob'}).then(
+          (content) => {
+            download(content,'test.zip', 'application/zip')
+          }
+        )
+      }}>
+        Save
+      </button>
 
     <div className="Editor"> 
     
