@@ -287,7 +287,7 @@ function App() {
       <button onClick={()=>{
         const project = {
           version: 0.1, 
-          title:'test', 
+          title:songTitle, 
           metroBpm: bpm,
           metroActive: clickState,
           sources: AudioEngine.bufferPool.map(b => {
@@ -303,10 +303,10 @@ function App() {
           sources.file(`buffer_${b.id}.wav`,ab)
         })
 
-        pzip.file('project_title.ml',manifest)
+        pzip.file(`${songTitle}`,manifest)
         pzip.generateAsync({type:'blob'}).then(
           (content) => {
-            download(content,'test.zip', 'application/zip')
+            download(content,`${songTitle}.zip`, 'application/zip')
           }
         )
       }}>
