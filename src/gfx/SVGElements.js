@@ -1,4 +1,4 @@
-import { memo, useState, useContext } from 'react'
+import { useState, } from 'react'
 import { generateSVGPathFromAudioBuffer } from '../Util'
 
 const SVGElements = ({buffers})=>{

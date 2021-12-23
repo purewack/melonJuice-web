@@ -23,7 +23,9 @@ function App() {
   const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:150, trackHeight:100, toolMode:'grab'})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
+  //eslint-disable-next-line
   const [bpm, setBpm] = useState(110)
+  //eslint-disable-next-line
   const [clickState, setClickState] = useState(false)
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
@@ -36,7 +38,7 @@ function App() {
   
   const [inputDevices, setInputDevices] = useState()
   const [selectedInput, setSelectedInput] = useState()
-  const [useMicrophone, setUseMicrophone] = useState()
+  //const [useMicrophone, setUseMicrophone] = useState()
 
   // eslint-disable-next-line 
   useEffect(()=>{
@@ -133,6 +135,7 @@ function App() {
       //   AudioEngine.newRegion(testBuffer.id,0,4)
       // ])
     }
+  //eslint-disable-next-line
   }, [screen])
 
   useEffect(()=>{
