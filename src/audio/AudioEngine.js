@@ -145,11 +145,12 @@ export const AudioEngine = {
     if(!inputId) return
     
     navigator.mediaDevices.getUserMedia({audio:{
-  		deviceId: {exatc: inputId},
+  		deviceId: {exact: inputId},
   		echoCancellation: false,
   		mozNoiseSuppression: false,
   		mozAutoGainControl: false
   	},video:false}).then(stream => {
+
 
         (async ()=>{
           console.log('setup mic-processor worklet')
