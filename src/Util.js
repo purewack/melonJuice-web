@@ -39,10 +39,14 @@ export const simpleTest = ()=>{
 }
 
 export const generateSVGPathFromAudioBuffer = (tonebuffer) =>{
+    //this.useRenders('svg waveform gen')
+    console.log('svg render')
+    console.log(tonebuffer)
+
     if(!tonebuffer) return ''
 
     const samples = tonebuffer.getChannelData(0)
-    const step = 16384
+    const step = 4096*1 //16384
     let acc = 0
     let points = []
     let string = 'M 0,50 '
@@ -66,3 +70,13 @@ export const generateSVGPathFromAudioBuffer = (tonebuffer) =>{
     //console.log(string)
     return string
 }
+
+export const randomColor = ()=>{
+    const rand = ()=>{
+      return Math.floor(Math.random()*40 + 195)
+    }
+
+    const cc = `rgb(${rand()},${rand()},${rand()})`
+    return cc;
+}
+  

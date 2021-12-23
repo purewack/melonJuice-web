@@ -1,140 +1,3 @@
-// import './App.css';
-// // eslint-disable-next-line
-// import { useRef, useState, useEffect} from 'react';
-// // eslint-disable-next-line
-// import { createContext } from 'react';
-// import newid from 'uniqid';
-// import { AudioEngine } from './audio/AudioEngine';
-// //import {AudioEngine} from './audio/AudioEngine';
-// import AudioField from './components/AudioField';
-// import AudioRegion from './components/AudioRegion';
-// import AudioTrack from './components/AudioTrack';
-// import ToolField from './components/ToolField';
-// import TrackTool from './components/TrackTool';
-
-// function App() {
-//   // eslint-disable-next-line
-//   const [begun, setBegun] = useState(false)
-//   // eslint-disable-next-line
-//   const [recording, setRecording] = useState(false)
-//   // eslint-disable-next-line
-//   const [armedIndex,setArmedIndex] = useState(null)
-//   // eslint-disable-next-line
-//   const [transportTimer, setTransportTimer] = useState('0:0:0')
-//   // eslint-disable-next-line
-//   const [bar, setBar] = useState(50)
-//   // eslint-disable-next-line
-//   const [snapGrain, setSnapGrain] = useState(null)
-//   // eslint-disable-next-line
-//   const [measures, setMeasures] = useState(16)
-//   // eslint-disable-next-line
-//   const [tracks, setTracks] = useState([])
-
-//   useEffect(() => {
-//     if(!begun){
-//       AudioEngine.addTrack()
-//       AudioEngine.addTrack()
-//       AudioEngine.addTrack()
-
-//       AudioEngine.tracks[0].addRegion(newid(),10,1)
-//       AudioEngine.tracks[0].addRegion(newid(),0,2)
-//       AudioEngine.tracks[0].addRegion(newid(),3,4)
-
-//       AudioEngine.tracks[1].addRegion(newid(),0,2)
-//       AudioEngine.tracks[1].addRegion(newid(),5,5)
-
-//       AudioEngine.tracks[2].addRegion(newid(),1,10)
-
-//       setBegun(true)
-//       setTracks(AudioEngine.tracks)
-//     }
-
-//   }, [])
-
-//   return (
-//     <>  
-//       <p>{drag ? 'drag' : 'none'}</p>
-//       <div> <p><b>MelonJuice</b> is {recording ? 'recording' : 'ready'} </p> </div>
-// {/*           
-//       <button onClick={()=>{AudioEngine.monitor()}}>Monitor</button>
-//       <button style={{backgroundColor:(recording ? 'red' : 'gray')}} 
-//         onClick={()=>{
-//           setRecording(AudioEngine.transportRecord(armedIndex))
-//         }}
-//       >Record</button>
-//       <button onClick={()=>{
-//         AudioEngine.transportPlay(setTransport)
-//       }}>Playback</button>
-//         <button onClick={()=>{
-//     console.log(AudioEngine.tracks)}}>List</button> */}
-//       <input 
-//         type="range" 
-//         min="20" 
-//         max="400" 
-//         defaultValue="90"
-//         onChange={(e)=>{
-//           let n = Number(e.target.value)
-//           setBar(n)
-//         }}
-//       />
-
-//       <button 
-//         style={{width:100}}
-//         onClick={()=>{
-//           if(snapGrain === null){
-//             setSnapGrain(2)
-//           }
-//           else if(snapGrain < 16){
-//             setSnapGrain(snapGrain*2)
-//           }
-//           else(setSnapGrain(null))
-//         }}>
-
-//         {snapGrain ? 'Q:'+snapGrain : 'No-snap'}
-//       </button>
-
-//       <div className="EditorField">
-//         <ToolField>
-//           <div className='TransportTimer'>{transportTimer}</div>
-
-//           {tracks.map((t,i) => {
-//             return <TrackTool key={i} id={i} armedId={armedIndex} onArm={()=>{
-//               setArmedIndex((armedIndex !== i ? i : null))
-//             }} />
-//           })}
-
-//         </ToolField>
-
-//         <AudioField songMeasures={measures} bar={bar}>
-
-//           {tracks.map((t,i) => { 
-//             return <AudioTrack key={i} bar={bar}>
-
-//               {t.regions && t.regions.map((r,j) => {
-//                   return <AudioRegion key={j} region={r} setRegion={(r)=>{
-//                     AudioEngine.tracks[i].setRegion(r)
-//                     setTracks([...AudioEngine.tracks])
-//                     console.log('ttt')
-//                   }} bar={bar} shouldSnap={snapGrain} mousePos={mousePos} mouseOffset={50}/>
-//               })}
-
-//             </AudioTrack> 
-//           })}
-
-//         </AudioField>
-//       </div>
-//   </>);
-// }
-
-// export default App;
-
-//   // <> {!begun ? <button onClick={()=>{
-//   //   setBegun(AudioEngine.init())
-//   // }}>Begin</button> :
-
-//   // }</>
-
-
 import './css/App.css';
 import './css/Fields.css'
 import './css/Time.css'
@@ -149,15 +12,21 @@ import { tracksReducer } from './reducers/TracksReducer'
 import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
 import SVGElements from './gfx/SVGElements';
-import {generateSVGPathFromAudioBuffer} from './Util'
+import JSZip from 'jszip';
+import download from 'downloadjs';
+import encodeWAV from 'audiobuffer-to-wav'
 
 function App() {
 
-  const [begun, setBegun] = useState(false)
+  const [screen, setScreen] = useState(false)
   const [songMeasures, setSongMeasures] = useState(16)
-  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:50, trackHeight:60, toolMode:'grab'})
+  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:150, trackHeight:100, toolMode:'grab'})
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
+  //eslint-disable-next-line
+  const [bpm, setBpm] = useState(110)
+  //eslint-disable-next-line
+  const [clickState, setClickState] = useState(false)
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
   const [armedId, setArmedId] = useState(null)
@@ -167,6 +36,10 @@ function App() {
   const [recStart, setRecStart] = useState(0)
   const [recEnd, setRecEnd] = useState(0)
   
+  const [inputDevices, setInputDevices] = useState()
+  const [selectedInput, setSelectedInput] = useState()
+  //const [useMicrophone, setUseMicrophone] = useState()
+
   // eslint-disable-next-line 
   useEffect(()=>{
     setBuffers(AudioEngine.bufferPool)
@@ -175,20 +48,49 @@ function App() {
 
 
   useEffect(() => {
-    if(!begun) {
-      AudioEngine.init()
+    if(screen === 'audio-permissions') {
+
+      AudioEngine.hasInputs().then(()=>{
+        try{
+          AudioEngine.awaitPermission().then(()=>{
+            console.log('got permissions')
+            AudioEngine.getInputs().then((devices)=>{  
+              console.log('new')
+              console.log(devices)
+              tracksDispatch({type:'new'})
+              setSongTitle('Unnamed')
+              setInputDevices(devices)
+              setScreen('audio-devices')
+            })
+          }).catch(()=>{
+            console.log('not allowed')
+            setScreen('audio-denied')
+          })
+        }
+        catch(ex){
+          console.log(ex)
+          setScreen('audio-ex')
+        }
+      }).catch(()=>{
+        setScreen('audio-nodevices')
+        setSelectedInput(null)
+      })
+    }
+
+    else if(screen === 'editor-fresh'){
+      AudioEngine.init(selectedInput)
 
       const testId = newid()
       const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_1MG.mp3'
+      //const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'            
       const testBuffer = {
         id: testId,
         bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
-        svgWaveformPath: null,
+        online: true,
       }
       let testRegion = AudioEngine.newRegion(testId,0,0)
       
-      const doneLoad = (buf) => {
-        const bpm = 110
+      testBuffer.bufferData.onload = (buf) => {
         const bps = bpm/60
         const beatDurSec = 1/bps
         const barDurSec = 4*beatDurSec
@@ -196,12 +98,7 @@ function App() {
         console.log(buf)
         testRegion.bDuration = buf._buffer.duration / barDurSec
         testRegion.rDuration = testRegion.bDuration
-        testBuffer.svgWaveformPath = generateSVGPathFromAudioBuffer(buf)
         AudioEngine.bufferPool.push(testBuffer)
-        console.log(testBuffer)
-        console.log(testRegion)
-        console.log(AudioEngine.bufferPool)
-
         
         let ttt = [
           AudioEngine.newTrack(),
@@ -228,25 +125,23 @@ function App() {
 
         tracksDispatch({type:'load', tracks:ttt})
         setSongTitle('test_init_regions')
-        setBegun(true)
+        setScreen('editor')
       }
-      testBuffer.bufferData.onload = doneLoad;
 
-
-      
       // let ttt = [
       //   AudioEngine.newTrack(),
       // ]
       // ttt[0].regions = AudioEngine.setRegions([
       //   AudioEngine.newRegion(testBuffer.id,0,4)
       // ])
-
     }
-    
-  }, [begun])
+  //eslint-disable-next-line
+  }, [screen])
 
   useEffect(()=>{
-    if(!begun) return
+    if(!screen) return
+    if(screen !== 'editor') return
+
     console.log('song changed')
     console.log(tracks)
     //setEditorStats({...editorStats,lastMoveLegal:tracks.lastMoveLegal})
@@ -265,7 +160,7 @@ function App() {
 
     undoButtonRef.current.disabled = (tracks.historyPointer < 1)
     redoButtonRef.current.disabled = (tracks.historyPointer === tracks.history.length-1)
-  },[tracks,begun])
+  },[tracks,screen])
 
   // useEffect(()=>{ 
   //   console.log(editorStats.toolMode)
@@ -273,10 +168,86 @@ function App() {
   //   tracks.changes = tracks.changes.map(t => {return true})
   // },[editorStats])
 
-  return (<>
-    {!begun ? <p>Loading...</p> : <>
 
-    <SVGElements />
+  return (<>
+    {!screen ? <>
+      <p>Welcome to MelonJuice</p>
+      <button onClick={()=>{
+        setScreen('audio-permissions')
+      }}>Start</button>
+    </> :
+
+    screen === 'audio-permissions' ? <p>Waiting for permissions...</p> :
+
+    screen === 'audio-denied' ? <>
+      <p>🔇 Audio permissions denied 😭</p> 
+      <button onClick={()=>{
+        setSelectedInput(null)
+        setScreen('editor-fresh')
+      }}>Continue without input</button>
+    </>:
+
+    screen === 'audio-nodevices' ? <>
+      <p>Looks like you don't have any input devices :/</p>
+      <button onClick={()=>{setScreen('editor-fresh')}}> Continue</button>
+    </> :
+      
+    screen === 'audio-devices' ? <>
+      {inputDevices && inputDevices.map(d => {
+        if(d.kind === 'audioinput' && !(d.deviceId === 'communications' || d.deviceId === 'default'))
+          return( 
+            <p key={d.deviceId+d.groupId} onClick={()=>{
+              setSelectedInput(d.deviceId)
+            }}> {selectedInput === d.deviceId ? '✔️' : null} 🎤 - {d.label}</p>
+          )
+        else
+          return null
+      })} 
+      
+      <button disabled={!selectedInput} onClick={()=>{
+        setScreen('editor-fresh')
+      }}>
+        Use this one
+      </button>
+    </> : 
+
+    screen === 'editor-fresh' ? <>
+      <p>Loading ...</p>
+    </>:
+
+    screen === 'editor' ?
+    <>
+
+    <SVGElements buffers={AudioEngine.bufferPool}/>
+
+      <button onClick={()=>{
+        const project = {
+          version: 0.1, 
+          title:songTitle, 
+          metroBpm: bpm,
+          metroActive: clickState,
+          sources: AudioEngine.bufferPool.map(b => {
+            return b.id
+          }),
+          tracks: tracks.current}
+        const manifest = JSON.stringify(project)
+        let pzip = JSZip()
+        let sources = pzip.folder('sources')
+
+        AudioEngine.bufferPool.forEach(b => {
+          const ab = encodeWAV(b.bufferData._buffer)
+          sources.file(`buffer_${b.id}.wav`,ab)
+        })
+
+        pzip.file(`${songTitle}`,manifest)
+        pzip.generateAsync({type:'blob'}).then(
+          (content) => {
+            download(content,`${songTitle}.zip`, 'application/zip')
+          }
+        )
+      }}>
+        Save
+      </button>
 
     <div className="Editor"> 
     
@@ -365,9 +336,28 @@ function App() {
         <form onSubmit={e=>{
           e.preventDefault()
           if(armedId && (recEnd > recStart)){
-            const rr = AudioEngine.newRegion(newid(),Number(recStart),recEnd-recStart)
-            console.log(rr)
-            tracksDispatch({type:'record_region', trackId:armedId, region:rr})
+            const testId = newid()
+            const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'
+            const testBuffer = {
+              id: testId,
+              bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
+            }
+            let testRegion = AudioEngine.newRegion(testId,Number(recStart),recEnd-recStart)
+            
+            const doneLoad = (buf) => {
+              const bpm = 110
+              const bps = bpm/60
+              const beatDurSec = 1/bps
+              const barDurSec = 4*beatDurSec
+              console.log({bpm,bps,beatDurSec,barDurSec})
+              console.log(buf)
+              testRegion.bDuration = buf._buffer.duration / barDurSec
+              AudioEngine.bufferPool.push(testBuffer)
+              console.log(AudioEngine.bufferPool)
+
+              tracksDispatch({type:'record_region', trackId:armedId, region:testRegion})
+            }
+            testBuffer.bufferData.onload = doneLoad
           }
         }}>
           <label>
@@ -396,7 +386,7 @@ function App() {
                 if(armedId === t.trackId) setArmedId(null)
                 else setArmedId(t.trackId)
               }
-            } height={editorStats.trackHeight+5}/>
+            } height={editorStats.trackHeight}/>
           })}
         </ToolField>
 
@@ -486,7 +476,7 @@ function App() {
         </div>
       </div>
   </div>
-  </>
+  </> : null
   }
   </>);
 }

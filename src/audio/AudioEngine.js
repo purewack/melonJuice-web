@@ -60,7 +60,7 @@
 
 import * as Tone from 'tone'
 import newid from 'uniqid';
-
+import { randomColor } from '../Util';
 
 const calculateRegionRelations = (regions) => {
   let sorted = regions.slice().sort((a,b)=>{
@@ -89,61 +89,105 @@ export const AudioEngine = {
   lastBufferId: null,
   bufferPool: [],
   connections: [],
+  
+  awaitPermission(){
+    try{
+      return new Promise((resolve, reject) => {
+        if(navigator.mediaDevices === undefined) 
+          reject()
+        else 
+          navigator.mediaDevices.getUserMedia({audio: true, video: false})
+          .then(resolve)
+          .catch(reject)
+      })
+    }
+    catch(ex){
+      return ex
+    }
+  },
+
+  hasInputs(){
+    return new Promise((resolve, reject) => {
+      navigator.mediaDevices.enumerateDevices().then((devices)=>{
+        let count = 0
+        devices.forEach(d =>{
+          if(d.kind === 'audioinput')
+            count += 1
+        })
+
+        if(count)
+          resolve(count)
+        else
+          reject()
+      }).catch(()=>{
+        reject()
+      })
+    })
+  },
+
+  getInputs(){
+    return new Promise((resolve, reject) => {
+      navigator.mediaDevices.enumerateDevices().then((devices)=>{
+        resolve(devices)
+      }).catch(()=>{
+        reject()
+      })
+    })
+  },
+
+  init(inputId) {
     
-  init() {
-    
-    this.actx  = Tone.getContext().rawContext._nativeContext
+    let ac = this.actx  = Tone.getContext().rawContext._nativeContext
     this.tonejs = Tone;
     this.player = new this.tonejs.Player()
     this.player.toDestination()
 
-    // navigator.mediaDevices.getUserMedia({audio:{
-  	// 	latency: 0.0,
-  	// 	echoCancellation: false,
-  	// 	mozNoiseSuppression: false,
-  	// 	mozAutoGainControl: false
-  	// },video:false}).then(stream => {
-    //     console.log('permission granted')
-        
-    //     const startWorklet = async ()=>{
-    //       console.log('setup mic-processor worklet')
-    //       let micStream = ac.createMediaStreamSource(stream);
-    //       await this.tonejs.start()
-    //       await ac.audioWorklet.addModule('MicWorkletModule.js')
-         
-    //       let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
-    //       micStream.connect(micNode)
-    // 		  micNode.connect(ac.destination)
-          
-    //       micNode.port.onmessage = (e)=>{
-    //         if(e.data.eventType === 'onchunk'){
-    //           let len = (e.data.audioChunk.length + this.lastRecording.length)
-    //           let bufnew = new Float32Array(len)
-    //           bufnew.set(this.lastRecording)
-    //           bufnew.set(e.data.audioChunk, this.lastRecording.length)
-    //           this.lastRecording = bufnew
-    //           //console.log(len)
-    //         }
-    //         else if(e.data.eventType === 'begin'){
-    //   				this.lastRecordingChunks = []
-    //   			}
-    //         else if(e.data.eventType === 'end'){
-    //           //console.log(this.lastRecording)
-    //   				const buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
-    //           buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
-    //           this.lastBufferId = newid()
-    //           this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
-              
-    //           let recordStartTime = 0 //get actual position of transport
-    //           this.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
-    //         }
-    //       }
-    //       this.micNode = micNode
-    //     }
-    //     startWorklet()
-    // })
+    if(!inputId) return
     
-    return true;
+    navigator.mediaDevices.getUserMedia({audio:{
+  		deviceId: {exatc: inputId},
+  		echoCancellation: false,
+  		mozNoiseSuppression: false,
+  		mozAutoGainControl: false
+  	},video:false}).then(stream => {
+
+        (async ()=>{
+          console.log('setup mic-processor worklet')
+          let micStream = ac.createMediaStreamSource(stream);
+          await this.tonejs.start()
+          await ac.audioWorklet.addModule('MicWorkletModule.js')
+         
+          let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
+          micStream.connect(micNode)
+    		  micNode.connect(ac.destination)
+          
+          micNode.port.onmessage = (e)=>{
+            if(e.data.eventType === 'onchunk'){
+              let len = (e.data.audioChunk.length + this.lastRecording.length)
+              let bufnew = new Float32Array(len)
+              bufnew.set(this.lastRecording)
+              bufnew.set(e.data.audioChunk, this.lastRecording.length)
+              this.lastRecording = bufnew
+              //console.log(len)
+            }
+            else if(e.data.eventType === 'begin'){
+      				this.lastRecordingChunks = []
+      			}
+            else if(e.data.eventType === 'end'){
+              //console.log(this.lastRecording)
+      				const buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
+              buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
+              this.lastBufferId = newid()
+              this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
+              
+              let recordStartTime = 0 //get actual position of transport
+              this.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
+            }
+          }
+          this.micNode = micNode
+        })()
+    })
+    
   },
   monitor () {
     if(this.actx === null) return;
@@ -213,13 +257,6 @@ export const AudioEngine = {
     this.tonejs.Transport.start('+0.1')
           
   },
-  randomColor(){
-    const cc = `rgb(${Math.floor(Math.random()*65 + 190)},\
-      ${Math.floor(Math.random()*65 + 190)},\
-      ${Math.floor(Math.random()*65 + 190)})`;
-//    console.log(cc)
-    return cc;
-  },
   
   newTrack(){
     const t = {
@@ -227,7 +264,7 @@ export const AudioEngine = {
         volume: 1.0,
         enable: 1.0,
         regions: [],
-        color: this.randomColor(),
+        color: randomColor(),
         // player: new this.tonejs.Player(),
         // envelope: new this.tonejs.AmplitudeEnvelope({
         //   attack:0,
@@ -251,8 +288,8 @@ export const AudioEngine = {
       bDuration:duration,
       rOffset:offset,
       rDuration:duration,
-      rFadeIn: 0.5,
-      rFadeOut: 1.0,
+      rFadeIn: 0.0,
+      rFadeOut: 0.0,
       rPlayrate:1.0,
       rLoop:0,
     }

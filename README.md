@@ -18,14 +18,14 @@ General:
 - 🧪 Unit testing
 - 🧠 Logical project structure for future handoff
 
-React Specific:
+React & JS Specific:
 - 🙅‍♂️🙅‍♀️  Immutable data model
 - ↪ ↩ Use of reducers for Undo and Redo history
 - 📝 Use of Memoization for optimized rendering of petentially 100s of elements
 - 🏋️‍♀️🏋️‍♂️ Lifting up state- 
 - 🎣 Use of custom React hooks
 - 🔊 Audio Operations separte from React UI
-
+- 🙏 Promises
 
 Glossary, App logic, and Editor expectations:
 
