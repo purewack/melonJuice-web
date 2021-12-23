@@ -31,7 +31,8 @@ function App() {
   const redoButtonRef = useRef()
   const [armedId, setArmedId] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
-
+  
+  //eslint-disable-next-line
   const [buffers, setBuffers] = useState([])
   const [recStart, setRecStart] = useState(0)
   const [recEnd, setRecEnd] = useState(0)
