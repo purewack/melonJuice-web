@@ -381,7 +381,7 @@ function App() {
         <ToolField>
           <p className="TransportTimer">Timer</p>
           {tracks.current.map(t=>{
-            return <TrackTool onArm={
+            return <TrackTool key={t.trackId} onArm={
               ()=>{
                 if(armedId === t.trackId) setArmedId(null)
                 else setArmedId(t.trackId)
@@ -429,7 +429,7 @@ function App() {
       tracks.current.map(t => {
           return t.regions.map(r => {
             if(r.regionId === selectedRegion.regionId){
-              return <div className='DebugSelection'>
+              return <div key={r.regionId} className='DebugSelection'>
                 <p>regionId:{r.regionId}</p>
                 <p>bufferId:{r.bufferId}</p>
                 <p>bOffset:{r.bOffset}</p>
@@ -446,11 +446,13 @@ function App() {
         })
       : null}
 
-      <div className="DebugMap">
+      {/* <div className="DebugMap">
         <div>
           <p>Buffers</p>
           {buffers.map(b => {
-            return <div className="DebugBuffer">ID:<b>{b.bufferId}</b> - Duration: <b>{b.duration}</b></div>
+            return <div key={b.bufferId} className="DebugBuffer">
+              ID:<b>{b.bufferId}</b> - Duration: <b>{b.duration}</b>
+            </div>
           })}
         </div>
 
@@ -458,10 +460,10 @@ function App() {
           <p>Regions</p>
           {tracks.current.map(t=>{
             
-            return <div className="DebugTrack">
+            return <div key={t.trackId} className="DebugTrack">
               <p>TrackID: {t.trackId}</p>
               {t.regions.map(r => {
-                return <div className="DebugRegion">
+                return <div key={r.regionId} className="DebugRegion">
                   ID:<b>{r.regionId}</b> -
                   Start:<b>{r.rOffset}</b> -
                   End:<b>{r.rDuration+r.rOffset}</b> -
@@ -474,7 +476,7 @@ function App() {
             </div>
           })}
         </div>
-      </div>
+      </div> */}
   </div>
   </> : null
   }
