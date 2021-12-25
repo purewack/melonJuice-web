@@ -92,12 +92,7 @@ function App() {
       let testRegion = AudioEngine.newRegion(testId,0,0)
       
       testBuffer.bufferData.onload = (buf) => {
-        const bps = bpm/60
-        const beatDurSec = 1/bps
-        const barDurSec = 4*beatDurSec
-        console.log({bpm,bps,beatDurSec,barDurSec})
-        console.log(buf)
-        testRegion.bDuration = buf._buffer.duration / barDurSec
+        
         testRegion.rDuration = testRegion.bDuration
         AudioEngine.bufferPool.push(testBuffer)
         
@@ -163,6 +158,19 @@ function App() {
     redoButtonRef.current.disabled = (tracks.historyPointer === tracks.history.length-1)
   },[tracks,screen])
 
+  useEffect(()=>{
+    // const bps = bpm/60
+    // const beatDurSec = 1/bps
+    // const barDurSec = 4*beatDurSec
+    // console.log({bpm,bps,beatDurSec,barDurSec})
+    // console.log(buf)
+    // testRegion.bDuration = buf._buffer.duration / barDurSec
+
+    // AudioEngine.bufferPool.map(bb => {
+    //   const data = {...bb.bufferData, bDuration:bb.buffer}      
+    // })
+  },[bpm, screen])
+
   // useEffect(()=>{ 
   //   console.log(editorStats.toolMode)
   //   if(tracks)
@@ -218,6 +226,9 @@ function App() {
 
     screen === 'editor' ?
     <>
+
+    <button onClick={()=>{AudioEngine.transportPlay()}}>Start</button>
+    <button onClick={()=>{AudioEngine.transportStop()}}>Stop</button>
 
     <SVGElements buffers={AudioEngine.bufferPool}/>
 

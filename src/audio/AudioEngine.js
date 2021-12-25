@@ -61,6 +61,8 @@
 import * as Tone from 'tone'
 import newid from 'uniqid';
 import { randomColor } from '../Util';
+import wavClickMinor from './metro_click_l.wav'
+import wavClickMajor from './metro_click_h.wav'
 
 const calculateRegionRelations = (regions) => {
   let sorted = regions.slice().sort((a,b)=>{
@@ -89,6 +91,7 @@ export const AudioEngine = {
   lastBufferId: null,
   bufferPool: [],
   connections: [],
+  metronome: null,
   
   awaitPermission(){
     try{
@@ -141,6 +144,19 @@ export const AudioEngine = {
     this.tonejs = Tone;
     this.player = new this.tonejs.Player()
     this.player.toDestination()
+
+    this.metronome = {
+      click_major: new this.tonejs.Player(),
+      click_minor: new this.tonejs.Player(),
+      volume: 1.0,
+      mute: false,
+    }
+
+    this.metronome.click_major.toDestination()
+    this.metronome.click_minor.toDestination()
+
+    this.metronome.click_minor.load(wavClickMinor)
+    this.metronome.click_major.load(wavClickMajor)
 
     if(!inputId) return
     
@@ -223,10 +239,10 @@ export const AudioEngine = {
     this.tonejs.Transport.stop()
     this.tonejs.Transport.cancel()
     
-    this.tracks.forEach(tr => {
-      tr.player.stop()
-      tr.envelope.cancel()
-    })
+    // this.tracks.forEach(tr => {
+    //   tr.player.stop()
+    //   tr.envelope.cancel()
+    // })
     
   },
   transportPlay(setTransportLabel){
@@ -250,9 +266,19 @@ export const AudioEngine = {
     //   })
     // })
 
-    this.tonejs.Transport.scheduleRepeat(()=>{
-      setTransportLabel(this.tonejs.Transport.position)
-    },'16n')
+    // this.tonejs.Transport.scheduleRepeat(()=>{
+    //   setTransportLabel(this.tonejs.Transport.position)
+    // },'16n')
+    let b = 0
+    this.tonejs.Transport.scheduleRepeat((time)=>{
+      if(this.metronome.mute) return
+      if(b%4 === 0)
+      this.metronome.click_major.start(time)
+      else
+      this.metronome.click_minor.start(time)
+
+      b+=1
+    }, '4n')
     
     this.tonejs.Transport.seconds = 0
     this.tonejs.Transport.start('+0.1')
