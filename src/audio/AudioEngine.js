@@ -61,6 +61,8 @@
 import * as Tone from 'tone'
 import newid from 'uniqid';
 import { randomColor } from '../Util';
+import wavClickMinor from './metro_click_l.wav'
+import wavClickMajor from './metro_click_h.wav'
 
 const calculateRegionRelations = (regions) => {
   let sorted = regions.slice().sort((a,b)=>{
@@ -82,6 +84,7 @@ const calculateRegionRelations = (regions) => {
 }
 
 export const AudioEngine = {
+  isSetup: false,
   actx: null,
   tonejs: null,
   micNode: null,
@@ -89,8 +92,10 @@ export const AudioEngine = {
   lastBufferId: null,
   bufferPool: [],
   connections: [],
+  metronome: null,
   
   awaitPermission(){
+    if(this.isSetup) return
     try{
       return new Promise((resolve, reject) => {
         if(navigator.mediaDevices === undefined) 
@@ -135,25 +140,46 @@ export const AudioEngine = {
     })
   },
 
-  init(inputId) {
+  async init(inputId) {
+    if(this.isSetup) return
     
     let ac = this.actx  = Tone.getContext().rawContext._nativeContext
     this.tonejs = Tone;
     this.player = new this.tonejs.Player()
     this.player.toDestination()
 
-    if(!inputId) return
+    this.metronome = {
+      click_major: new this.tonejs.Player(),
+      click_minor: new this.tonejs.Player(),
+      volume: 1.0,
+      mute: false,
+    }
+
+    this.metronome.click_major.toDestination()
+    this.metronome.click_minor.toDestination()
+
+    this.metronome.click_minor.load(wavClickMinor)
+    this.metronome.click_major.load(wavClickMajor)
+
+    this.isSetup = true
+
+    if(!inputId) {
+      this.tonejs.start()
+      return
+    }
     
     navigator.mediaDevices.getUserMedia({audio:{
-  		deviceId: {exatc: inputId},
+  		deviceId: {exact: inputId},
   		echoCancellation: false,
   		mozNoiseSuppression: false,
   		mozAutoGainControl: false
   	},video:false}).then(stream => {
 
+
         (async ()=>{
           console.log('setup mic-processor worklet')
           let micStream = ac.createMediaStreamSource(stream);
+  
           await this.tonejs.start()
           await ac.audioWorklet.addModule('MicWorkletModule.js')
          
@@ -222,10 +248,10 @@ export const AudioEngine = {
     this.tonejs.Transport.stop()
     this.tonejs.Transport.cancel()
     
-    this.tracks.forEach(tr => {
-      tr.player.stop()
-      tr.envelope.cancel()
-    })
+    // this.tracks.forEach(tr => {
+    //   tr.player.stop()
+    //   tr.envelope.cancel()
+    // })
     
   },
   transportPlay(setTransportLabel){
@@ -249,9 +275,19 @@ export const AudioEngine = {
     //   })
     // })
 
-    this.tonejs.Transport.scheduleRepeat(()=>{
-      setTransportLabel(this.tonejs.Transport.position)
-    },'16n')
+    // this.tonejs.Transport.scheduleRepeat(()=>{
+    //   setTransportLabel(this.tonejs.Transport.position)
+    // },'16n')
+    let b = 0
+    this.tonejs.Transport.scheduleRepeat((time)=>{
+      if(this.metronome.mute) return
+      if(b%4 === 0)
+      this.metronome.click_major.start(time)
+      else
+      this.metronome.click_minor.start(time)
+
+      b+=1
+    }, '4n')
     
     this.tonejs.Transport.seconds = 0
     this.tonejs.Transport.start('+0.1')

@@ -25,8 +25,9 @@ const SVGElements = ({buffers})=>{
         </symbol>
   
         {waves.map(w => {
+          const id = `waveform-${w.id}`
           return (
-            <symbol id={`waveform-${w.id}`} viewBox='0 0 100 100' preserveAspectRatio='none'>
+            <symbol key={id} id={id} viewBox='0 0 100 100' preserveAspectRatio='none'>
               <path d={w.path} />
             </symbol>
           )
