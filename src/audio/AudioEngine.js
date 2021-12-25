@@ -158,6 +158,8 @@ export const AudioEngine = {
     this.metronome.click_minor.load(wavClickMinor)
     this.metronome.click_major.load(wavClickMajor)
 
+    this.tonejs.start()
+
     if(!inputId) return
     
     navigator.mediaDevices.getUserMedia({audio:{
@@ -171,7 +173,7 @@ export const AudioEngine = {
         (async ()=>{
           console.log('setup mic-processor worklet')
           let micStream = ac.createMediaStreamSource(stream);
-          await this.tonejs.start()
+          //await this.tonejs.start()
           await ac.audioWorklet.addModule('MicWorkletModule.js')
          
           let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
