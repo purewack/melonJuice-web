@@ -93,6 +93,7 @@ export const AudioEngine = {
   bufferPool: [],
   connections: [],
   metronome: null,
+  workletSupport: false,
   
   awaitPermission(){
     if(this.isSetup) return
@@ -181,7 +182,10 @@ export const AudioEngine = {
           let micStream = ac.createMediaStreamSource(stream);
   
           await this.tonejs.start()
+          this.workletSupport = ac.audioWorklet
+          if(!this.workletSupport) return
           await ac.audioWorklet.addModule('MicWorkletModule.js')
+          
          
           let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
           micStream.connect(micNode)
