@@ -40,13 +40,13 @@ function App() {
   const [inputDevices, setInputDevices] = useState()
   const [selectedInput, setSelectedInput] = useState()
   //const [useMicrophone, setUseMicrophone] = useState()
+  const [workletState, setWorkletState] = useState('')
 
   // eslint-disable-next-line 
   useEffect(()=>{
     setBuffers(AudioEngine.bufferPool)
     // eslint-disable-next-line
   },[AudioEngine.bufferPool])
-
 
   useEffect(() => {
     if(screen === 'audio-permissions') {
@@ -178,6 +178,7 @@ function App() {
 
   const startAudio = ()=>{
     AudioEngine.init(selectedInput)
+    setWorkletState(AudioEngine.workletSupport ? 'worklet supported' : 'no worklet')
   }
 
   return (<>
@@ -233,6 +234,8 @@ function App() {
 
     screen === 'editor' ?
     <>
+
+    <p>{workletState}</p>
 
     <button onClick={()=>{AudioEngine.transportPlay()}}>Start</button>
     <button onClick={()=>{AudioEngine.transportStop()}}>Stop</button>
