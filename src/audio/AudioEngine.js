@@ -84,6 +84,7 @@ const calculateRegionRelations = (regions) => {
 }
 
 export const AudioEngine = {
+  isSetup: false,
   actx: null,
   tonejs: null,
   micNode: null,
@@ -94,6 +95,7 @@ export const AudioEngine = {
   metronome: null,
   
   awaitPermission(){
+    if(this.isSetup) return
     try{
       return new Promise((resolve, reject) => {
         if(navigator.mediaDevices === undefined) 
@@ -139,6 +141,7 @@ export const AudioEngine = {
   },
 
   async init(inputId) {
+    if(this.isSetup) return
     
     let ac = this.actx  = Tone.getContext().rawContext._nativeContext
     this.tonejs = Tone;
@@ -158,9 +161,12 @@ export const AudioEngine = {
     this.metronome.click_minor.load(wavClickMinor)
     this.metronome.click_major.load(wavClickMajor)
 
-    this.tonejs.start()
-    
-    if(!inputId) return
+    this.isSetup = true
+
+    if(!inputId) {
+      this.tonejs.start()
+      return
+    }
     
     navigator.mediaDevices.getUserMedia({audio:{
   		deviceId: {exact: inputId},
@@ -173,7 +179,8 @@ export const AudioEngine = {
         (async ()=>{
           console.log('setup mic-processor worklet')
           let micStream = ac.createMediaStreamSource(stream);
-          //await this.tonejs.start()
+  
+          await this.tonejs.start()
           await ac.audioWorklet.addModule('MicWorkletModule.js')
          
           let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
