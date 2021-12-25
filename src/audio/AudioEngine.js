@@ -138,7 +138,7 @@ export const AudioEngine = {
     })
   },
 
-  init(inputId) {
+  async init(inputId) {
     
     let ac = this.actx  = Tone.getContext().rawContext._nativeContext
     this.tonejs = Tone;
@@ -159,7 +159,7 @@ export const AudioEngine = {
     this.metronome.click_major.load(wavClickMajor)
 
     this.tonejs.start()
-
+    
     if(!inputId) return
     
     navigator.mediaDevices.getUserMedia({audio:{

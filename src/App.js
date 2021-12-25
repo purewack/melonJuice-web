@@ -79,7 +79,6 @@ function App() {
     }
 
     else if(screen === 'editor-fresh'){
-      AudioEngine.init(selectedInput)
 
       const testId = newid()
       const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_1MG.mp3'
@@ -177,6 +176,9 @@ function App() {
   //   tracks.changes = tracks.changes.map(t => {return true})
   // },[editorStats])
 
+  const startAudio = ()=>{
+    AudioEngine.init(selectedInput)
+  }
 
   return (<>
     {!screen ? <>
@@ -191,6 +193,7 @@ function App() {
     screen === 'audio-denied' ? <>
       <p>🔇 Audio permissions denied 😭</p> 
       <button onClick={()=>{
+        startAudio()
         setSelectedInput(null)
         setScreen('editor-fresh')
       }}>Continue without input</button>
@@ -198,7 +201,10 @@ function App() {
 
     screen === 'audio-nodevices' ? <>
       <p>Looks like you don't have any input devices :/</p>
-      <button onClick={()=>{setScreen('editor-fresh')}}> Continue</button>
+      <button onClick={()=>{
+        startAudio()
+        setScreen('editor-fresh')
+      }}> Continue</button>
     </> :
       
     screen === 'audio-devices' ? <>
@@ -214,6 +220,7 @@ function App() {
       })} 
       
       <button disabled={!selectedInput} onClick={()=>{
+        startAudio()
         setScreen('editor-fresh')
       }}>
         Use this one
