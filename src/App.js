@@ -237,6 +237,7 @@ function App() {
 
     <p>{workletState}</p>
 
+    <button onClick={()=>{AudioEngine.monitor()}}> mon </button>
     <button onClick={()=>{AudioEngine.transportPlay()}}>Start</button>
     <button onClick={()=>{AudioEngine.transportStop()}}>Stop</button>
 

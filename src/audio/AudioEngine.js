@@ -163,27 +163,23 @@ export const AudioEngine = {
     this.metronome.click_major.load(wavClickMajor)
 
     this.isSetup = true
+    this.workletSupport = ac.audioWorklet
 
     if(!inputId) {
       this.tonejs.start()
       return
     }
-    
+
     navigator.mediaDevices.getUserMedia({audio:{
   		deviceId: {exact: inputId},
-  		echoCancellation: false,
-  		mozNoiseSuppression: false,
-  		mozAutoGainControl: false
   	},video:false}).then(stream => {
-
 
         (async ()=>{
           console.log('setup mic-processor worklet')
           let micStream = ac.createMediaStreamSource(stream);
   
           await this.tonejs.start()
-          this.workletSupport = ac.audioWorklet
-          if(!this.workletSupport) return
+          //if(!this.workletSupport) return
           await ac.audioWorklet.addModule('MicWorkletModule.js')
           
          
@@ -220,7 +216,7 @@ export const AudioEngine = {
     
   },
   monitor () {
-    if(this.actx === null) return;
+    //if(this.actx === null) return;
 
     let monitorState = (this.micNode.parameters.get('monitorState').value > 0)
     
@@ -234,7 +230,7 @@ export const AudioEngine = {
 	  return !monitorState
   },
   transportRecord (trackId) {
-    if(this.actx === null) return;
+    //if(this.actx === null) return;
 
     let recState = (this.micNode.parameters.get('recState').value > 0)
     
@@ -247,7 +243,7 @@ export const AudioEngine = {
  
   },
   transportStop(){
-    if(this.actx === null) return;
+    //if(this.actx === null) return;
     
     this.tonejs.Transport.stop()
     this.tonejs.Transport.cancel()
@@ -259,7 +255,7 @@ export const AudioEngine = {
     
   },
   transportPlay(setTransportLabel){
-    if(this.actx === null) return;
+   // if(this.actx === null) return;
   
     
     if(this.tonejs.Transport.state !== 'stopped'){
