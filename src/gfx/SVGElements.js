@@ -4,7 +4,7 @@ import { generateSVGPathFromAudioBuffer } from '../Util'
 const SVGElements = ({buffers})=>{
   const [waves,setWaves] = useState([])
 
-  if(buffers && buffers.length !== waves.length){
+  if(buffers && buffers.length !== waves.length && buffers.length > 0){
     console.log('new buffers')
     console.log({buffers,waves})
     const bb = buffers[buffers.length-1]

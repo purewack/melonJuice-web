@@ -286,6 +286,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
 
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
       <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
+      <line y1={maxHeight/2} y2={maxHeight/2} x1={0} x2={rww} strokeWidth={2} stroke={'white'}></line>
       <use fill='white' href={`#waveform-${region.bufferId}`} y={0} x={-rrOffset-bOffset} width={bDuration} height={maxHeight}/>
       <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/4} ${rFadeIn+rrFadeIn},${vy} L 0,${vy} L 0,${maxHeight}`} />
       <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},${vy} Q ${rww},${maxHeight/4} ${rww},${maxHeight} L ${rww},${vy} L ${rww-(rFadeOut+rrFadeOut)},${vy}`} />

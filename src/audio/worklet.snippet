@@ -88,12 +88,12 @@ export const AudioEngine = {
   actx: null,
   tonejs: null,
   micNode: null,
-  isRecording: false,
-  lastRecording: [],
+  lastRecording: new Float32Array(0),
   lastBufferId: null,
   bufferPool: [],
   connections: [],
   metronome: null,
+  workletSupport: false,
   
   awaitPermission(){
     if(this.isSetup) return
@@ -141,11 +141,18 @@ export const AudioEngine = {
     })
   },
 
-  init(inputId) {
+  async init(inputId) {
     if(this.isSetup) return
-    
-    this.tonejs = Tone
-    let ac = this.actx  = this.tonejs.getContext().rawContext._nativeContext
+   
+   
+    let ac = this.actx  = Tone.getContext().rawContext._nativeContext
+    this.workletSupport = (ac.audioWorklet?.addModule)
+    console.log('worklet support')
+    console.log(this.workletSupport)
+    console.log(window.AudioWorkletNode)
+    this.tonejs = Tone;
+    this.player = new this.tonejs.Player()
+    this.player.toDestination()
 
     this.metronome = {
       click_major: new this.tonejs.Player(),
@@ -160,7 +167,6 @@ export const AudioEngine = {
     this.metronome.click_minor.load(wavClickMinor)
     this.metronome.click_major.load(wavClickMajor)
 
-    this.tonejs.start()
     this.isSetup = true
    
     if(!inputId) {
@@ -171,102 +177,107 @@ export const AudioEngine = {
     navigator.mediaDevices.getUserMedia({audio:{
   		deviceId: {exact: inputId},
   	},video:false}).then(stream => {
-      this.micNode = new MediaRecorder(stream)
-      this.micNode.ondataavailable = (e)=>{
-        if(e.data.size){
-          console.log('chunk')
-          this.lastRecording.push(e.data)
-        }
-      }
-      console.log(this.micNode)
-    })
-  },
 
-  transportRecordStart (bpm, trackId, tracks, durationMultiplier) {
-    if(!this.isRecording && trackId){
-      this.transportPlay(bpm, trackId, tracks, durationMultiplier)
-      this.lastRecording = []
-      this.micNode.start()
-      this.isRecording = trackId
-      console.log('started')
-    }
-    console.log(this.isRecording)
-  },
-  transportRecordStop (trackId,tracks) {
-
-    if(this.isRecording && trackId){
-      this.transportStop(tracks)
-
-      return new Promise((resolve, reject) => {
-        this.isRecording = null
-        const id = newid()
-
-        console.log('stopping') 
-        this.micNode.onstop = (e)=>{
-          const blob = new Blob(this.lastRecording, {type:'audio/mp3;'});
-          this.lastRecording = []
-          console.log(blob)
-          const url = window.URL.createObjectURL(blob);
-          console.log(url)
-          const newRecording = {
-            id: id,
-            bufferData: new this.tonejs.ToneAudioBuffer(url),
-            online: true,
+        (async ()=>{
+          console.log('setup mic-processor worklet')
+          let micStream = ac.createMediaStreamSource(stream);
+  
+          await this.tonejs.start()
+          await ac.audioWorklet.addModule('MicWorkletModule.js')
+         
+          let micNode = new window.AudioWorkletNode(ac, 'mic-worklet')
+          micStream.connect(micNode)
+    		  micNode.connect(ac.destination)
+          
+          micNode.port.onmessage = (e)=>{
+            if(e.data.eventType === 'onchunk'){
+              let len = (e.data.audioChunk.length + this.lastRecording.length)
+              let bufnew = new Float32Array(len)
+              bufnew.set(this.lastRecording)
+              bufnew.set(e.data.audioChunk, this.lastRecording.length)
+              this.lastRecording = bufnew
+              //console.log(len)
+            }
+            else if(e.data.eventType === 'begin'){
+      				this.lastRecordingChunks = []
+      			}
+            else if(e.data.eventType === 'end'){
+              //console.log(this.lastRecording)
+      				const buf = ac.createBuffer(1,e.data.recLength, ac.sampleRate)
+              buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
+              this.lastBufferId = newid()
+              this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
+              
+              let recordStartTime = 0 //get actual position of transport
+              this.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
+            }
           }
-          newRecording.bufferData.onload = (b)=>{
-            this.bufferPool.push(newRecording)
-            console.log(this.bufferPool)
-            resolve({id:id, duration:b.duration})
-          }
-        }
-        
-        this.micNode.stop()
-      })      
-    }
-    return new Promise((resolve,reject)=>{
-      reject()
+          this.micNode = micNode
+        })()
     })
+    
   },
-  transportStop(tracks){
+  monitor () {
+    //if(this.actx === null) return;
+    if(this.micNode === null) return;
+
+    let monitorState = (this.micNode.parameters.get('monitorState').value > 0)
+    
+    if(!monitorState){
+      this.micNode.parameters.get('monitorState').setValueAtTime(1, 0);
+    }
+	  else{
+	  	this.micNode.parameters.get('monitorState').setValueAtTime(0, 0);
+    }
+
+	  return !monitorState
+  },
+  transportRecord (trackId) {
+    //if(this.actx === null) return;
+    if(this.micNode === null) return;
+
+    let recState = (this.micNode.parameters.get('recState').value > 0)
+    
+    if(!recState){
+      this.micNode.parameters.get('recState').setValueAtTime(1, 0);
+    } 
+	  else{
+	  	this.micNode.parameters.get('recState').setValueAtTime(0, 0);
+    }
+ 
+  },
+  transportStop(){
     //if(this.actx === null) return;
     
     this.tonejs.Transport.stop()
     this.tonejs.Transport.cancel()
-    tracks.forEach(tr => {
-      tr.player.stop()
-      //tr.envelope.cancel()
-    })
+    
+    // this.tracks.forEach(tr => {
+    //   tr.player.stop()
+    //   tr.envelope.cancel()
+    // })
     
   },
-  transportPlay(bpm, omitTrackId, tracks, durationMultiplier){
+  transportPlay(setTransportLabel){
    // if(this.actx === null) return;
-    this.tonejs.bpm = bpm
+  
     
     if(this.tonejs.Transport.state !== 'stopped'){
       this.transportStop()
       return;
     }
-    const tt = durationMultiplier
-
-    tracks.forEach(tr => {
-      if(!tr.regions) return
-      if(omitTrackId && tr.trackId === omitTrackId) return
-
-      tr.regions.forEach(reg => {
-        this.tonejs.Transport.schedule(t => {
-            this.bufferPool.forEach(bp => {
-              if(bp.id === reg.bufferId){
-                tr.player.buffer = bp.bufferData
-                tr.player.start(t, reg.bOffset*tt , reg.rDuration*tt )
-              }
-            })
-            // tr.envelope.attack = reg.timeFadeIn
-            // tr.envelope.release = reg.timeFadeOut
-            // tr.envelope.triggerAttackRelease(reg.rDuration - reg.timeFadeOut)
-        }, reg.rOffset*tt )
-      })
-
-    })
+    
+    // this.tracks.forEach(tr => {
+    //   tr.regions.forEach(reg => {
+    //     this.tonejs.Transport.schedule(t => {
+    //         tr.player.buffer = this.bufferPool[reg.bufferId]
+    //         tr.player.start(t,reg.bOffset,reg.rDuration)
+    //         tr.envelope.attack = reg.timeFadeIn
+    //         tr.envelope.release = reg.timeFadeOut
+    //         tr.envelope.triggerAttackRelease(reg.rDuration - reg.timeFadeOut)
+    //     }, reg.timeStart)
+    //   })
+    // })
 
     // this.tonejs.Transport.scheduleRepeat(()=>{
     //   setTransportLabel(this.tonejs.Transport.position)
@@ -294,7 +305,7 @@ export const AudioEngine = {
         enable: 1.0,
         regions: [],
         color: randomColor(),
-        player: new this.tonejs.Player(),
+        // player: new this.tonejs.Player(),
         // envelope: new this.tonejs.AmplitudeEnvelope({
         //   attack:0,
         //   decay:0,
@@ -302,8 +313,7 @@ export const AudioEngine = {
         //   release:0,
         // }),
     }
-    t.player.toDestination()
-    //t.player.connect(t.envelope)
+    // t.player.connect(t.envelope)
     // t.envelope.toDestination()
     return t
   },
