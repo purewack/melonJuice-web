@@ -21,11 +21,11 @@ import PointerHandle  from '../interfaces/PointerHandle';
                        │                            │
     */
 
-const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo, tracksDispatch, editorStats})=>{
+const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatch, editorStats})=>{
   const rOffset = (editorStats.barLength*region.rOffset)
-  const rDuration = (editorStats.barLength*region.rDuration)
   const bOffset = (editorStats.barLength*region.bOffset)
-  const bDuration = (editorStats.barLength*region.bDuration)
+  const rDuration = (editorStats.barLength*editorStats.bpmMultiplier*region.rDuration)
+  const bDuration = (editorStats.barLength*editorStats.bpmMultiplier*region.bDuration)
   const rFadeIn = (editorStats.barLength*region.rFadeIn)
   const rFadeOut = (editorStats.barLength*region.rFadeOut)
   const maxHeight = (editorStats.trackHeight)

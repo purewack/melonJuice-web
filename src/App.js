@@ -20,12 +20,17 @@ function App() {
 
   const [screen, setScreen] = useState(false)
   const [songMeasures, setSongMeasures] = useState(16)
-  const [editorStats, setEditorStats] = useState({snapGrain:null, barLength:150, trackHeight:100, toolMode:'grab'})
+  const [editorStats, setEditorStats] = useState({
+    snapGrain:null, 
+    barLength:150, 
+    trackHeight:100, 
+    toolMode:'grab', 
+    bpmMultiplier:1.0
+  })
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   //eslint-disable-next-line
-  const [bpm, setBpm] = useState(110)
-  const [durationMultiplier, setDurationMultiplier] = useState(1.0)
+  const [bpm, setBpm] = useState(90)
   //eslint-disable-next-line
   const [clickState, setClickState] = useState(false)
   const undoButtonRef = useRef()
@@ -149,15 +154,14 @@ function App() {
     const bps = bpm/60
     const beatDurSec = 1/bps
     const barDurSec = 4*beatDurSec
-    console.log({bpm,bps,beatDurSec,barDurSec})
-    setDurationMultiplier(1/barDurSec)
+    //console.log({bpm,bps,beatDurSec,barDurSec})
+    setEditorStats(stats => { return {...stats, bpmMultiplier:(1/barDurSec) } })
   },[bpm, screen])
+  
 
-  // useEffect(()=>{ 
-  //   console.log(editorStats.toolMode)
-  //   if(tracks)
-  //   tracks.changes = tracks.changes.map(t => {return true})
-  // },[editorStats])
+  useEffect(()=>{ 
+    console.log(editorStats)
+  },[editorStats])
 
   const startAudio = ()=>{
    // AudioEngine.init(selectedInput)
@@ -218,7 +222,7 @@ function App() {
 
 
     <button onClick={()=>{
-      AudioEngine.transportPlay(bpm, null, tracks.current, durationMultiplier)
+      AudioEngine.transportPlay(bpm, null, tracks.current, editorStats.bpmMultiplier)
     }}>Start</button>
 
     <button onClick={()=>{
@@ -226,7 +230,7 @@ function App() {
     }>Stop</button>
     
     <button onClick={()=>{
-      AudioEngine.transportRecordStart(bpm, armedId, tracks.current, durationMultiplier)
+      AudioEngine.transportRecordStart(bpm, armedId, tracks.current, editorStats.bpmMultiplier)
     }}>Rec Start</button>
 
     <button onClick={()=>{
@@ -418,11 +422,6 @@ function App() {
               editorStats={editorStats}
             >
               {track.regions.map( r => {
-                let path
-                AudioEngine.bufferPool.forEach(b =>{
-                  if(b.id === r.bufferId) path = b.svgWaveformPath
-                })
-
                 return <AudioRegion
                     key={r.regionId} 
                     region={r}
@@ -430,7 +429,6 @@ function App() {
                     onSelect={(r)=>{
                       setSelectedRegion(r)
                     }}
-                    waveformPath={path}
                     trackInfo={{idx:i, max:tt.length, color:track.color}}
                     tracksDispatch={tracksDispatch}
                     editorStats={editorStats}

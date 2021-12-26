@@ -94,6 +94,14 @@ export const AudioEngine = {
   bufferPool: [],
   connections: [],
   metronome: null,
+  recordingStats: {
+    startTimePress:0,
+    startTimeReal:0,
+    stopTimePress:0,
+    stopTimeReal:0,
+    startDelta:0,
+    stopDelta:0,
+  },
   
   awaitPermission(){
     if(this.isSetup) return
@@ -170,6 +178,10 @@ export const AudioEngine = {
 
     navigator.mediaDevices.getUserMedia({audio:{
   		deviceId: {exact: inputId},
+      latency: 0.0,
+  		echoCancellation: false,
+  		mozNoiseSuppression: false,
+  		mozAutoGainControl: false,
   	},video:false}).then(stream => {
       this.micNode = new MediaRecorder(stream)
       this.micNode.ondataavailable = (e)=>{
@@ -178,16 +190,24 @@ export const AudioEngine = {
           this.lastRecording.push(e.data)
         }
       }
+      this.micNode.onstart = ()=>{ 
+        this.recordingStats.startTimeReal = performance.now() 
+        this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
+        console.log(this.recordingStats)
+      }
       console.log(this.micNode)
     })
   },
 
   transportRecordStart (bpm, trackId, tracks, durationMultiplier) {
     if(!this.isRecording && trackId){
+      this.tonejs.Transport.schedule((t)=>{
+        this.lastRecording = []
+        this.recordingStats.startTimePress = performance.now()
+        this.micNode.start()
+        this.isRecording = trackId
+      }, 0)
       this.transportPlay(bpm, trackId, tracks, durationMultiplier)
-      this.lastRecording = []
-      this.micNode.start()
-      this.isRecording = trackId
       console.log('started')
     }
     console.log(this.isRecording)
@@ -203,6 +223,11 @@ export const AudioEngine = {
 
         console.log('stopping') 
         this.micNode.onstop = (e)=>{
+          
+          this.recordingStats.stopTimeReal = performance.now()
+          this.recordingStats.stopDelta = this.recordingStats.stopTimeReal - this.recordingStats.stopTimePress
+          console.log(this.recordingStats)
+
           const blob = new Blob(this.lastRecording, {type:'audio/mp3;'});
           this.lastRecording = []
           console.log(blob)
@@ -217,9 +242,11 @@ export const AudioEngine = {
             this.bufferPool.push(newRecording)
             console.log(this.bufferPool)
             resolve({id:id, duration:b.duration})
+            this.micNode.onstop = null 
           }
         }
         
+        this.recordingStats.stopTimePress = performance.now()
         this.micNode.stop()
       })      
     }
@@ -240,7 +267,7 @@ export const AudioEngine = {
   },
   transportPlay(bpm, omitTrackId, tracks, durationMultiplier){
    // if(this.actx === null) return;
-    this.tonejs.bpm = bpm
+    this.tonejs.Transport.bpm.value = bpm
     
     if(this.tonejs.Transport.state !== 'stopped'){
       this.transportStop()
