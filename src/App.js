@@ -22,7 +22,8 @@ function App() {
   const [songMeasures, setSongMeasures] = useState(16)
   const [editorStats, setEditorStats] = useState({
     snapGrain:null, 
-    barLength:150, 
+    beatLength:320, 
+    beatBar: 4,
     trackHeight:100, 
     toolMode:'grab', 
     bpmMultiplier:1.0
@@ -282,12 +283,12 @@ function App() {
         <input 
           type="range" 
           min="20" 
-          max="400" 
-          defaultValue="90"
+          max="1000" 
+          defaultValue="320"
           onChange={(e)=>{
             setEditorStats({
               ...editorStats, 
-              barLength:Number(e.target.value)
+              beatLength:Number(e.target.value)
             })
           }}
         />

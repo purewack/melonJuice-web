@@ -8,9 +8,10 @@ const SVGElements = ({buffers})=>{
     console.log('new buffers')
     console.log({buffers,waves})
     const bb = buffers[buffers.length-1]
+    console.log(bb)
     setWaves([
       ...waves,
-      {id:bb.id, path:generateSVGPathFromAudioBuffer(bb.bufferData)}
+      {id:bb.id, path:generateSVGPathFromAudioBuffer(bb.bufferData, {start: bb.startDeltaSec, end:bb.stopDeltaSec})}
     ])
   }
 

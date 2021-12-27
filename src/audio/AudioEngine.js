@@ -207,6 +207,18 @@ export const AudioEngine = {
         this.micNode.start()
         this.isRecording = trackId
       }, 0)
+
+      let b = 0
+      this.tonejs.Transport.scheduleRepeat((time)=>{
+        if(this.metronome.mute) return
+        if(b%4 === 0)
+        this.metronome.click_major.start(time)
+        else
+        this.metronome.click_minor.start(time)
+
+        b+=1
+      }, '4n')
+
       this.transportPlay(bpm, trackId, tracks, durationMultiplier)
       console.log('started')
     }
@@ -230,18 +242,21 @@ export const AudioEngine = {
 
           const blob = new Blob(this.lastRecording, {type:'audio/mp3;'});
           this.lastRecording = []
-          console.log(blob)
-          const url = window.URL.createObjectURL(blob);
-          console.log(url)
+          
+          const sdx = this.recordingStats.startDelta/1000
+          const edx = this.recordingStats.stopDelta/100
           const newRecording = {
             id: id,
-            bufferData: new this.tonejs.ToneAudioBuffer(url),
+            bufferData: new this.tonejs.ToneAudioBuffer(window.URL.createObjectURL(blob)),
             online: true,
+            startDeltaSec: sdx,
+            stopDeltaSec: edx,
           }
+
           newRecording.bufferData.onload = (b)=>{
             this.bufferPool.push(newRecording)
             console.log(this.bufferPool)
-            resolve({id:id, duration:b.duration})
+            resolve({id:id, duration:b.duration - sdx - edx})
             this.micNode.onstop = null 
           }
         }
@@ -270,10 +285,23 @@ export const AudioEngine = {
     this.tonejs.Transport.bpm.value = bpm
     
     if(this.tonejs.Transport.state !== 'stopped'){
-      this.transportStop()
+      this.transportStop(tracks)
       return;
     }
+
+    this.schedule(tracks, omitTrackId, durationMultiplier)
+
+    
+    
+    this.tonejs.Transport.seconds = 0
+    this.tonejs.Transport.start('+0.1')
+          
+  },
+
+  schedule(tracks, omitTrackId, durationMultiplier){
     const tt = durationMultiplier
+    //const tt = 1.0
+    const ltc = 0.0
 
     tracks.forEach(tr => {
       if(!tr.regions) return
@@ -284,7 +312,15 @@ export const AudioEngine = {
             this.bufferPool.forEach(bp => {
               if(bp.id === reg.bufferId){
                 tr.player.buffer = bp.bufferData
-                tr.player.start(t, reg.bOffset*tt , reg.rDuration*tt )
+
+                const ltc_start = -bp.startDeltaSec-ltc
+                const ltc_dur = -bp.stopDeltaSec-ltc
+                
+                tr.player.start(
+                  t, 
+                  ltc_start + reg.bOffset*tt , 
+                  ltc_dur + reg.rDuration*tt 
+                )
               }
             })
             // tr.envelope.attack = reg.timeFadeIn
@@ -294,24 +330,6 @@ export const AudioEngine = {
       })
 
     })
-
-    // this.tonejs.Transport.scheduleRepeat(()=>{
-    //   setTransportLabel(this.tonejs.Transport.position)
-    // },'16n')
-    let b = 0
-    this.tonejs.Transport.scheduleRepeat((time)=>{
-      if(this.metronome.mute) return
-      if(b%4 === 0)
-      this.metronome.click_major.start(time)
-      else
-      this.metronome.click_minor.start(time)
-
-      b+=1
-    }, '4n')
-    
-    this.tonejs.Transport.seconds = 0
-    this.tonejs.Transport.start('+0.1')
-          
   },
   
   newTrack(){
@@ -349,6 +367,8 @@ export const AudioEngine = {
       rFadeOut: 0.0,
       rPlayrate:1.0,
       rLoop:0,
+      recordBPM: this.tonejs.Transport.bpm.value,
+      recordDuration: duration,
     }
   },
 

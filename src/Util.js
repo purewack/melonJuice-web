@@ -38,27 +38,31 @@ export const simpleTest = ()=>{
     return 'i am tested'
 }
 
-export const generateSVGPathFromAudioBuffer = (tonebuffer) =>{
+export const generateSVGPathFromAudioBuffer = (tonebuffer, delays) =>{
     //this.useRenders('svg waveform gen')
     console.log('svg render')
     console.log(tonebuffer)
 
     if(!tonebuffer) return ''
 
+    const sr = tonebuffer._buffer.sampleRate
     const samples = tonebuffer.getChannelData(0)
-    const step = 2048*1 //16384
+    const step = 256 //2048*1 //16384
+    const offset = delays.start * sr
+    const duration = samples.length - (delays.end*sr)
     let acc = 0
     let points = []
     let string = 'M 0,50 '
-    for(let i = 0; i < samples.length; i++){
-        const s = samples[i]
+    for(let i = 0; i < duration; i++){
+        const idx = Math.floor(i+offset < duration ? i+offset : duration-1)
+        const s = samples[idx]
         acc += s*s
         if(i%step === 0){
             const rms = Math.sqrt(acc/step)
             const point = 50-(rms*100)
             acc = 0
             points.push(point)
-            string += `L ${(i/samples.length)*100},${point} `  
+            string += `L ${(i/duration)*100},${point} `  
         }
     }
     //string += 'L 100,50 L 0,50'
@@ -79,4 +83,9 @@ export const randomColor = ()=>{
     const cc = `rgb(${rand()},${rand()},${rand()})`
     return cc;
 }
-  
+ 
+export const beatToAbs = (bpm, beats) => {
+    const bps = bpm/60
+    const beatDurSec = 1/bps
+    return beatDurSec * beats
+}
