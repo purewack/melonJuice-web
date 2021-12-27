@@ -259,6 +259,7 @@ export const AudioEngine = {
             online: true,
             startDeltaSec: sdx,
             stopDeltaSec: edx,
+            initialBPM: this.tonejs.Transport.bpm.value,
           }
 
           newRecording.bufferData.onload = (b)=>{
@@ -306,7 +307,7 @@ export const AudioEngine = {
   schedule(tracks, omitTrackId){
     //const tt = durationMultiplier
     const tt = 1.0
-    const ltc = 0.0
+    const ltc = 0.128
 
     tracks.forEach(tr => {
       if(!tr.regions) return
@@ -321,10 +322,10 @@ export const AudioEngine = {
               if(bp.id === reg.bufferId){
                 tr.player.buffer = bp.bufferData
 
-                const ltc_start = -bp.startDeltaSec-ltc
-                const ltc_dur = -bp.stopDeltaSec-ltc
+                const ltc_start = bp.startDeltaSec+ltc
+                const ltc_dur = bp.stopDeltaSec+ltc
 
-                const bpmPlayrate = bpm / reg.initialBPM
+                const bpmPlayrate = bpm / bp.initialBPM
                 tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
 
                 tr.player.start(
@@ -390,7 +391,6 @@ export const AudioEngine = {
       rFadeOut: 0.0,
       rPlayrate:1.0,
       bpmPlayrate: 1.0,
-      initialBPM: this.tonejs.Transport.bpm.value,
     }
   },
 
