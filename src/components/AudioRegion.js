@@ -22,10 +22,11 @@ import PointerHandle  from '../interfaces/PointerHandle';
     */
 
 const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatch, editorStats})=>{
-  const rOffset = (editorStats.beatLength*region.rOffset)
-  const bOffset = (editorStats.beatLength*region.bOffset)
-  const rDuration = (editorStats.beatLength*region.rDuration)
-  const bDuration = (editorStats.beatLength*editorStats.bpmMultiplier*region.bDuration)
+
+  const rOffset = (editorStats.beatLength * region.rOffset)
+  const bOffset = (editorStats.beatLength * region.bOffset * region.rPlayrate)
+  const rDuration = (editorStats.beatLength * region.rDuration) / region.rPlayrate
+  const bDuration = (editorStats.beatLength * region.bDuration * editorStats.bps) / region.rPlayrate
   const rFadeIn = (editorStats.beatLength*region.rFadeIn)
   const rFadeOut = (editorStats.beatLength*region.rFadeOut)
   const maxHeight = (editorStats.trackHeight)
@@ -41,7 +42,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatc
   }
   const snapCalc = (ll, min, max, cancel)=>{
     if(editorStats.snapGrain && !cancel){
-      let b = (editorStats.beatLength/editorStats.snapGrain)
+      let b = ((editorStats.beatLength*editorStats.beatBar)/editorStats.snapGrain)
       let l = Math.floor(ll/b)*b
       if(min !== null && l < min) l = min
       if(max !== null && l > max) l = max

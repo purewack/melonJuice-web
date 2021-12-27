@@ -26,23 +26,20 @@ function App() {
     beatBar: 4,
     trackHeight:100, 
     toolMode:'grab', 
-    bpmMultiplier:1.0
+    bps:1.0,
+    seekBeat: 0,
   })
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   //eslint-disable-next-line
-  const [bpm, setBpm] = useState(90)
+  const [bpm, setBpm] = useState()
   //eslint-disable-next-line
   const [clickState, setClickState] = useState(false)
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
   const [armedId, setArmedId] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
-  
-  //eslint-disable-next-line
-  const [recStart, setRecStart] = useState(0)
-  const [recEnd, setRecEnd] = useState(0)
-  
+    
   const [inputDevices, setInputDevices] = useState()
   const [selectedInput, setSelectedInput] = useState(null)
   //const [useMicrophone, setUseMicrophone] = useState()
@@ -120,9 +117,11 @@ function App() {
       //   setSongTitle('test_init_regions')
       //   setScreen('editor')
       // }
+
       AudioEngine.init(selectedInput)
       tracksDispatch({type:'new'})
       setScreen('editor')
+      setBpm(90)
     }
   //eslint-disable-next-line
   }, [screen])
@@ -152,12 +151,11 @@ function App() {
   },[tracks,screen])
 
   useEffect(()=>{
-    const bps = bpm/60
-    const beatDurSec = 1/bps
-    const barDurSec = 4*beatDurSec
-    //console.log({bpm,bps,beatDurSec,barDurSec})
-    setEditorStats(stats => { return {...stats, bpmMultiplier:(1/barDurSec) } })
-  },[bpm, screen])
+    console.log({bpm})
+    AudioEngine.setBPM(bpm)
+    setEditorStats(stats => {return {...stats, bps:AudioEngine.getBPS()}}) 
+    console.log(AudioEngine.getBPS())
+  },[bpm])
   
 
   useEffect(()=>{ 
@@ -223,7 +221,7 @@ function App() {
 
 
     <button onClick={()=>{
-      AudioEngine.transportPlay(bpm, null, tracks.current, editorStats.bpmMultiplier)
+      AudioEngine.transportPlay(null, tracks.current)
     }}>Start</button>
 
     <button onClick={()=>{
@@ -231,12 +229,18 @@ function App() {
     }>Stop</button>
     
     <button onClick={()=>{
-      AudioEngine.transportRecordStart(bpm, armedId, tracks.current, editorStats.bpmMultiplier)
+      AudioEngine.transportRecordStart(armedId, tracks.current)
     }}>Rec Start</button>
 
     <button onClick={()=>{
       AudioEngine.transportRecordStop(armedId, tracks.current).then((recording)=>{
-        const rr = AudioEngine.newRegion(recording.id, 0, recording.duration)
+        const rr = AudioEngine.newRegion(
+          recording.id, 
+          editorStats.seekBeat, 
+          recording.durationSeconds * editorStats.bps, 
+          recording.durationSeconds
+        )
+        console.log(rr)
         tracksDispatch({type:'record_region', trackId: armedId, region: rr})
       })
     }}>Rec Stop</button>
@@ -356,48 +360,6 @@ function App() {
 
         <br/>
 
-        <form onSubmit={e=>{
-          e.preventDefault()
-          if(armedId && (recEnd > recStart)){
-            const testId = newid()
-            const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'
-            const testBuffer = {
-              id: testId,
-              bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
-            }
-            let testRegion = AudioEngine.newRegion(testId,Number(recStart),recEnd-recStart)
-            
-            const doneLoad = (buf) => {
-              const bpm = 110
-              const bps = bpm/60
-              const beatDurSec = 1/bps
-              const barDurSec = 4*beatDurSec
-              console.log({bpm,bps,beatDurSec,barDurSec})
-              console.log(buf)
-              testRegion.bDuration = buf._buffer.duration / barDurSec
-              AudioEngine.bufferPool.push(testBuffer)
-              console.log(AudioEngine.bufferPool)
-
-              tracksDispatch({type:'record_region', trackId:armedId, region:testRegion})
-            }
-            testBuffer.bufferData.onload = doneLoad
-          }
-        }}>
-          <label>
-            Record Start
-            <input type='number' value={recStart} onChange={e=>{setRecStart(Number(e.target.value))}}/>
-          </label>
-          <br/>
-
-          <label>
-            Record End
-            <input type='number' value={recEnd} onChange={e=>{setRecEnd(Number(e.target.value))}}/>
-          </label>
-          <br/>
-
-          <input type="submit" value="Sim. Record" />
-          <br/>
-        </form>
       </div>
 
       <div className="EditorField">

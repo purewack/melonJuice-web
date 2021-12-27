@@ -199,7 +199,26 @@ export const AudioEngine = {
     })
   },
 
-  transportRecordStart (bpm, trackId, tracks, durationMultiplier) {
+  setBPM(bpm){
+    if(this.tonejs)
+    this.tonejs.Transport.bpm.value = bpm
+  },
+
+  getBPM(){ 
+    if(this.tonejs)
+    return this.tonejs.Transport.bpm.value
+    else 
+    return 60
+  },
+
+  getBPS(){
+    if(this.tonejs)
+    return this.tonejs.Transport.bpm.value/60
+    else
+    return 1.0
+  },
+
+  transportRecordStart (trackId, tracks) {
     if(!this.isRecording && trackId){
       this.tonejs.Transport.schedule((t)=>{
         this.lastRecording = []
@@ -208,18 +227,7 @@ export const AudioEngine = {
         this.isRecording = trackId
       }, 0)
 
-      let b = 0
-      this.tonejs.Transport.scheduleRepeat((time)=>{
-        if(this.metronome.mute) return
-        if(b%4 === 0)
-        this.metronome.click_major.start(time)
-        else
-        this.metronome.click_minor.start(time)
-
-        b+=1
-      }, '4n')
-
-      this.transportPlay(bpm, trackId, tracks, durationMultiplier)
+      this.transportPlay(trackId, tracks)
       console.log('started')
     }
     console.log(this.isRecording)
@@ -256,7 +264,7 @@ export const AudioEngine = {
           newRecording.bufferData.onload = (b)=>{
             this.bufferPool.push(newRecording)
             console.log(this.bufferPool)
-            resolve({id:id, duration:b.duration - sdx - edx})
+            resolve({id:id, durationSeconds:b.duration - sdx - edx})
             this.micNode.onstop = null 
           }
         }
@@ -280,32 +288,32 @@ export const AudioEngine = {
     })
     
   },
-  transportPlay(bpm, omitTrackId, tracks, durationMultiplier){
+  transportPlay(omitTrackId, tracks){
    // if(this.actx === null) return;
-    this.tonejs.Transport.bpm.value = bpm
     
     if(this.tonejs.Transport.state !== 'stopped'){
       this.transportStop(tracks)
       return;
     }
 
-    this.schedule(tracks, omitTrackId, durationMultiplier)
-
-    
+    this.schedule(tracks, omitTrackId)
     
     this.tonejs.Transport.seconds = 0
     this.tonejs.Transport.start('+0.1')
           
   },
 
-  schedule(tracks, omitTrackId, durationMultiplier){
-    const tt = durationMultiplier
-    //const tt = 1.0
+  schedule(tracks, omitTrackId){
+    //const tt = durationMultiplier
+    const tt = 1.0
     const ltc = 0.0
 
     tracks.forEach(tr => {
       if(!tr.regions) return
       if(omitTrackId && tr.trackId === omitTrackId) return
+
+      const bpm = this.tonejs.Transport.bpm.value 
+      const bTimeScalar = 60/bpm
 
       tr.regions.forEach(reg => {
         this.tonejs.Transport.schedule(t => {
@@ -315,21 +323,36 @@ export const AudioEngine = {
 
                 const ltc_start = -bp.startDeltaSec-ltc
                 const ltc_dur = -bp.stopDeltaSec-ltc
-                
+
+                const bpmPlayrate = bpm / reg.initialBPM
+                tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
+
                 tr.player.start(
                   t, 
-                  ltc_start + reg.bOffset*tt , 
-                  ltc_dur + reg.rDuration*tt 
+                  ltc_start + reg.bOffset*bTimeScalar , 
+                  ltc_dur + reg.rDuration*bTimeScalar 
                 )
               }
             })
             // tr.envelope.attack = reg.timeFadeIn
             // tr.envelope.release = reg.timeFadeOut
             // tr.envelope.triggerAttackRelease(reg.rDuration - reg.timeFadeOut)
-        }, reg.rOffset*tt )
+        }, reg.rOffset*bTimeScalar )
       })
-
     })
+
+    if(this.metronome.volume !== 0.0){
+      let b = 0
+      this.tonejs.Transport.scheduleRepeat((time)=>{
+        if(this.metronome.mute) return
+        if(b%4 === 0)
+        this.metronome.click_major.start(time)
+        else
+        this.metronome.click_minor.start(time)
+
+        b+=1
+      }, '4n')
+    }
   },
   
   newTrack(){
@@ -353,22 +376,21 @@ export const AudioEngine = {
     return t
   },
 
-  newRegion(bufferId, offset, duration){
+  newRegion(bufferId, offset, durationBeat, durationRecord){
     //this.bufferPool = [...this.bufferPool, {bufferId,duration}]
 
     return {
       regionId: newid(),
       bufferId: bufferId,
       bOffset:0,
-      bDuration:duration,
+      bDuration:durationRecord,
       rOffset:offset,
-      rDuration:duration,
+      rDuration:durationBeat,
       rFadeIn: 0.0,
       rFadeOut: 0.0,
       rPlayrate:1.0,
-      rLoop:0,
-      recordBPM: this.tonejs.Transport.bpm.value,
-      recordDuration: duration,
+      bpmPlayrate: 1.0,
+      initialBPM: this.tonejs.Transport.bpm.value,
     }
   },
 

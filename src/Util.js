@@ -83,9 +83,3 @@ export const randomColor = ()=>{
     const cc = `rgb(${rand()},${rand()},${rand()})`
     return cc;
 }
- 
-export const beatToAbs = (bpm, beats) => {
-    const bps = bpm/60
-    const beatDurSec = 1/bps
-    return beatDurSec * beats
-}
