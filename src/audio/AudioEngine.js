@@ -63,6 +63,7 @@ import newid from 'uniqid';
 import { randomColor } from '../Util';
 import wavClickMinor from './metro_click_l.wav'
 import wavClickMajor from './metro_click_h.wav'
+//import MicWorkletModule from '../../public/MicWorkletModule'
 
 const calculateRegionRelations = (regions) => {
   let sorted = regions.slice().sort((a,b)=>{
@@ -87,6 +88,7 @@ export const AudioEngine = {
   isSetup: false,
   actx: null,
   tonejs: null,
+  inputWorklet: true,
   micNode: null,
   isRecording: false,
   lastRecording: [],
@@ -153,7 +155,7 @@ export const AudioEngine = {
     if(this.isSetup) return
     
     this.tonejs = Tone
-    let ac = this.actx  = this.tonejs.getContext().rawContext._nativeContext
+    this.actx = Tone.context._context._nativeAudioContext
 
     this.metronome = {
       click_major: new this.tonejs.Player(),
@@ -168,7 +170,7 @@ export const AudioEngine = {
     this.metronome.click_minor.load(wavClickMinor)
     this.metronome.click_major.load(wavClickMajor)
 
-    this.tonejs.start()
+    this.inputWorklet = (this.actx?.audioWorklet?.addModule !== undefined)
     this.isSetup = true
    
     if(!inputId) {
@@ -183,20 +185,64 @@ export const AudioEngine = {
   		mozNoiseSuppression: false,
   		mozAutoGainControl: false,
   	},video:false}).then(stream => {
-      this.micNode = new MediaRecorder(stream)
-      this.micNode.ondataavailable = (e)=>{
-        if(e.data.size){
-          console.log('chunk')
-          this.lastRecording.push(e.data)
+      if(this.inputWorklet){
+        (async ()=>{
+          let micStream = this.actx.createMediaStreamSource(stream);
+          await this.actx.audioWorklet.addModule('MicWorkletModule.js')
+         
+          let micNode = new window.AudioWorkletNode(this.actx, 'mic-worklet', {
+            numberOfInputs: 1,
+            numberOfOutputs: 1,
+            outputChannelCount: [2]
+          })
+          micStream.connect(micNode)
+    		  micNode.connect(this.actx.destination)
+          
+          micNode.port.onmessage = (e)=>{
+            if(e.data.eventType === 'onchunk'){
+              let len = (e.data.audioChunk.length + this.lastRecording.length)
+              let bufnew = new Float32Array(len)
+              bufnew.set(this.lastRecording)
+              bufnew.set(e.data.audioChunk, this.lastRecording.length)
+              this.lastRecording = bufnew
+              //console.log(len)
+            }
+            else if(e.data.eventType === 'begin'){
+      				this.lastRecordingChunks = []
+      			}
+            else if(e.data.eventType === 'end'){
+              //console.log(this.lastRecording)
+      				const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
+              buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
+              //this.lastBufferId = newid()
+              //this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
+              
+              //
+              let recordStartTime = 0 //get actual position of transport
+              //ihis.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
+            }
+          }
+          this.micNode = micNode
+          await this.tonejs.start()
+        })()  
+      }
+      else{
+        this.micNode = new MediaRecorder(stream)
+        this.micNode.ondataavailable = (e)=>{
+          if(e.data.size){
+            this.lastRecording.push(e.data)
+          }
         }
+        this.micNode.onstart = ()=>{ 
+          this.recordingStats.startTimeReal = performance.now() 
+          this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
+        }
+        this.tonejs.start()
       }
-      this.micNode.onstart = ()=>{ 
-        this.recordingStats.startTimeReal = performance.now() 
-        this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
-        console.log(this.recordingStats)
-      }
-      console.log(this.micNode)
+
     })
+
+    return this.inputWorklet
   },
 
   setBPM(bpm){

@@ -118,7 +118,8 @@ function App() {
       //   setScreen('editor')
       // }
 
-      AudioEngine.init(selectedInput)
+      const workletStatus = AudioEngine.init(selectedInput)
+      setSongTitle(workletStatus ? 'worklet working' : 'mediarecorder working')
       tracksDispatch({type:'new'})
       setScreen('editor')
       setBpm(90)
