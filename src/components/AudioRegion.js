@@ -21,13 +21,14 @@ import PointerHandle  from '../interfaces/PointerHandle';
                        │                            │
     */
 
-const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo, tracksDispatch, editorStats})=>{
-  const rOffset = (editorStats.barLength*region.rOffset)
-  const rDuration = (editorStats.barLength*region.rDuration)
-  const bOffset = (editorStats.barLength*region.bOffset)
-  const bDuration = (editorStats.barLength*region.bDuration)
-  const rFadeIn = (editorStats.barLength*region.rFadeIn)
-  const rFadeOut = (editorStats.barLength*region.rFadeOut)
+const AudioRegion = ({region, selectedRegion, onSelect, trackInfo, tracksDispatch, editorStats})=>{
+
+  const rOffset = (editorStats.beatLength * region.rOffset)
+  const bOffset = (editorStats.beatLength * region.bOffset * region.rPlayrate)
+  const rDuration = (editorStats.beatLength * region.rDuration) / region.rPlayrate
+  const bDuration = (editorStats.beatLength * region.bDuration * editorStats.bps) / region.rPlayrate
+  const rFadeIn = (editorStats.beatLength*region.rFadeIn)
+  const rFadeOut = (editorStats.beatLength*region.rFadeOut)
   const maxHeight = (editorStats.trackHeight)
   const selected = selectedRegion && selectedRegion.regionId === region.regionId
   const isGrabbing = editorStats.toolMode === 'grab'
@@ -41,7 +42,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
   }
   const snapCalc = (ll, min, max, cancel)=>{
     if(editorStats.snapGrain && !cancel){
-      let b = (editorStats.barLength/editorStats.snapGrain)
+      let b = ((editorStats.beatLength*editorStats.beatBar)/editorStats.snapGrain)
       let l = Math.floor(ll/b)*b
       if(min !== null && l < min) l = min
       if(max !== null && l > max) l = max
@@ -98,12 +99,12 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     let dxx = snapCalc(dx)-(right - snapCalc(right))
     const max = (bDuration-bOffset)-rDuration
     if(dx === max) dxx = max 
-    const rd = (rDuration + dxx)/editorStats.barLength
+    const rd = (rDuration + dxx)/editorStats.beatLength
 
     const rwo = (rww+dxx)-(rFadeOut)
     const delta = rFadeIn - rwo
-    const fi = delta > 0 ? (rFadeIn-delta) / editorStats.barLength : region.rFadeIn
-    const fo = rFadeOut>(rww+dxx) ? (rww+dxx) / editorStats.barLength : region.rFadeOut
+    const fi = delta > 0 ? (rFadeIn-delta) / editorStats.beatLength : region.rFadeIn
+    const fo = rFadeOut>(rww+dxx) ? (rww+dxx) / editorStats.beatLength : region.rFadeOut
  
     tracksDispatch({
       type:'update_region',
@@ -131,14 +132,14 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
 
     let dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
     if(dxx <= -bOffset) dxx = -bOffset
-    const ro = (rOffset + dxx)/editorStats.barLength
-    const rd = (rDuration - dxx)/editorStats.barLength
-    const bo = (bOffset + dxx)/editorStats.barLength
+    const ro = (rOffset + dxx)/editorStats.beatLength
+    const rd = (rDuration - dxx)/editorStats.beatLength
+    const bo = (bOffset + dxx)/editorStats.beatLength
     
     const rwo = (rww-dxx)-(rFadeOut)
     const delta = rFadeIn - rwo
-    const fo = delta > 0 ? (rFadeOut-delta) / editorStats.barLength : region.rFadeOut
-    const fi = rFadeIn>(rww-dxx) ? (rww-dxx) / editorStats.barLength : region.rFadeIn
+    const fo = delta > 0 ? (rFadeOut-delta) / editorStats.beatLength : region.rFadeOut
+    const fi = rFadeIn>(rww-dxx) ? (rww-dxx) / editorStats.beatLength : region.rFadeIn
 
     tracksDispatch({
       type:'update_region',
@@ -157,7 +158,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
 
     const jumps = (snapVCalc(dy + editorStats.trackHeight/2)/editorStats.trackHeight)
     const dxx = snapCalc(dx)-(rOffset - snapCalc(rOffset))
-    const ro = (rOffset + dxx)/editorStats.barLength
+    const ro = (rOffset + dxx)/editorStats.beatLength
       tracksDispatch({
        type:'update_region',
        updatedRegion: {...region, rOffset:ro},
@@ -188,7 +189,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     if(editorStats.trackHeight+dy <= 0 && editorStats.trackHeight+prev_dy > 0) {
       if(dxx === 0 || dxx === rDuration) return
       const cp = dxx
-      const cutPosCommit = (cp/editorStats.barLength)
+      const cutPosCommit = (cp/editorStats.beatLength)
       onSelect(null)
       tracksDispatch({type:'cut_region',regionToCut:region,regionCutLength:cutPosCommit})
     }
@@ -211,7 +212,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     setRRFadeIn(dx)
   }
   const onEndFadeInHandler = ({dx})=>{
-    const rfi = (rFadeIn+dx)/editorStats.barLength
+    const rfi = (rFadeIn+dx)/editorStats.beatLength
     tracksDispatch({
       type:'update_region',
       updatedRegion: {...region, rFadeIn:rfi},
@@ -223,7 +224,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
     setRRFadeOut(-dx)
   }
   const onEndFadeOutHandler = ({dx})=>{
-    const rfo = (rFadeOut-dx)/editorStats.barLength
+    const rfo = (rFadeOut-dx)/editorStats.beatLength
     tracksDispatch({
       type:'update_region',
       updatedRegion: {...region, rFadeOut:rfo},
@@ -286,6 +287,7 @@ const AudioRegion = ({region, selectedRegion, onSelect, waveformPath, trackInfo,
 
     <g clipPath={`url(#svgframe-${region.regionId})`}> 
       <rect fill={trackInfo.color} width={rww} height={maxHeight}></rect>
+      <line y1={maxHeight/2} y2={maxHeight/2} x1={0} x2={rww} strokeWidth={2} stroke={'white'}></line>
       <use fill='white' href={`#waveform-${region.bufferId}`} y={0} x={-rrOffset-bOffset} width={bDuration} height={maxHeight}/>
       <path className="FadeSVG" d={`M 0,${maxHeight} Q 0,${maxHeight/4} ${rFadeIn+rrFadeIn},${vy} L 0,${vy} L 0,${maxHeight}`} />
       <path className="FadeSVG" d={`M ${rww-(rFadeOut+rrFadeOut)},${vy} Q ${rww},${maxHeight/4} ${rww},${maxHeight} L ${rww},${vy} L ${rww-(rFadeOut+rrFadeOut)},${vy}`} />

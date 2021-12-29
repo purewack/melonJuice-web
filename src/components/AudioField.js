@@ -49,7 +49,7 @@ const AudioField = ({ songMeasures, timer, editorStats ,children}) => {
             {bars && bars.map((b,i)=>{
                 return (<div key={i}
                     className='TimelineBar'
-                    style={{width:editorStats.barLength}}>
+                    style={{width: editorStats.beatLength*editorStats.beatBar }}>
                     { i}
                 </div>)
             })}

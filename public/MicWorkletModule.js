@@ -56,31 +56,31 @@ class RecorderWorkletProcessor extends AudioWorkletProcessor {
     },
     {
       name: 'monitorState',
-      defaultValue: 0,
+      defaultValue: 1,
       automationRate: 'k-rate'
     }];
   }
 
   constructor() {
     super();
-	this._armedChannel = 0
+	  this._armedChannel = 0
     this._chunkSize = 4096;
     this._chunk = new Float32Array(this._chunkSize);
     this._framesWritten = 0;
-	this._recLength = 0;
-	this._wasRec = 0
+    this._recLength = 0;
+    this._wasRec = 0
   }
 
   _flush() {
-	let buffer = this._chunk;
-	this.port.postMessage({
-		eventType: 'onchunk',
-		audioChunk: buffer
-	});
+    let buffer = this._chunk;
+    this.port.postMessage({
+      eventType: 'onchunk',
+      audioChunk: buffer
+    });
   }
   _recordingStarted() {
-	this._framesWritten = 0;
-	this._recLength = 0;
+    this._framesWritten = 0;
+    this._recLength = 0;
     this.port.postMessage({
       eventType: 'begin'
     });
