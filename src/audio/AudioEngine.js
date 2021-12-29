@@ -218,7 +218,7 @@ export const AudioEngine = {
               //this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
               
               //
-              let recordStartTime = 0 //get actual position of transport
+              //let recordStartTime = 0 //get actual position of transport
               //ihis.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
             }
           }
@@ -352,7 +352,7 @@ export const AudioEngine = {
 
   schedule(tracks, omitTrackId){
     //const tt = durationMultiplier
-    const tt = 1.0
+    //const tt = 1.0
     const ltc = 0.128
 
     tracks.forEach(tr => {
