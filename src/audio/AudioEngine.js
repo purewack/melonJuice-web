@@ -103,7 +103,9 @@ export const AudioEngine = {
     stopTimeReal:0,
     startDelta:0,
     stopDelta:0,
+    totalDelay:0,
   },
+  onRecordingComplete: null,
   
   awaitPermission(){
     if(this.isSetup) return
@@ -176,7 +178,6 @@ export const AudioEngine = {
    
     if(!inputId) {
       this.tonejs.start()
-      return 
     }
 
     navigator.mediaDevices.getUserMedia({audio:{
@@ -187,18 +188,15 @@ export const AudioEngine = {
   		mozAutoGainControl: false,
   	},video:false}).then(stream => {
       if(this.inputWorklet){
-        (async ()=>{
-          let micStream = this.actx.createMediaStreamSource(stream);
-          await this.actx.audioWorklet.addModule('MicWorkletModule.js')
-         
+        let micStream = this.actx.createMediaStreamSource(stream);
+        this.actx.audioWorklet.addModule('MicWorkletModule.js').then(()=>{
           let micNode = new window.AudioWorkletNode(this.actx, 'mic-worklet', {
             numberOfInputs: 1,
             numberOfOutputs: 1,
             outputChannelCount: [2]
           })
           micStream.connect(micNode)
-    		  micNode.connect(this.actx.destination)
-          
+          micNode.connect(this.actx.destination)
           micNode.port.onmessage = (e)=>{
             if(e.data.eventType === 'onchunk'){
               let len = (e.data.audioChunk.length + this.lastRecording.length)
@@ -206,27 +204,19 @@ export const AudioEngine = {
               bufnew.set(this.lastRecording)
               bufnew.set(e.data.audioChunk, this.lastRecording.length)
               this.lastRecording = bufnew
-              //console.log(len)
             }
             else if(e.data.eventType === 'begin'){
-              this.lastRecording = new Float32Array(0)
-      			}
+              this.lastRecording = new Float32Array(4096)
+            }
             else if(e.data.eventType === 'end'){
-              //console.log(this.lastRecording)
-      				const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
+              const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
               buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
-              this.generateRegion()
-              //this.lastBufferId = newid()
-              //this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
-              
-              //
-              //let recordStartTime = 0 //get actual position of transport
-              //ihis.tracks[0].addRegion(this.lastBufferId, recordStartTime, (e.data.recLength/ac.sampleRate) )
+              this.constructRecording(buf)
             }
           }
           this.micNode = micNode
-          await this.tonejs.start()
-        })()  
+          this.tonejs.start()
+        })
       }
       else{
         this.micNode = new MediaRecorder(stream)
@@ -241,6 +231,8 @@ export const AudioEngine = {
         }
         this.micNode.onstop = (e)=>{
           console.log(this.lastRecording)
+          const blob = new Blob(this.lastRecording, {type:'audio/mp3;'});
+          this.constructRecording(blob)
         }
         this.tonejs.start()
       }
@@ -250,22 +242,30 @@ export const AudioEngine = {
     return this.inputWorklet
   },
 
-  construct(resolve){
+  constructRecording(data){
+    this.recordingStats.stopTimeReal = performance.now()
+    this.recordingStats.stopDelta = this.recordingStats.stopTimeReal - this.recordingStats.stopTimePress
+    this.recordingStats.totalDelay = (this.recordingStats.startDelta + this.recordingStats.stopDelta)
+    console.log(this.recordingStats)
+
     const id = newid()
     const newRecording = {
       id: id,
-      bufferData: new this.tonejs.ToneAudioBuffer(recording),
+      bufferData: new this.tonejs.ToneAudioBuffer(data),
       online: true,
-      startDeltaSec: sdx,
-      stopDeltaSec: edx,
+      startDeltaSec: this.recordingStats.startDelta/1000,
+      stopDeltaSec: this.recordingStats.stopDelta/1000,
+      totalDelay: this.recordingStats.totalDelay/1000,
       initialBPM: this.tonejs.Transport.bpm.value,
     }
+    this.bufferPool.push(newRecording)
     newRecording.bufferData.onload = (b)=>{
-      this.bufferPool.push(newRecording)
-      console.log(this.bufferPool)
-      this.micNode.onstop = null 
-      return Promise.resolve({id:id, durationSeconds:b.duration - sdx - edx})
-    }
+      const recording = {
+        id: id, 
+        durationSeconds: b.duration - this.recordingStats.totalDelay
+      }
+      this.onRecordingComplete(recording)
+    } 
   },
 
   setBPM(bpm){
@@ -296,7 +296,6 @@ export const AudioEngine = {
           this.micNode.parameters.get('recState').setValueAtTime(1, 0); 
         }
         else{
-          this.lastRecording = []
           this.micNode.start()
         }
       }, 0)
@@ -309,34 +308,19 @@ export const AudioEngine = {
   transportRecordStop (trackId,tracks) {
 
     if(this.isRecording && trackId){
-      this.transportStop(tracks)
+      
       this.recordingStats.stopTimePress = performance.now()
-      this.micNode.stop()
-      return this.construct()
+      this.transportStop(tracks)
+      
+      if(this.inputWorklet)
+        this.micNode.port.get('recState').setValueAtTime(1,0)
+      else
+        this.micNode.stop()
 
-      return new Promise((resolve, reject) => {
-        this.isRecording = null
-
-        console.log('stopping') 
-        this.micNode.onstop = (e)=>{
-          
-          this.recordingStats.stopTimeReal = performance.now()
-          this.recordingStats.stopDelta = this.recordingStats.stopTimeReal - this.recordingStats.stopTimePress
-          console.log(this.recordingStats)
-
-          const blob = new Blob(this.lastRecording, {type:'audio/mp3;'});
-          this.lastRecording = []
-          
-          const sdx = this.recordingStats.startDelta/1000
-          const edx = this.recordingStats.stopDelta/100
-
-        }
-      })      
     }
-    return Promise.reject()
+
   },
   transportStop(tracks){
-    //if(this.actx === null) return;
     
     this.tonejs.Transport.stop()
     this.tonejs.Transport.cancel()

@@ -118,11 +118,12 @@ function App() {
       //   setScreen('editor')
       // }
 
-      const workletStatus = AudioEngine.init(selectedInput)
-      setSongTitle(workletStatus ? 'worklet working' : 'mediarecorder working')
-      tracksDispatch({type:'new'})
-      setScreen('editor')
-      setBpm(90)
+      AudioEngine.init(selectedInput).then((workletStatus)=>{
+        setSongTitle(workletStatus ? 'worklet working' : 'mediarecorder working')
+        tracksDispatch({type:'new'})
+        setScreen('editor')
+        setBpm(90)
+      })
     }
   //eslint-disable-next-line
   }, [screen])
