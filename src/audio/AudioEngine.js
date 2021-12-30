@@ -174,8 +174,8 @@ export const AudioEngine = {
     this.metronome.click_minor.load(wavClickMinor)
     this.metronome.click_major.load(wavClickMajor)
 
-    //this.inputWorklet = (this.actx?.audioWorklet?.addModule !== undefined)
-    this.inputWorklet = false
+    this.inputWorklet = (this.actx?.audioWorklet?.addModule !== undefined)
+    //this.inputWorklet = false
     this.isSetup = true
    
     if(!inputId) {
@@ -212,6 +212,8 @@ export const AudioEngine = {
         }
         else if(e.data.eventType === 'begin'){
           this.lastRecording = new Float32Array(4096)
+          this.recordingStats.startTimeReal = performance.now() 
+          this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
         }
         else if(e.data.eventType === 'end'){
           const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
@@ -265,14 +267,17 @@ export const AudioEngine = {
 
     const newRecording = {
       id: id,
-      bufferData: new this.tonejs.ToneAudioBuffer(data,onload),
+      bufferData: new this.tonejs.ToneAudioBuffer(data, onload),
       online: true,
       startDeltaSec: this.recordingStats.startDelta/1000,
       stopDeltaSec: this.recordingStats.stopDelta/1000,
       totalDelay: this.recordingStats.totalDelay/1000,
       initialBPM: this.tonejs.Transport.bpm.value,
     }
+    console.log(newRecording)
     this.bufferPool.push(newRecording)
+
+    if(typeof data !== 'string') onload(data)
   },
 
   setBPM(bpm){
@@ -311,7 +316,6 @@ export const AudioEngine = {
       this.transportPlay(trackId, tracks, from)
       console.log('started')
     }
-    console.log(this.isRecording)
   },
   transportRecordStop (trackId,tracks) {
 
@@ -323,7 +327,7 @@ export const AudioEngine = {
       this.transportStop(tracks)
 
       if(this.inputWorklet)
-        this.micNode.port.get('recState').setValueAtTime(1,0)
+        this.micNode.parameters.get('recState').setValueAtTime(0, 0)
       else
         this.micNode.stop()
 
