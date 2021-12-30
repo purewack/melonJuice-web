@@ -104,6 +104,8 @@ export const AudioEngine = {
     startDelta:0,
     stopDelta:0,
     totalDelay:0,
+    track:null,
+    from:0,
   },
   onRecordingComplete: null,
   
@@ -153,8 +155,8 @@ export const AudioEngine = {
     })
   },
 
-  init(inputId) {
-    if(this.isSetup) return
+  async init(inputId) {
+    if(this.isSetup) return null
     
     this.tonejs = Tone
     this.actx = Tone.context._context._nativeAudioContext
@@ -177,81 +179,93 @@ export const AudioEngine = {
     this.isSetup = true
    
     if(!inputId) {
-      this.tonejs.start()
+      await this.tonejs.start()
+      return this.inputWorklet
     }
 
-    navigator.mediaDevices.getUserMedia({audio:{
+    let stream = await navigator.mediaDevices.getUserMedia({audio:{
   		deviceId: {exact: inputId},
       latency: 0.0,
   		echoCancellation: false,
   		mozNoiseSuppression: false,
   		mozAutoGainControl: false,
-  	},video:false}).then(stream => {
-      if(this.inputWorklet){
-        let micStream = this.actx.createMediaStreamSource(stream);
-        this.actx.audioWorklet.addModule('MicWorkletModule.js').then(()=>{
-          let micNode = new window.AudioWorkletNode(this.actx, 'mic-worklet', {
-            numberOfInputs: 1,
-            numberOfOutputs: 1,
-            outputChannelCount: [2]
-          })
-          micStream.connect(micNode)
-          micNode.connect(this.actx.destination)
-          micNode.port.onmessage = (e)=>{
-            if(e.data.eventType === 'onchunk'){
-              let len = (e.data.audioChunk.length + this.lastRecording.length)
-              let bufnew = new Float32Array(len)
-              bufnew.set(this.lastRecording)
-              bufnew.set(e.data.audioChunk, this.lastRecording.length)
-              this.lastRecording = bufnew
-            }
-            else if(e.data.eventType === 'begin'){
-              this.lastRecording = new Float32Array(4096)
-            }
-            else if(e.data.eventType === 'end'){
-              const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
-              buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
-              this.constructRecording(buf)
-            }
-          }
-          this.micNode = micNode
-          this.tonejs.start()
-        })
-      }
-      else{
-        this.micNode = new MediaRecorder(stream)
-        this.micNode.ondataavailable = (e)=>{
-          if(e.data.size){
-            this.lastRecording = e.data
-          }
-        }
-        this.micNode.onstart = ()=>{ 
-          this.recordingStats.startTimeReal = performance.now() 
-          this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
-        }
-        this.micNode.onstop = (e)=>{
-          console.log(this.lastRecording)
-          const blob = new Blob(this.lastRecording, {type:'audio/mp3;'});
-          this.constructRecording(blob)
-        }
-        this.tonejs.start()
-      }
+  	},video:false})
 
-    })
+    if(this.inputWorklet){
+      let micStream = this.actx.createMediaStreamSource(stream);
+      await this.actx.audioWorklet.addModule('MicWorkletModule.js')
+      
+      let micNode = new window.AudioWorkletNode(this.actx, 'mic-worklet', {
+        numberOfInputs: 1,
+        numberOfOutputs: 1,
+        outputChannelCount: [2]
+      })
+      micStream.connect(micNode)
+      micNode.connect(this.actx.destination)
+      micNode.port.onmessage = (e)=>{
+        if(e.data.eventType === 'onchunk'){
+          let len = (e.data.audioChunk.length + this.lastRecording.length)
+          let bufnew = new Float32Array(len)
+          bufnew.set(this.lastRecording)
+          bufnew.set(e.data.audioChunk, this.lastRecording.length)
+          this.lastRecording = bufnew
+        }
+        else if(e.data.eventType === 'begin'){
+          this.lastRecording = new Float32Array(4096)
+        }
+        else if(e.data.eventType === 'end'){
+          const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
+          buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
+          this.constructRecording(buf)
+        }
+      }
+      this.micNode = micNode
+      await this.tonejs.start()
+      
+    }
+    else{
+      this.micNode = new MediaRecorder(stream)
+      this.micNode.ondataavailable = (e)=>{
+        if(e.data.size){
+          this.lastRecording = e.data
+        }
+      }
+      this.micNode.onstart = ()=>{ 
+        this.recordingStats.startTimeReal = performance.now() 
+        this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
+      }
+      this.micNode.onstop = (e)=>{
+        console.log(this.lastRecording)
+        let url = window.URL.createObjectURL(this.lastRecording)
+        this.constructRecording(url)
+      }
+      await this.tonejs.start()
+    }
 
     return this.inputWorklet
   },
 
   constructRecording(data){
+    console.log(data)
     this.recordingStats.stopTimeReal = performance.now()
     this.recordingStats.stopDelta = this.recordingStats.stopTimeReal - this.recordingStats.stopTimePress
     this.recordingStats.totalDelay = (this.recordingStats.startDelta + this.recordingStats.stopDelta)
     console.log(this.recordingStats)
 
     const id = newid()
+
+    const onload = (b)=>{
+      console.log(b)
+      const recording = {
+        id: id, 
+        durationSeconds: b.duration - this.recordingStats.totalDelay/1000
+      }
+      this.onRecordingComplete(recording, this.recordingStats.track, this.recordingStats.from, this.getBPS())
+    }
+
     const newRecording = {
       id: id,
-      bufferData: new this.tonejs.ToneAudioBuffer(data),
+      bufferData: new this.tonejs.ToneAudioBuffer(data,onload),
       online: true,
       startDeltaSec: this.recordingStats.startDelta/1000,
       stopDeltaSec: this.recordingStats.stopDelta/1000,
@@ -259,13 +273,6 @@ export const AudioEngine = {
       initialBPM: this.tonejs.Transport.bpm.value,
     }
     this.bufferPool.push(newRecording)
-    newRecording.bufferData.onload = (b)=>{
-      const recording = {
-        id: id, 
-        durationSeconds: b.duration - this.recordingStats.totalDelay
-      }
-      this.onRecordingComplete(recording)
-    } 
   },
 
   setBPM(bpm){
@@ -287,10 +294,11 @@ export const AudioEngine = {
     return 1.0
   },
 
-  transportRecordStart (trackId, tracks) {
+  transportRecordStart (trackId, tracks, from) {
     if(!this.isRecording && trackId){
       this.tonejs.Transport.schedule((t)=>{
         this.isRecording = trackId
+        this.recordingStats.from = from
         this.recordingStats.startTimePress = performance.now()
         if(this.inputWorklet){
           this.micNode.parameters.get('recState').setValueAtTime(1, 0); 
@@ -300,7 +308,7 @@ export const AudioEngine = {
         }
       }, 0)
 
-      this.transportPlay(trackId, tracks)
+      this.transportPlay(trackId, tracks, from)
       console.log('started')
     }
     console.log(this.isRecording)
@@ -310,8 +318,10 @@ export const AudioEngine = {
     if(this.isRecording && trackId){
       
       this.recordingStats.stopTimePress = performance.now()
-      this.transportStop(tracks)
+      this.recordingStats.track = trackId
       
+      this.transportStop(tracks)
+
       if(this.inputWorklet)
         this.micNode.port.get('recState').setValueAtTime(1,0)
       else
@@ -330,7 +340,7 @@ export const AudioEngine = {
     })
     
   },
-  transportPlay(omitTrackId, tracks){
+  transportPlay(omitTrackId, tracks, from){
    // if(this.actx === null) return;
     
     if(this.tonejs.Transport.state !== 'stopped'){
@@ -338,14 +348,14 @@ export const AudioEngine = {
       return;
     }
 
-    this.schedule(tracks, omitTrackId)
+    this.schedule(tracks, omitTrackId, from)
     
     this.tonejs.Transport.seconds = 0
     this.tonejs.Transport.start('+0.1')
           
   },
 
-  schedule(tracks, omitTrackId){
+  schedule(tracks, omitTrackId, from){
     //const tt = durationMultiplier
     //const tt = 1.0
     const ltc = 0.128

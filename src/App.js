@@ -27,8 +27,8 @@ function App() {
     trackHeight:100, 
     toolMode:'grab', 
     bps:1.0,
-    seekBeat: 0,
   })
+  const [seekBeat, setSeekBeat] = useState(0)
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   //eslint-disable-next-line
@@ -123,6 +123,19 @@ function App() {
         tracksDispatch({type:'new'})
         setScreen('editor')
         setBpm(90)
+        
+        AudioEngine.onRecordingComplete = (recording, track, from, bps)=>{
+          const region = AudioEngine.newRegion(
+            recording.id, 
+            from, 
+            recording.durationSeconds * bps,//editorStats.bps, 
+            recording.durationSeconds
+          )
+          console.log(region)
+          tracksDispatch({type:'record_region', trackId: track, region: region})
+        }
+
+        console.log(AudioEngine)
       })
     }
   //eslint-disable-next-line
@@ -223,7 +236,7 @@ function App() {
 
 
     <button onClick={()=>{
-      AudioEngine.transportPlay(null, tracks.current)
+      AudioEngine.transportPlay(null, tracks.current, seekBeat)
     }}>Start</button>
 
     <button onClick={()=>{
@@ -231,20 +244,11 @@ function App() {
     }>Stop</button>
     
     <button onClick={()=>{
-      AudioEngine.transportRecordStart(armedId, tracks.current)
+      AudioEngine.transportRecordStart(armedId, tracks.current, seekBeat)
     }}>Rec Start</button>
 
     <button onClick={()=>{
-      AudioEngine.transportRecordStop(armedId, tracks.current).then((recording)=>{
-        const rr = AudioEngine.newRegion(
-          recording.id, 
-          editorStats.seekBeat, 
-          recording.durationSeconds * editorStats.bps, 
-          recording.durationSeconds
-        )
-        console.log(rr)
-        tracksDispatch({type:'record_region', trackId: armedId, region: rr})
-      })
+      AudioEngine.transportRecordStop(armedId, tracks.current)
     }}>Rec Stop</button>
 
     <SVGElements buffers={AudioEngine.bufferPool}/>
