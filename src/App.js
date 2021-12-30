@@ -251,6 +251,10 @@ function App() {
       AudioEngine.transportRecordStop(armedId, tracks.current)
     }}>Rec Stop</button>
 
+    <button onClick={()=>{
+      setSeekBeat(2)
+    }}>Seek to 2b</button>
+
     <SVGElements buffers={AudioEngine.bufferPool}/>
 
       <button onClick={()=>{

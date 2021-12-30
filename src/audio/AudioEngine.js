@@ -359,7 +359,7 @@ export const AudioEngine = {
           
   },
 
-  schedule(tracks, omitTrackId, from){
+  schedule(tracks, omitTrackId, fromB){
     //const tt = durationMultiplier
     //const tt = 1.0
     const ltc = 0.128
@@ -369,36 +369,43 @@ export const AudioEngine = {
       if(omitTrackId && tr.trackId === omitTrackId) return
 
       const bpm = this.tonejs.Transport.bpm.value 
-      const bTimeScalar = 60/bpm
+      const scalarBtoT = 60/bpm
 
       tr.regions.forEach(reg => {
-        this.tonejs.Transport.schedule(t => {
-            this.bufferPool.forEach(bp => {
-              if(bp.id === reg.bufferId){
-                tr.player.buffer = bp.bufferData
+        const startT = fromB*scalarBtoT
+        const regEndT = (reg.rOffset+reg.rDuration)*scalarBtoT
+        
+        if(startT < regEndT) {
+          const scheduleT = regEndT - startT
 
-                const ltc_start = bp.startDeltaSec+ltc
-                const ltc_dur = bp.stopDeltaSec+ltc
+          this.tonejs.Transport.schedule(t => {
+              this.bufferPool.forEach(bp => {
+                if(bp.id === reg.bufferId){
+                  tr.player.buffer = bp.bufferData
 
-                const bpmPlayrate = bpm / bp.initialBPM
-                tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
+                  const ltc_start = bp.startDeltaSec+ltc
+                  const ltc_dur = bp.stopDeltaSec+ltc
 
-                tr.player.start(
-                  t, 
-                  ltc_start + reg.bOffset*bTimeScalar , 
-                  ltc_dur + reg.rDuration*bTimeScalar 
-                )
-              }
-            })
-            // tr.envelope.attack = reg.timeFadeIn
-            // tr.envelope.release = reg.timeFadeOut
-            // tr.envelope.triggerAttackRelease(reg.rDuration - reg.timeFadeOut)
-        }, reg.rOffset*bTimeScalar )
+                  const bpmPlayrate = bpm / bp.initialBPM
+                  tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
+
+                  tr.player.start(
+                    t, 
+                    ltc_start + reg.bOffset*scalarBtoT , 
+                    ltc_dur + reg.rDuration*scalarBtoT 
+                  )
+                }
+              })
+              // tr.envelope.attack = reg.timeFadeIn
+              // tr.envelope.release = reg.timeFadeOut
+              // tr.envelope.triggerAttackRelease(reg.rDuration - reg.timeFadeOut)
+          }, scheduleT)
+        }
       })
     })
 
     if(this.metronome.volume !== 0.0){
-      let b = 0
+      let b = fromB % 4
       this.tonejs.Transport.scheduleRepeat((time)=>{
         if(this.metronome.mute) return
         if(b%4 === 0)
