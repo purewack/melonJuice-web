@@ -91,7 +91,7 @@ export const AudioEngine = {
   inputWorklet: true,
   micNode: null,
   isRecording: false,
-  lastRecording: [],
+  lastRecording: null,
   lastBufferId: null,
   bufferPool: [],
   connections: [],
@@ -170,7 +170,8 @@ export const AudioEngine = {
     this.metronome.click_minor.load(wavClickMinor)
     this.metronome.click_major.load(wavClickMajor)
 
-    this.inputWorklet = (this.actx?.audioWorklet?.addModule !== undefined)
+    //this.inputWorklet = (this.actx?.audioWorklet?.addModule !== undefined)
+    this.inputWorklet = false
     this.isSetup = true
    
     if(!inputId) {
@@ -208,12 +209,13 @@ export const AudioEngine = {
               //console.log(len)
             }
             else if(e.data.eventType === 'begin'){
-      				this.lastRecordingChunks = []
+              this.lastRecording = new Float32Array(0)
       			}
             else if(e.data.eventType === 'end'){
               //console.log(this.lastRecording)
       				const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
               buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
+              this.generateRegion()
               //this.lastBufferId = newid()
               //this.bufferPool[`${this.lastBufferId}`] = new this.tonejs.ToneAudioBuffer(buf)
               
@@ -230,12 +232,15 @@ export const AudioEngine = {
         this.micNode = new MediaRecorder(stream)
         this.micNode.ondataavailable = (e)=>{
           if(e.data.size){
-            this.lastRecording.push(e.data)
+            this.lastRecording = e.data
           }
         }
         this.micNode.onstart = ()=>{ 
           this.recordingStats.startTimeReal = performance.now() 
           this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
+        }
+        this.micNode.onstop = (e)=>{
+          console.log(this.lastRecording)
         }
         this.tonejs.start()
       }
@@ -243,6 +248,24 @@ export const AudioEngine = {
     })
 
     return this.inputWorklet
+  },
+
+  construct(resolve){
+    const id = newid()
+    const newRecording = {
+      id: id,
+      bufferData: new this.tonejs.ToneAudioBuffer(recording),
+      online: true,
+      startDeltaSec: sdx,
+      stopDeltaSec: edx,
+      initialBPM: this.tonejs.Transport.bpm.value,
+    }
+    newRecording.bufferData.onload = (b)=>{
+      this.bufferPool.push(newRecording)
+      console.log(this.bufferPool)
+      this.micNode.onstop = null 
+      return Promise.resolve({id:id, durationSeconds:b.duration - sdx - edx})
+    }
   },
 
   setBPM(bpm){
@@ -267,10 +290,15 @@ export const AudioEngine = {
   transportRecordStart (trackId, tracks) {
     if(!this.isRecording && trackId){
       this.tonejs.Transport.schedule((t)=>{
-        this.lastRecording = []
-        this.recordingStats.startTimePress = performance.now()
-        this.micNode.start()
         this.isRecording = trackId
+        this.recordingStats.startTimePress = performance.now()
+        if(this.inputWorklet){
+          this.micNode.parameters.get('recState').setValueAtTime(1, 0); 
+        }
+        else{
+          this.lastRecording = []
+          this.micNode.start()
+        }
       }, 0)
 
       this.transportPlay(trackId, tracks)
@@ -282,10 +310,12 @@ export const AudioEngine = {
 
     if(this.isRecording && trackId){
       this.transportStop(tracks)
+      this.recordingStats.stopTimePress = performance.now()
+      this.micNode.stop()
+      return this.construct()
 
       return new Promise((resolve, reject) => {
         this.isRecording = null
-        const id = newid()
 
         console.log('stopping') 
         this.micNode.onstop = (e)=>{
@@ -299,30 +329,11 @@ export const AudioEngine = {
           
           const sdx = this.recordingStats.startDelta/1000
           const edx = this.recordingStats.stopDelta/100
-          const newRecording = {
-            id: id,
-            bufferData: new this.tonejs.ToneAudioBuffer(window.URL.createObjectURL(blob)),
-            online: true,
-            startDeltaSec: sdx,
-            stopDeltaSec: edx,
-            initialBPM: this.tonejs.Transport.bpm.value,
-          }
 
-          newRecording.bufferData.onload = (b)=>{
-            this.bufferPool.push(newRecording)
-            console.log(this.bufferPool)
-            resolve({id:id, durationSeconds:b.duration - sdx - edx})
-            this.micNode.onstop = null 
-          }
         }
-        
-        this.recordingStats.stopTimePress = performance.now()
-        this.micNode.stop()
       })      
     }
-    return new Promise((resolve,reject)=>{
-      reject()
-    })
+    return Promise.reject()
   },
   transportStop(tracks){
     //if(this.actx === null) return;
