@@ -12,6 +12,7 @@
     position:relative;
     width:max-content;
     white-space: nowrap;
+    height:max-content;
 }
 .Timeline .TimelineBar{
     display:inline-block;
@@ -36,12 +37,17 @@
     border-right: solid gray 1px;
 }
 
-.Timeline .Playhead{
+.PlayHead{
+    z-index: 11;
     position:absolute;
-    z-index: 100;
-    width:1px;
-    height:100vh;
-    left:20%;
-    background-color: red;
-    border:solid red 1px;
+    left:0;
+    top:100%;
+    overflow: visible;
+    height:min-content;
+    width: min-content;
+}
+
+.PlayHead line{
+    stroke: red;
+    stroke-width: 1px;
 }

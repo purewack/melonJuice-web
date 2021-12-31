@@ -35,8 +35,9 @@ import '../css/Fields.css'
 import '../css/Time.css'
 import {useState,useEffect} from 'react'
 import { useRenders } from '../Util'
+import PlayHead from './PlayHead';
 
-const AudioField = ({ songMeasures, timer, editorStats ,children}) => {
+const AudioField = ({ songMeasures, timer, editorStats ,children, playHead}) => {
     useRenders('FIELD', 'red')
 
     const [bars, setBars] = useState()
@@ -45,7 +46,11 @@ const AudioField = ({ songMeasures, timer, editorStats ,children}) => {
     },[songMeasures])
 
     return(<div className='AudioField' >
-        <span className='Timeline'>
+        <div className='Timeline'>
+            <PlayHead 
+                pos={playHead.pos} 
+                height={playHead.height}
+            />
             {bars && bars.map((b,i)=>{
                 return (<div key={i}
                     className='TimelineBar'
@@ -53,7 +58,7 @@ const AudioField = ({ songMeasures, timer, editorStats ,children}) => {
                     { i}
                 </div>)
             })}
-        </span>
+        </div>
 
         {children}
     </div>)

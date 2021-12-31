@@ -5,10 +5,10 @@ import { useState, useEffect, useReducer, useRef} from 'react';
 
 //import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
+import { tracksReducer } from './reducers/TracksReducer'
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
 import AudioRegion from './components/AudioRegion';
-import { tracksReducer } from './reducers/TracksReducer'
 import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
 import SVGElements from './gfx/SVGElements';
@@ -385,7 +385,14 @@ function App() {
           })}
         </ToolField>
 
-        <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
+        <AudioField 
+          songMeasures={songMeasures ? songMeasures : 16} 
+          editorStats={editorStats} 
+          playHead={{
+            pos: seekBeat * editorStats.beatLength ,
+            height: tracks.current.length * editorStats.trackHeight, 
+          }}
+        >
           {tracks.current.map((track,i,tt) => { 
             return <AudioTrack 
               hadChanges={tracks.changes[i]}
