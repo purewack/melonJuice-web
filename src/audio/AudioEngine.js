@@ -372,29 +372,33 @@ export const AudioEngine = {
       const scalarBtoT = 60/bpm
 
       tr.regions.forEach(reg => {
-        const startT = fromB*scalarBtoT
-        const regEndT = (reg.rOffset+reg.rDuration)*scalarBtoT
+        const fromT = fromB*scalarBtoT
+        const regOffsetT = reg.rOffset*scalarBtoT
+        const regBOffsetT = reg.bOffset*scalarBtoT
+        const regDurationT = reg.rDuration*scalarBtoT
+        const regEndingT = (reg.rOffset+reg.rDuration)*scalarBtoT
+        const deltaRegOffsetT = regOffsetT - fromT
+        const deltaRegEndingT = regEndingT - fromT
         
-        if(startT < regEndT) {
-          const scheduleT = regEndT - startT
-          const offsetT = startT - regStartT
-          const durationT = 
+        if(deltaRegEndingT > 0) {
+          const scheduleT = deltaRegOffsetT < 0 ? 0 : deltaRegOffsetT
+          const bOffsetSeekT = deltaRegOffsetT < 0 ? -deltaRegOffsetT : 0
 
           this.tonejs.Transport.schedule(t => {
               this.bufferPool.forEach(bp => {
                 if(bp.id === reg.bufferId){
                   tr.player.buffer = bp.bufferData
 
-                  const ltc_off = bp.startDeltaSec+ltc + offsetT
-                  const ltc_dur = bp.stopDeltaSec+ltc + durationT
+                  const ltc_off = bp.startDeltaSec+ltc + bOffsetSeekT
+                  const ltc_dur = bp.stopDeltaSec+ltc + regDurationT - bOffsetSeekT
 
-                  const bpmPlayrate = bpm / bp.initialBPM
-                  tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
+                  // const bpmPlayrate = bpm / bp.initialBPM
+                  // tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
 
                   tr.player.start(
                     t, 
-                    ltc_off + reg.bOffset*scalarBtoT , 
-                    ltc_dur + reg.rDuration*scalarBtoT 
+                    ltc_off + regBOffsetT , 
+                    ltc_dur + regDurationT 
                   )
                 }
               })
@@ -406,18 +410,18 @@ export const AudioEngine = {
       })
     })
 
-    if(this.metronome.volume !== 0.0){
-      let b = fromB % 4
-      this.tonejs.Transport.scheduleRepeat((time)=>{
-        if(this.metronome.mute) return
-        if(b%4 === 0)
-        this.metronome.click_major.start(time)
-        else
-        this.metronome.click_minor.start(time)
+    // if(this.metronome.volume !== 0.0){
+    //   let b = fromB % 4
+    //   this.tonejs.Transport.scheduleRepeat((time)=>{
+    //     if(this.metronome.mute) return
+    //     if(b%4 === 0)
+    //     this.metronome.click_major.start(time)
+    //     else
+    //     this.metronome.click_minor.start(time)
 
-        b+=1
-      }, '4n')
-    }
+    //     b+=1
+    //   }, '4n')
+    // }
   },
   
   newTrack(){
