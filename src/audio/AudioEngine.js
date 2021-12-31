@@ -377,21 +377,23 @@ export const AudioEngine = {
         
         if(startT < regEndT) {
           const scheduleT = regEndT - startT
+          const offsetT = startT - regStartT
+          const durationT = 
 
           this.tonejs.Transport.schedule(t => {
               this.bufferPool.forEach(bp => {
                 if(bp.id === reg.bufferId){
                   tr.player.buffer = bp.bufferData
 
-                  const ltc_start = bp.startDeltaSec+ltc
-                  const ltc_dur = bp.stopDeltaSec+ltc
+                  const ltc_off = bp.startDeltaSec+ltc + offsetT
+                  const ltc_dur = bp.stopDeltaSec+ltc + durationT
 
                   const bpmPlayrate = bpm / bp.initialBPM
                   tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
 
                   tr.player.start(
                     t, 
-                    ltc_start + reg.bOffset*scalarBtoT , 
+                    ltc_off + reg.bOffset*scalarBtoT , 
                     ltc_dur + reg.rDuration*scalarBtoT 
                   )
                 }
