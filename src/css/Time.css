@@ -43,8 +43,6 @@
     left:0;
     top:100%;
     overflow: visible;
-    height:min-content;
-    width: min-content;
 }
 
 .PlayHead line{

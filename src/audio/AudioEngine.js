@@ -108,6 +108,9 @@ export const AudioEngine = {
     from:0,
   },
   onRecordingComplete: null,
+  onTransportTick: null,
+  onTransportStart: null,
+  onTransportStop: null,
   
   awaitPermission(){
     if(this.isSetup) return
@@ -299,7 +302,7 @@ export const AudioEngine = {
     return 1.0
   },
 
-  transportRecordStart (trackId, tracks, from) {
+  transportRecordStart (trackId, tracks, from, songBeats) {
     if(!this.isRecording && trackId){
       this.tonejs.Transport.schedule((t)=>{
         this.isRecording = trackId
@@ -313,7 +316,7 @@ export const AudioEngine = {
         }
       }, 0)
 
-      this.transportPlay(trackId, tracks, from)
+      this.transportPlay(trackId, tracks, from, songBeats)
       console.log('started')
     }
   },
@@ -342,34 +345,35 @@ export const AudioEngine = {
       tr.player.stop()
       //tr.envelope.cancel()
     })
-    
+    this.onTransportStop(0)
+//    this.onTransportTick(0)
   },
-  transportPlay(omitTrackId, tracks, from){
+  transportPlay(omitTrackId, tracks, from, songBeats){
    // if(this.actx === null) return;
     
     if(this.tonejs.Transport.state !== 'stopped'){
       this.transportStop(tracks)
       return;
     }
-
-    this.schedule(tracks, omitTrackId, from)
+    this.onTransportTick(0)
+    this.schedule(tracks, omitTrackId, from, songBeats)
     
     this.tonejs.Transport.seconds = 0
     this.tonejs.Transport.start('+0.1')
           
   },
 
-  schedule(tracks, omitTrackId, fromB){
+  schedule(tracks, omitTrackId, fromB, songBeats){
     //const tt = durationMultiplier
     //const tt = 1.0
     const ltc = 0.128
 
+    const bpm = this.tonejs.Transport.bpm.value 
+    const scalarBtoT = 60/bpm
+    
     tracks.forEach(tr => {
       if(!tr.regions) return
       if(omitTrackId && tr.trackId === omitTrackId) return
-
-      const bpm = this.tonejs.Transport.bpm.value 
-      const scalarBtoT = 60/bpm
 
       tr.regions.forEach(reg => {
         const fromT = fromB*scalarBtoT
@@ -410,17 +414,29 @@ export const AudioEngine = {
       })
     })
 
-    // if(this.metronome.volume !== 0.0){
-    //   let b = fromB % 4
-    //   this.tonejs.Transport.scheduleRepeat((time)=>{
-    //     if(this.metronome.mute) return
-    //     if(b%4 === 0)
-    //     this.metronome.click_major.start(time)
-    //     else
-    //     this.metronome.click_minor.start(time)
+    const nextB = Math.ceil(fromB)
+    const dtB = nextB - fromB
+    const dtT = dtB * scalarBtoT
+    let b = nextB
+    let bb = 0 
 
-    //     b+=1
-    //   }, '4n')
+    console.log({fromB, nextB, dtB, b, dtT, songBeats})
+    this.tonejs.Transport.scheduleRepeat((time)=>{
+      if(this.metronome.mute) return
+
+      if(b%4 === 0)
+        this.metronome.click_major.start(time)
+      else
+        this.metronome.click_minor.start(time)
+
+      this.onTransportTick(bb + dtB)
+      b+=1
+      bb+=1
+    }, '4n', dtT)
+    // if(songBeats){
+    //   this.tonejs.Transport.scheduleOnce((t)=>{
+    //     this.transportStop(tracks)
+    //   },`${songBeats}n`)
     // }
   },
   

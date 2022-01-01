@@ -37,7 +37,7 @@ import {useState,useEffect} from 'react'
 import { useRenders } from '../Util'
 import PlayHead from './PlayHead';
 
-const AudioField = ({ songMeasures, timer, editorStats ,children, playHead}) => {
+const AudioField = ({ songMeasures, timer, editorStats ,children, playHead, onNewPosPx}) => {
     useRenders('FIELD', 'red')
 
     const [bars, setBars] = useState()
@@ -50,6 +50,8 @@ const AudioField = ({ songMeasures, timer, editorStats ,children, playHead}) => 
             <PlayHead 
                 pos={playHead.pos} 
                 height={playHead.height}
+                transportPx={playHead.transportPx}
+                onNewPosPx={onNewPosPx}
             />
             {bars && bars.map((b,i)=>{
                 return (<div key={i}

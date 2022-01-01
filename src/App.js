@@ -29,6 +29,7 @@ function App() {
     bps:1.0,
   })
   const [seekBeat, setSeekBeat] = useState(0)
+  const [transportBeat, setTransportBeat] = useState(0)
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   //eslint-disable-next-line
@@ -128,11 +129,19 @@ function App() {
           const region = AudioEngine.newRegion(
             recording.id, 
             from, 
-            recording.durationSeconds * bps,//editorStats.bps, 
+            recording.durationSeconds * bps, 
             recording.durationSeconds
           )
           console.log(region)
           tracksDispatch({type:'record_region', trackId: track, region: region})
+        }
+
+        AudioEngine.onTransportTick = (beat)=>{
+          setTransportBeat(beat)
+        }
+        AudioEngine.onTransportStop = (beat)=>{
+          setTransportBeat(0)
+          setSeekBeat(s => s+beat)
         }
 
         console.log(AudioEngine)
@@ -236,7 +245,7 @@ function App() {
 
 
     <button onClick={()=>{
-      AudioEngine.transportPlay(null, tracks.current, seekBeat)
+      AudioEngine.transportPlay(null, tracks.current, seekBeat, songMeasures)
     }}>Start</button>
 
     <button onClick={()=>{
@@ -390,7 +399,11 @@ function App() {
           editorStats={editorStats} 
           playHead={{
             pos: seekBeat * editorStats.beatLength ,
-            height: tracks.current.length * editorStats.trackHeight, 
+            height: tracks.current.length * editorStats.trackHeight,
+            transportPx: transportBeat * editorStats.beatLength, 
+          }}
+          onNewPosPx={(px)=>{
+            setSeekBeat(px / editorStats.beatLength)
           }}
         >
           {tracks.current.map((track,i,tt) => { 
