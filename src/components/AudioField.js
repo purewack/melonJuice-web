@@ -47,12 +47,8 @@ const AudioField = ({ songMeasures, timer, editorStats ,children, playHead, onNe
 
     return(<div className='AudioField' >
         <div className='Timeline'>
-            <PlayHead 
-                pos={playHead.pos} 
-                height={playHead.height}
-                transportPx={playHead.transportPx}
-                onNewPosPx={onNewPosPx}
-            />
+            <PlayHead stats={playHead} onNewPosPx={onNewPosPx}/>
+
             {bars && bars.map((b,i)=>{
                 return (<div key={i}
                     className='TimelineBar'

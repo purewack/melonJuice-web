@@ -38,7 +38,9 @@ function App() {
   const [clickState, setClickState] = useState(false)
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
+  const [recordingDurationB, setRecordingDurationB] = useState(0)
   const [armedId, setArmedId] = useState(null)
+  const [armedIdx, setArmedIdx] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
     
   const [inputDevices, setInputDevices] = useState()
@@ -142,6 +144,9 @@ function App() {
         AudioEngine.onTransportStop = (beat)=>{
           setTransportBeat(0)
           setSeekBeat(s => s+beat)
+        }
+        AudioEngine.onRecordingTick = (beat)=>{
+          setRecordingDurationB(beat)
         }
 
         console.log(AudioEngine)
@@ -258,6 +263,7 @@ function App() {
 
     <button onClick={()=>{
       AudioEngine.transportRecordStop(armedId, tracks.current)
+      setRecordingDurationB(0)
     }}>Rec Stop</button>
 
     <button onClick={()=>{
@@ -384,14 +390,24 @@ function App() {
       <div className="EditorField">
         <ToolField>
           <p className="TransportTimer">Timer</p>
-          {tracks.current.map(t=>{
+          {tracks.current.map((t,i)=>{
             return <TrackTool key={t.trackId} onArm={
               ()=>{
-                if(armedId === t.trackId) setArmedId(null)
-                else setArmedId(t.trackId)
+                if(armedId === t.trackId) {
+                  setArmedId(null)
+                  setArmedIdx(null)
+                }
+                else {
+                  setArmedId(t.trackId)
+                  setArmedIdx(i)
+                }
               }
             } height={editorStats.trackHeight}/>
           })}
+
+          <button onClick={()=>{
+            tracksDispatch({type:'add_track'})
+          }}>+</button>
         </ToolField>
 
         <AudioField 
@@ -399,8 +415,12 @@ function App() {
           editorStats={editorStats} 
           playHead={{
             pos: seekBeat * editorStats.beatLength ,
-            height: tracks.current.length * editorStats.trackHeight,
+            trackCount: tracks.current.length,
+            trackHeight: editorStats.trackHeight,
             transportPx: transportBeat * editorStats.beatLength, 
+            recordingDuration: recordingDurationB * editorStats.beatLength,
+            recordingStart: seekBeat * editorStats.beatLength,
+            recordingTrackIdx: armedIdx, 
           }}
           onNewPosPx={(px)=>{
             setSeekBeat(px / editorStats.beatLength)
@@ -414,6 +434,7 @@ function App() {
               armedId={armedId}
               editorStats={editorStats}
             >
+             
               {track.regions.map( r => {
                 return <AudioRegion
                     key={r.regionId} 

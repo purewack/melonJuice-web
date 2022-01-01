@@ -108,6 +108,7 @@ export const AudioEngine = {
     from:0,
   },
   onRecordingComplete: null,
+  onRecordingTick: null,
   onTransportTick: null,
   onTransportStart: null,
   onTransportStop: null,
@@ -304,8 +305,8 @@ export const AudioEngine = {
 
   transportRecordStart (trackId, tracks, from, songBeats) {
     if(!this.isRecording && trackId){
+
       this.tonejs.Transport.schedule((t)=>{
-        this.isRecording = trackId
         this.recordingStats.from = from
         this.recordingStats.startTimePress = performance.now()
         if(this.inputWorklet){
@@ -316,6 +317,7 @@ export const AudioEngine = {
         }
       }, 0)
 
+      this.isRecording = trackId
       this.transportPlay(trackId, tracks, from, songBeats)
       console.log('started')
     }
@@ -323,7 +325,7 @@ export const AudioEngine = {
   transportRecordStop (trackId,tracks) {
 
     if(this.isRecording && trackId){
-      
+      this.isRecording = null
       this.recordingStats.stopTimePress = performance.now()
       this.recordingStats.track = trackId
       
@@ -433,6 +435,14 @@ export const AudioEngine = {
       b+=1
       bb+=1
     }, '4n', dtT)
+
+    if(this.isRecording){
+      let r = 0
+      this.tonejs.Transport.scheduleRepeat((time)=>{
+        this.onRecordingTick(r)
+        r+=0.25
+      }, '16n', dtT)
+    }
     // if(songBeats){
     //   this.tonejs.Transport.scheduleOnce((t)=>{
     //     this.transportStop(tracks)
