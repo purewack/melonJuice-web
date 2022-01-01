@@ -273,9 +273,9 @@ export const AudioEngine = {
       id: id,
       bufferData: new this.tonejs.ToneAudioBuffer(data, onload),
       online: true,
-      startDeltaSec: this.recordingStats.startDelta/1000,
-      stopDeltaSec: this.recordingStats.stopDelta/1000,
-      totalDelay: this.recordingStats.totalDelay/1000,
+      startDeltaSec: 0,//this.recordingStats.startDelta/1000,
+      stopDeltaSec: 0,//this.recordingStats.stopDelta/1000,
+      totalDelay: 0,//this.recordingStats.totalDelay/1000,
       initialBPM: this.tonejs.Transport.bpm.value,
     }
     console.log(newRecording)
