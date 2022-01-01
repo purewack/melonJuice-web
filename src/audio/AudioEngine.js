@@ -394,7 +394,7 @@ export const AudioEngine = {
                   tr.player.buffer = bp.bufferData
 
                   const ltc_off = bp.startDeltaSec+ltc + bOffsetSeekT
-                  const ltc_dur = bp.stopDeltaSec+ltc + regDurationT - bOffsetSeekT
+                  const ltc_dur = bp.stopDeltaSec - bOffsetSeekT
 
                   // const bpmPlayrate = bpm / bp.initialBPM
                   // tr.player.playbackRate = reg.rPlayrate*bpmPlayrate
