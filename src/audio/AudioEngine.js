@@ -366,7 +366,7 @@ export const AudioEngine = {
     this.schedule(tracks, omitTrackId, from, songBeats)
     
     this.tonejs.Transport.seconds = 0
-    this.tonejs.Transport.start('0.1')
+    this.tonejs.Transport.start('+0.1')
           
   },
 
