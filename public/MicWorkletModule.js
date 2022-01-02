@@ -56,7 +56,7 @@ class RecorderWorkletProcessor extends AudioWorkletProcessor {
     },
     {
       name: 'monitorState',
-      defaultValue: 1,
+      defaultValue: 0,
       automationRate: 'k-rate'
     }];
   }

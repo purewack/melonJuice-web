@@ -194,6 +194,15 @@ export function tracksReducer(state,action){
       return publishHistory(newMove, [destTrackIdx])
     }
 
+    case 'add_track':{
+      let currentCopy = state.current.map(t => {
+        return {...t, regions:[...t.regions]}
+      })
+      currentCopy.push(AudioEngine.newTrack())
+      
+      return publishHistory(currentCopy, [])
+    }
+
     case 'undo':
       if(state.historyPointer > 0){
         return {

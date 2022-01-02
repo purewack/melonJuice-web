@@ -5,10 +5,10 @@ import { useState, useEffect, useReducer, useRef} from 'react';
 
 //import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
+import { tracksReducer } from './reducers/TracksReducer'
 import AudioField from './components/AudioField';
 import AudioTrack from './components/AudioTrack';
 import AudioRegion from './components/AudioRegion';
-import { tracksReducer } from './reducers/TracksReducer'
 import ToolField from './components/ToolField';
 import TrackTool from './components/TrackTool';
 import SVGElements from './gfx/SVGElements';
@@ -27,8 +27,9 @@ function App() {
     trackHeight:100, 
     toolMode:'grab', 
     bps:1.0,
-    seekBeat: 0,
   })
+  const [seekBeat, setSeekBeat] = useState(0)
+  const [transportBeat, setTransportBeat] = useState(0)
   const [tracks, tracksDispatch] = useReducer(tracksReducer)
   const [songTitle, setSongTitle] = useState('')
   //eslint-disable-next-line
@@ -37,7 +38,9 @@ function App() {
   const [clickState, setClickState] = useState(false)
   const undoButtonRef = useRef()
   const redoButtonRef = useRef()
+  const [recordingDurationB, setRecordingDurationB] = useState(0)
   const [armedId, setArmedId] = useState(null)
+  const [armedIdx, setArmedIdx] = useState(null)
   const [selectedRegion, setSelectedRegion] = useState(null)
     
   const [inputDevices, setInputDevices] = useState()
@@ -118,11 +121,36 @@ function App() {
       //   setScreen('editor')
       // }
 
-      const workletStatus = AudioEngine.init(selectedInput)
-      setSongTitle(workletStatus ? 'worklet working' : 'mediarecorder working')
-      tracksDispatch({type:'new'})
-      setScreen('editor')
-      setBpm(90)
+      AudioEngine.init(selectedInput).then((workletStatus)=>{
+        setSongTitle(workletStatus ? 'worklet working' : 'mediarecorder working')
+        tracksDispatch({type:'new'})
+        setScreen('editor')
+        setBpm(90)
+        
+        AudioEngine.onRecordingComplete = (recording, track, from, bps)=>{
+          const region = AudioEngine.newRegion(
+            recording.id, 
+            from, 
+            recording.durationSeconds * bps, 
+            recording.durationSeconds
+          )
+          console.log(region)
+          tracksDispatch({type:'record_region', trackId: track, region: region})
+        }
+
+        AudioEngine.onTransportTick = (beat)=>{
+          setTransportBeat(beat)
+        }
+        AudioEngine.onTransportStop = (beat)=>{
+          setTransportBeat(0)
+          setSeekBeat(s => s+beat)
+        }
+        AudioEngine.onRecordingTick = (beat)=>{
+          setRecordingDurationB(beat)
+        }
+
+        console.log(AudioEngine)
+      })
     }
   //eslint-disable-next-line
   }, [screen])
@@ -222,7 +250,7 @@ function App() {
 
 
     <button onClick={()=>{
-      AudioEngine.transportPlay(null, tracks.current)
+      AudioEngine.transportPlay(null, tracks.current, seekBeat, songMeasures)
     }}>Start</button>
 
     <button onClick={()=>{
@@ -230,21 +258,17 @@ function App() {
     }>Stop</button>
     
     <button onClick={()=>{
-      AudioEngine.transportRecordStart(armedId, tracks.current)
+      AudioEngine.transportRecordStart(armedId, tracks.current, seekBeat)
     }}>Rec Start</button>
 
     <button onClick={()=>{
-      AudioEngine.transportRecordStop(armedId, tracks.current).then((recording)=>{
-        const rr = AudioEngine.newRegion(
-          recording.id, 
-          editorStats.seekBeat, 
-          recording.durationSeconds * editorStats.bps, 
-          recording.durationSeconds
-        )
-        console.log(rr)
-        tracksDispatch({type:'record_region', trackId: armedId, region: rr})
-      })
+      AudioEngine.transportRecordStop(armedId, tracks.current)
+      setRecordingDurationB(0)
     }}>Rec Stop</button>
+
+    <button onClick={()=>{
+      setSeekBeat(2)
+    }}>Seek to 2b</button>
 
     <SVGElements buffers={AudioEngine.bufferPool}/>
 
@@ -366,17 +390,42 @@ function App() {
       <div className="EditorField">
         <ToolField>
           <p className="TransportTimer">Timer</p>
-          {tracks.current.map(t=>{
+          {tracks.current.map((t,i)=>{
             return <TrackTool key={t.trackId} onArm={
               ()=>{
-                if(armedId === t.trackId) setArmedId(null)
-                else setArmedId(t.trackId)
+                if(armedId === t.trackId) {
+                  setArmedId(null)
+                  setArmedIdx(null)
+                }
+                else {
+                  setArmedId(t.trackId)
+                  setArmedIdx(i)
+                }
               }
             } height={editorStats.trackHeight}/>
           })}
+
+          <button onClick={()=>{
+            tracksDispatch({type:'add_track'})
+          }}>+</button>
         </ToolField>
 
-        <AudioField songMeasures={songMeasures ? songMeasures : 16} editorStats={editorStats}>
+        <AudioField 
+          songMeasures={songMeasures ? songMeasures : 16} 
+          editorStats={editorStats} 
+          playHead={{
+            pos: seekBeat * editorStats.beatLength ,
+            trackCount: tracks.current.length,
+            trackHeight: editorStats.trackHeight,
+            transportPx: transportBeat * editorStats.beatLength, 
+            recordingDuration: recordingDurationB * editorStats.beatLength,
+            recordingStart: seekBeat * editorStats.beatLength,
+            recordingTrackIdx: armedIdx, 
+          }}
+          onNewPosPx={(px)=>{
+            setSeekBeat(px / editorStats.beatLength)
+          }}
+        >
           {tracks.current.map((track,i,tt) => { 
             return <AudioTrack 
               hadChanges={tracks.changes[i]}
@@ -385,6 +434,7 @@ function App() {
               armedId={armedId}
               editorStats={editorStats}
             >
+             
               {track.regions.map( r => {
                 return <AudioRegion
                     key={r.regionId} 
