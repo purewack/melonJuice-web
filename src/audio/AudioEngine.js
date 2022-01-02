@@ -89,6 +89,7 @@ export const AudioEngine = {
   actx: null,
   tonejs: null,
   inputWorklet: true,
+  inputLatency: 0,
   micNode: null,
   isRecording: false,
   lastRecording: null,
@@ -178,8 +179,8 @@ export const AudioEngine = {
     this.metronome.click_minor.load(wavClickMinor)
     this.metronome.click_major.load(wavClickMajor)
 
-    this.inputWorklet = (this.actx?.audioWorklet?.addModule !== undefined)
-    //this.inputWorklet = false
+    //this.inputWorklet = (this.actx?.audioWorklet?.addModule !== undefined)
+    this.inputWorklet = false
     this.isSetup = true
    
     if(!inputId) {
@@ -189,11 +190,14 @@ export const AudioEngine = {
 
     let stream = await navigator.mediaDevices.getUserMedia({audio:{
   		deviceId: {exact: inputId},
-      latency: 0.0,
+      //latency: 0.0,
   		echoCancellation: false,
   		mozNoiseSuppression: false,
   		mozAutoGainControl: false,
   	},video:false})
+    
+    this.inputLatency = stream.getAudioTracks()[0].getSettings().latency
+    console.log(this.inputLatency)
 
     if(this.inputWorklet){
       let micStream = this.actx.createMediaStreamSource(stream);
@@ -204,6 +208,7 @@ export const AudioEngine = {
         numberOfOutputs: 1,
         outputChannelCount: [2]
       })
+      
       micStream.connect(micNode)
       micNode.connect(this.actx.destination)
       micNode.port.onmessage = (e)=>{
@@ -361,14 +366,13 @@ export const AudioEngine = {
     this.schedule(tracks, omitTrackId, from, songBeats)
     
     this.tonejs.Transport.seconds = 0
-    this.tonejs.Transport.start('+0.1')
+    this.tonejs.Transport.start('0.1')
           
   },
 
   schedule(tracks, omitTrackId, fromB, songBeats){
-    //const tt = durationMultiplier
-    //const tt = 1.0
-    const ltc = 0.128
+
+    const ltc = 0.150 //this.inputLatency
 
     const bpm = this.tonejs.Transport.bpm.value 
     const scalarBtoT = 60/bpm
@@ -395,7 +399,7 @@ export const AudioEngine = {
                 if(bp.id === reg.bufferId){
                   tr.player.buffer = bp.bufferData
 
-                  const ltc_off = bp.startDeltaSec+ltc + bOffsetSeekT
+                  const ltc_off = bp.startDeltaSec + bOffsetSeekT + ltc
                   const ltc_dur = bp.stopDeltaSec - bOffsetSeekT
 
                   // const bpmPlayrate = bpm / bp.initialBPM
