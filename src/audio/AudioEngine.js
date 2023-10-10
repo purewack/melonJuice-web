@@ -1,69 +1,10 @@
 
 
-
-// const rollTransport = ()=>{
-//     Tone.Transport.stop()
-//     Tone.Transport.scheduleRepeat(t=>{
-//       setTransport(Tone.Transport.position)
-//     },'16n',0)
-//     Tone.Transport.seconds = 0
-//     Tone.Transport.start()
-//   }
-
-//   const recHandle = ()=>{
-//     if(armedIndex === null) return
-    
-//     if(micProcess.current.parameters.get('isRecording')){
-//       micProcess.current.parameters.get('isRecording').setValueAtTime(0, 0);
-//       let source = URL.createObjectURL(new Blob(recorderChunks.current))
-//       console.log(source)
-
-//       let track = tracks[armedIndex]
-//       track.buffers.push(new Tone.ToneAudioBuffer(source, (buffer)=>{
-//         track.player.buffer = buffer
-//       }))
-//       setRecording(false)
-//     }
-//     else{
-//       playHandle()
-//       recorderChunks.current = []
-//       micProcess.current.parameters.get('isRecording').setValueAtTime(1, 0);
-      
-//       setRecording(true)
-//     }
-//   }
-//   const stopHandle =()=>{
-//     if(Tone.Transport.state === 'started'){
-//       tracks.forEach(t=>{
-//         t.player.stop()
-//       })
-//       Tone.Transport.stop()
-//     }
-//   }
-//   const playHandle = ()=>{
-//     if(Tone.Transport.state !== 'started'){
-
-//       //start all tracks that have a recording
-//       Tone.Transport.cancel()
-//       console.log('start transport')
-//       tracks.forEach(t=>{
-//         if(t.player.loaded){
-//           Tone.Transport.scheduleOnce(()=>{
-//               t.player.start()
-//           },'0:0:0')
-//         }
-//       })
-//       rollTransport()
-//     }
-//     setRecording(false)
-//   }
-
 import * as Tone from 'tone'
 import newid from 'uniqid';
 import { randomColor } from '../Util';
 import wavClickMinor from './metro_click_l.wav'
 import wavClickMajor from './metro_click_h.wav'
-//import MicWorkletModule from '../../public/MicWorkletModule'
 
 const calculateRegionRelations = (regions) => {
   let sorted = regions.slice().sort((a,b)=>{
@@ -88,77 +29,15 @@ export const AudioEngine = {
   isSetup: false,
   actx: null,
   tonejs: null,
-  inputWorklet: true,
-  inputLatency: 0,
-  micNode: null,
-  isRecording: false,
-  lastRecording: null,
   lastBufferId: null,
   bufferPool: [],
   connections: [],
   metronome: null,
-  recordingStats: {
-    startTimePress:0,
-    startTimeReal:0,
-    stopTimePress:0,
-    stopTimeReal:0,
-    startDelta:0,
-    stopDelta:0,
-    totalDelay:0,
-    track:null,
-    from:0,
-  },
-  onRecordingComplete: null,
-  onRecordingTick: null,
   onTransportTick: null,
   onTransportStart: null,
   onTransportStop: null,
   
-  awaitPermission(){
-    if(this.isSetup) return
-    try{
-      return new Promise((resolve, reject) => {
-        if(navigator.mediaDevices === undefined) 
-          reject()
-        else 
-          navigator.mediaDevices.getUserMedia({audio: true, video: false})
-          .then(resolve)
-          .catch(reject)
-      })
-    }
-    catch(ex){
-      return ex
-    }
-  },
 
-  hasInputs(){
-    return new Promise((resolve, reject) => {
-      navigator.mediaDevices.enumerateDevices().then((devices)=>{
-        let count = 0
-        devices.forEach(d =>{
-          if(d.kind === 'audioinput')
-            count += 1
-        })
-
-        if(count)
-          resolve(count)
-        else
-          reject()
-      }).catch(()=>{
-        reject()
-      })
-    })
-  },
-
-  getInputs(){
-    return new Promise((resolve, reject) => {
-      navigator.mediaDevices.enumerateDevices().then((devices)=>{
-        resolve(devices)
-      }).catch(()=>{
-        reject()
-      })
-    })
-  },
 
   async init(inputId) {
     if(this.isSetup) return null
@@ -198,96 +77,40 @@ export const AudioEngine = {
     
     this.inputLatency = stream.getAudioTracks()[0].getSettings().latency
     console.log(this.inputLatency)
-
-    if(this.inputWorklet){
-      let micStream = this.actx.createMediaStreamSource(stream);
-      await this.actx.audioWorklet.addModule('MicWorkletModule.js')
-      
-      let micNode = new window.AudioWorkletNode(this.actx, 'mic-worklet', {
-        numberOfInputs: 1,
-        numberOfOutputs: 1,
-        outputChannelCount: [2]
-      })
-      
-      micStream.connect(micNode)
-      micNode.connect(this.actx.destination)
-      micNode.port.onmessage = (e)=>{
-        if(e.data.eventType === 'onchunk'){
-          let len = (e.data.audioChunk.length + this.lastRecording.length)
-          let bufnew = new Float32Array(len)
-          bufnew.set(this.lastRecording)
-          bufnew.set(e.data.audioChunk, this.lastRecording.length)
-          this.lastRecording = bufnew
-        }
-        else if(e.data.eventType === 'begin'){
-          this.lastRecording = new Float32Array(4096)
-          this.recordingStats.startTimeReal = performance.now() 
-          this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
-        }
-        else if(e.data.eventType === 'end'){
-          const buf = this.actx.createBuffer(1,e.data.recLength, this.actx.sampleRate)
-          buf.copyToChannel(Float32Array.from(this.lastRecording),0) 
-          this.constructRecording(buf)
-        }
-      }
-      this.micNode = micNode
-      await this.tonejs.start()
-      
-    }
-    else{
-      this.micNode = new MediaRecorder(stream)
-      this.micNode.ondataavailable = (e)=>{
-        if(e.data.size){
-          this.lastRecording = e.data
-        }
-      }
-      this.micNode.onstart = ()=>{ 
-        this.recordingStats.startTimeReal = performance.now() 
-        this.recordingStats.startDelta = this.recordingStats.startTimeReal-this.recordingStats.startTimePress
-      }
-      this.micNode.onstop = (e)=>{
-        console.log(this.lastRecording)
-        let url = window.URL.createObjectURL(this.lastRecording)
-        this.constructRecording(url)
-      }
-      await this.tonejs.start()
-    }
-
-    return this.inputWorklet
   },
 
-  constructRecording(data){
-    console.log(data)
-    this.recordingStats.stopTimeReal = performance.now()
-    this.recordingStats.stopDelta = this.recordingStats.stopTimeReal - this.recordingStats.stopTimePress
-    this.recordingStats.totalDelay = (this.recordingStats.startDelta + this.recordingStats.stopDelta)
-    console.log(this.recordingStats)
+  // constructRecording(data){
+  //   console.log(data)
+  //   this.recordingStats.stopTimeReal = performance.now()
+  //   this.recordingStats.stopDelta = this.recordingStats.stopTimeReal - this.recordingStats.stopTimePress
+  //   this.recordingStats.totalDelay = (this.recordingStats.startDelta + this.recordingStats.stopDelta)
+  //   console.log(this.recordingStats)
 
-    const id = newid()
+  //   const id = newid()
 
-    const onload = (b)=>{
-      console.log(b)
-      const recording = {
-        id: id, 
-        durationSeconds: b.duration - this.recordingStats.totalDelay/1000
-      }
-      this.onRecordingComplete(recording, this.recordingStats.track, this.recordingStats.from, this.getBPS())
-    }
+  //   const onload = (b)=>{
+  //     console.log(b)
+  //     const recording = {
+  //       id: id, 
+  //       durationSeconds: b.duration - this.recordingStats.totalDelay/1000
+  //     }
+  //     this.onRecordingComplete(recording, this.recordingStats.track, this.recordingStats.from, this.getBPS())
+  //   }
 
-    const newRecording = {
-      id: id,
-      bufferData: new this.tonejs.ToneAudioBuffer(data, onload),
-      online: true,
-      startDeltaSec: 0,//this.recordingStats.startDelta/1000,
-      stopDeltaSec: 0,//this.recordingStats.stopDelta/1000,
-      totalDelay: 0,//this.recordingStats.totalDelay/1000,
-      initialBPM: this.tonejs.Transport.bpm.value,
-    }
-    console.log(newRecording)
-    this.bufferPool.push(newRecording)
+  //   const newRecording = {
+  //     id: id,
+  //     bufferData: new this.tonejs.ToneAudioBuffer(data, onload),
+  //     online: true,
+  //     startDeltaSec: 0,//this.recordingStats.startDelta/1000,
+  //     stopDeltaSec: 0,//this.recordingStats.stopDelta/1000,
+  //     totalDelay: 0,//this.recordingStats.totalDelay/1000,
+  //     initialBPM: this.tonejs.Transport.bpm.value,
+  //   }
+  //   console.log(newRecording)
+  //   this.bufferPool.push(newRecording)
 
-    if(typeof data !== 'string') onload(data)
-  },
+  //   if(typeof data !== 'string') onload(data)
+  // },
 
   setBPM(bpm){
     if(this.tonejs)
@@ -308,42 +131,42 @@ export const AudioEngine = {
     return 1.0
   },
 
-  transportRecordStart (trackId, tracks, from, songBeats) {
-    if(!this.isRecording && trackId){
+  // transportRecordStart (trackId, tracks, from, songBeats) {
+  //   if(!this.isRecording && trackId){
 
-      this.tonejs.Transport.schedule((t)=>{
-        this.recordingStats.from = from
-        this.recordingStats.startTimePress = performance.now()
-        if(this.inputWorklet){
-          this.micNode.parameters.get('recState').setValueAtTime(1, 0); 
-        }
-        else{
-          this.micNode.start()
-        }
-      }, 0)
+  //     this.tonejs.Transport.schedule((t)=>{
+  //       this.recordingStats.from = from
+  //       this.recordingStats.startTimePress = performance.now()
+  //       if(this.inputWorklet){
+  //         this.micNode.parameters.get('recState').setValueAtTime(1, 0); 
+  //       }
+  //       else{
+  //         this.micNode.start()
+  //       }
+  //     }, 0)
 
-      this.isRecording = trackId
-      this.transportPlay(trackId, tracks, from, songBeats)
-      console.log('started')
-    }
-  },
-  transportRecordStop (trackId,tracks) {
+  //     this.isRecording = trackId
+  //     this.transportPlay(trackId, tracks, from, songBeats)
+  //     console.log('started')
+  //   }
+  // },
+  // transportRecordStop (trackId,tracks) {
 
-    if(this.isRecording && trackId){
-      this.isRecording = null
-      this.recordingStats.stopTimePress = performance.now()
-      this.recordingStats.track = trackId
+  //   if(this.isRecording && trackId){
+  //     this.isRecording = null
+  //     this.recordingStats.stopTimePress = performance.now()
+  //     this.recordingStats.track = trackId
       
-      this.transportStop(tracks)
+  //     this.transportStop(tracks)
 
-      if(this.inputWorklet)
-        this.micNode.parameters.get('recState').setValueAtTime(0, 0)
-      else
-        this.micNode.stop()
+  //     if(this.inputWorklet)
+  //       this.micNode.parameters.get('recState').setValueAtTime(0, 0)
+  //     else
+  //       this.micNode.stop()
 
-    }
+  //   }
 
-  },
+  // },
   transportStop(tracks){
     
     this.tonejs.Transport.stop()

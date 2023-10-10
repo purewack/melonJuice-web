@@ -3,7 +3,7 @@ import './css/Fields.css'
 import './css/Time.css'
 import { useState, useEffect, useReducer, useRef} from 'react';
 
-//import newid from 'uniqid';
+import newid from 'uniqid';
 import { AudioEngine } from './audio/AudioEngine';
 import { tracksReducer } from './reducers/TracksReducer'
 import AudioField from './components/AudioField';
@@ -48,95 +48,24 @@ function App() {
   //const [useMicrophone, setUseMicrophone] = useState()
 
   useEffect(() => {
-    if(screen === 'audio-permissions') {
+    if(screen === 'editor-fresh'){
 
-      AudioEngine.hasInputs().then(()=>{
-        try{
-          AudioEngine.awaitPermission().then(()=>{
-            console.log('got permissions')
-            AudioEngine.getInputs().then((devices)=>{  
-              console.log('new')
-              console.log(devices)
-              setSongTitle('Unnamed')
-              setInputDevices(devices)
-              setScreen('audio-devices')
-            })
-          }).catch(()=>{
-            console.log('not allowed')
-            setScreen('audio-denied')
-          })
-        }
-        catch(ex){
-          console.log(ex)
-          setScreen('audio-ex')
-        }
-      }).catch(()=>{
-        setScreen('audio-nodevices')
-        setSelectedInput(null)
-      })
-    }
 
-    else if(screen === 'editor-fresh'){
-
-      // const testId = newid()
-      // const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_1MG.mp3'
-      // //const testSrc = 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'            
-      // const testBuffer = {
-      //   id: testId,
-      //   bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
-      //   online: true,
-      // }
-      // let testRegion = AudioEngine.newRegion(testId,0,0)
-      
-      // testBuffer.bufferData.onload = (buf) => {
-        
-      //   testRegion.rDuration = testRegion.bDuration
-      //   AudioEngine.bufferPool.push(testBuffer)
-        
-      //   let ttt = [
-      //     AudioEngine.newTrack(),
-      //     AudioEngine.newTrack(),
-      //     AudioEngine.newTrack(),
-      //   ]
-
-      //   ttt[0].regions = AudioEngine.setRegions([
-      //     testRegion,
-      //     // AudioEngine.newRegion(newid(),10,1),
-      //     // AudioEngine.newRegion(newid(),0,2),
-      //     // AudioEngine.newRegion(newid(),3,4),
-      //     AudioEngine.newRegion(newid(),15,20),
-      //   ])
-
-      //   ttt[1].regions =  AudioEngine.setRegions([
-      //     AudioEngine.newRegion(newid(),0,2),
-      //     AudioEngine.newRegion(newid(),5,5),
-      //   ])
-
-      //   ttt[2].regions =  AudioEngine.setRegions([
-      //     AudioEngine.newRegion(newid(),1,10),
-      //   ])
-
-      //   tracksDispatch({type:'load', tracks:ttt})
-      //   setSongTitle('test_init_regions')
-      //   setScreen('editor')
-      // }
-
-      AudioEngine.init(selectedInput).then((workletStatus)=>{
-        setSongTitle(workletStatus ? 'worklet working' : 'mediarecorder working')
+      AudioEngine.init(selectedInput).then(()=>{
         tracksDispatch({type:'new'})
         setScreen('editor')
         setBpm(90)
         
-        AudioEngine.onRecordingComplete = (recording, track, from, bps)=>{
-          const region = AudioEngine.newRegion(
-            recording.id, 
-            from, 
-            recording.durationSeconds * bps, 
-            recording.durationSeconds
-          )
-          console.log(region)
-          tracksDispatch({type:'record_region', trackId: track, region: region})
-        }
+        // AudioEngine.onRecordingComplete = (recording, track, from, bps)=>{
+        //   const region = AudioEngine.newRegion(
+        //     recording.id, 
+        //     from, 
+        //     recording.durationSeconds * bps, 
+        //     recording.durationSeconds
+        //   )
+        //   console.log(region)
+        //   tracksDispatch({type:'record_region', trackId: track, region: region})
+        // }
 
         AudioEngine.onTransportTick = (beat)=>{
           setTransportBeat(beat)
@@ -145,11 +74,55 @@ function App() {
           setTransportBeat(0)
           setSeekBeat(s => s+beat)
         }
-        AudioEngine.onRecordingTick = (beat)=>{
-          setRecordingDurationB(beat)
-        }
+        // AudioEngine.onRecordingTick = (beat)=>{
+        //   setRecordingDurationB(beat)
+        // }
 
         console.log(AudioEngine)
+
+        
+        const testId = newid()
+        const testSrc = "https://tonejs.github.io/audio/berklee/gong_1.mp3"
+        
+        const testBuffer = {
+          id: testId,
+          bufferData: new AudioEngine.tonejs.ToneAudioBuffer(testSrc),
+          online: true,
+        }
+        let testRegion = AudioEngine.newRegion(testId,0,0)
+        
+        testBuffer.bufferData.onload = (buf) => {
+          
+          testRegion.rDuration = testRegion.bDuration
+          AudioEngine.bufferPool.push(testBuffer)
+          
+          let ttt = [
+            AudioEngine.newTrack(),
+            AudioEngine.newTrack(),
+            AudioEngine.newTrack(),
+          ]
+
+          ttt[0].regions = AudioEngine.setRegions([
+            testRegion,
+            // AudioEngine.newRegion(newid(),10,1),
+            // AudioEngine.newRegion(newid(),0,2),
+            // AudioEngine.newRegion(newid(),3,4),
+            AudioEngine.newRegion(newid(),15,20),
+          ])
+
+          ttt[1].regions =  AudioEngine.setRegions([
+            AudioEngine.newRegion(newid(),0,2),
+            AudioEngine.newRegion(newid(),5,5),
+          ])
+
+          ttt[2].regions =  AudioEngine.setRegions([
+            AudioEngine.newRegion(newid(),1,10),
+          ])
+
+          tracksDispatch({type:'load', tracks:ttt})
+          setSongTitle('test_init_regions')
+          setScreen('editor')
+        }
       })
     }
   //eslint-disable-next-line
@@ -162,8 +135,7 @@ function App() {
     console.log('song changed')
     console.log(tracks)
     //setEditorStats({...editorStats,lastMoveLegal:tracks.lastMoveLegal})
- 
- 
+
     //calc song length based on longest most further away clip
     let sm = 0
     tracks.current.forEach(t => {
@@ -199,47 +171,9 @@ function App() {
     {!screen ? <>
       <p>Welcome to MelonJuice</p>
       <button onClick={()=>{
-        setScreen('audio-permissions')
+        setScreen('editor-fresh')
       }}>Start</button>
     </> :
-
-    screen === 'audio-permissions' ? <p>Waiting for permissions...</p> :
-
-    screen === 'audio-denied' ? <>
-      <p>🔇 Audio permissions denied 😭</p> 
-      <button onClick={()=>{
-        startAudio()
-        setScreen('editor-fresh')
-      }}>Continue without input</button>
-    </>:
-
-    screen === 'audio-nodevices' ? <>
-      <p>Looks like you don't have any input devices :/</p>
-      <button onClick={()=>{
-        startAudio()
-        setScreen('editor-fresh')
-      }}> Continue</button>
-    </> :
-      
-    screen === 'audio-devices' ? <>
-      {inputDevices && inputDevices.map(d => {
-        if(d.kind === 'audioinput' && !(d.deviceId === 'communications' || d.deviceId === 'default'))
-          return( 
-            <p key={d.deviceId+d.groupId} onClick={()=>{
-              setSelectedInput(d.deviceId)
-            }}> {selectedInput === d.deviceId ? '✔️' : null} 🎤 - {d.label}</p>
-          )
-        else
-          return null
-      })} 
-      
-      <button disabled={!selectedInput} onClick={()=>{
-        startAudio()
-        setScreen('editor-fresh')
-      }}>
-        {selectedInput ? 'Use this one' : 'Click one from the list'}
-      </button>
-    </> : 
 
     screen === 'editor-fresh' ? <>
       <p>Loading ...</p>
@@ -248,7 +182,6 @@ function App() {
     screen === 'editor' ?
     <>
 
-
     <button onClick={()=>{
       AudioEngine.transportPlay(null, tracks.current, seekBeat, songMeasures)
     }}>Start</button>
@@ -256,15 +189,6 @@ function App() {
     <button onClick={()=>{
       AudioEngine.transportStop(tracks.current)}
     }>Stop</button>
-    
-    <button onClick={()=>{
-      AudioEngine.transportRecordStart(armedId, tracks.current, seekBeat)
-    }}>Rec Start</button>
-
-    <button onClick={()=>{
-      AudioEngine.transportRecordStop(armedId, tracks.current)
-      setRecordingDurationB(0)
-    }}>Rec Stop</button>
 
     <button onClick={()=>{
       setSeekBeat(2)
@@ -434,7 +358,7 @@ function App() {
               armedId={armedId}
               editorStats={editorStats}
             >
-             
+
               {track.regions.map( r => {
                 return <AudioRegion
                     key={r.regionId} 
@@ -455,7 +379,7 @@ function App() {
       
       <p>Debug Map</p>
         
-      {selectedRegion ? 
+      {selectedRegion && 
       tracks.current.map(t => {
           return t.regions.map(r => {
             if(r.regionId === selectedRegion.regionId){
@@ -474,17 +398,21 @@ function App() {
             return null
           })
         })
-      : null}
+      }
+
+      <div>
+        <p>Buffers</p>
+        {AudioEngine.bufferPool.map((b,i) => {
+          return <div key={b.id} className="DebugBuffer">
+            <p>{JSON.stringify(b)}</p>
+            ID:<b>{b.id}</b> - Duration: <b>{b.duration}</b>
+          </div>
+        })}
+      </div>
+
 
       {/* <div className="DebugMap">
-        <div>
-          <p>Buffers</p>
-          {buffers.map(b => {
-            return <div key={b.bufferId} className="DebugBuffer">
-              ID:<b>{b.bufferId}</b> - Duration: <b>{b.duration}</b>
-            </div>
-          })}
-        </div>
+        
 
         <div>
           <p>Regions</p>
